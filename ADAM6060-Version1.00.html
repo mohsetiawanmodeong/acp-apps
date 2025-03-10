@@ -124,102 +124,157 @@
     </style>
   </head>
   <body onload="pageOnInit()">
-    <!-- Header -->
-    <header class="header-fixed">
-      <div class="container">
-        <h1 class="text-center text-brown mb-0">
-          ICA CPS - Collision Prevention System
-        </h1>
+    <center>
+      <header
+        style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          background-color: #add8e6;
+          padding: 10px 0;
+          z-index: 1000;
+        "
+      >
+        <span style="color: brown; font-style: bold; font-size: 25px"
+          >ICA CPS - Collision Prevention System</span
+        >
+        <hr />
+      </header>
+
+      <!-- Tambahkan padding-top untuk mengompensasi fixed header -->
+      <div style="padding-top: 80px">
+        <span style="color: black; font-style: bold; font-size: 20px"
+          >LHD 710698</span
+        >
       </div>
-    </header>
+      <br />
+      <br />
 
-    <!-- Main Content -->
-    <div class="container main-content">
-      <h2 class="text-center mb-4">LHD 710698</h2>
+      <table border="1" id="TBL0">
+        <tbody>
+          <tr bgcolor="#FFA500">
+            <th colspan="3">ICA CPS - Safe Zone Status</th>
+          </tr>
+          <tr>
+            <td id="DIPOLL" colspan="3">Polling 616 times...</td>
+          </tr>
+          <tr>
+            <td bgcolor="#FFA500" width="45%">FRONT Safe Zone</td>
+            <td class="hidden">N/A</td>
+            <td bgcolor="#FFA500" width="45%">REAR Safe Zone</td>
+          </tr>
+          <tr>
+            <td>
+              <img
+                id="DI0"
+                alt="0"
+                src="data:image/png;base64,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"
+                style="margin: 5px"
+              />
+            </td>
+            <td class="hidden">
+              <img
+                id="DI1"
+                alt="0"
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABjBJREFUeNrEV1tvVFUU/uacmel0pu3Q65ROW8CYEjHQFDBFWw1CeZDqT+DBFiQobxIFxYCtxFgeiKIQgaoJT4bEEIyJgaiUW1sgJoAQaqEX2rl0pnPptHM5d9c+0wtFZjodje7O7tlzzj5rfXut71t7j0HTNDytGQyG2fHjc9rbD5XTZRfNaKYZ65KT9U83/f+Zvh3/cP8+/0J2Zp8vBODx523thz61F+Tv3bp1K6qrq2AymcBxHFRVRSKRwODQMC6cv4BoZOrw6ODo+8e/Paa1tu4gcElbpzpPZAegre2TZ1VV27O5afPOhpc2zFsVNPaZs6EoKq5cuYbLl7o6DQbu8NDwUF86AEZk0GiFe5qbm3euXVenA9I0FTO4tbmBDoN931D/ArnUWi9dukxQDa3pbC8I4MDBts/W1tXtXL36eaiKPC8lM2NN1fSxyoDRmKVkxTMr4HK5WlRFiY26XO/SNPFp9rl0zvd9sL/YarW+19D4ImRZhCRLkJVk18eyTFdxtouiCEFI6HwQhDiclU4YTcbdBQX5VZRsLBoAz/O7amvXgOMBQUpMO5fndUkiMBI5JueSJECkzuZOTkUgKQKWLi2HzWZ7C9AWnwIi2+vLllcRsSQoqqznnkDNko+FXJFVSo2ih11R6apoiMWnCEgCZiOHMkcpRh6NNiXF+ncUaQGQxFYVFdrJkcKoSCsWyQmXlJUhaU8m5wpFQpEUyARASAh6RNhjBjYvP5ddaxZNwoMft/MUgXyjmafVSLozjYAk4iIsOSYCotItgx6BGS7IkopYIgaOvBMVISqivnADZ8grLS5jvqSMOXDwwEfkQ40liFTMsUarY0zvfzCAUHhCz38sGtPTw8jn9/oJXAwD/Y8oAjKBZqBU4obElBH3j/uURZOQCHY/MB4kJ5rOAZbniqUOjAy7KQo2WKwsvCYaW+Cg++4RL0pKltCiGTeInAR+gsASwAdIwcK0AKLR6PnhoREKZlJ2kiwgv8ACk9kMj8uTzL1GHTLGxsaI9RI9z9WBsj+NgExNRpmdi1kBuN7bc/LuH/chJpjmk3KTBAGOcjtcoy5amUAgFETjUYx5AygqXUJElHQ5cqT7XIsFXrcPt+/c+lpLRfR0ALq7r1ERc3fe6L1NSoBONoExnORXVFigh1wiED7POHLzcpGTa6LnxAkCyzYpj3scgUDgtM/vG8q2FEtfHv18r6rsrigsKnitankZrY5pXoLFxpPxIK5evQKz2YL6xvW6WmQpWS98Y0Fc7/m968yZ7/dWVDjjyCYC03kLu93uL2723tElqHHEbHISo1RUVJajdv1qVFY7SGxcUv+sNhDI+3cHCMTYV8QNf11dnZotACY9+ezZHy7SxnLs7q1+mE1GvayLsoJIIoL+PwcQjcWJD3F95UazEX5PGF6P92hPb/dPLS2tUtpih8yacO7c2bZHwx5ypMJqo3xPA7HkmCFSNHie08HxvJFy78evv/3S0dS0Jb6Q4YwAUBQ0j8cdCIaCne4RH4qLHVjmrIGjdCmql1VQvS8hApphsuQgHIgiFAyd7uvrG0slvWwigJYdb8qJhNA17ougsKCE9G6jeq8hGJxAvt2K3qs3YTHnIBKO0lYsdG3fnj70izoRzbRQKHgjSMw3GXNg4qn6lTvR+ApPxWYCAX9Izz8rPCTXe5nazBhA54lvsGnT5tFEPEFFhmP7EIy025mMFHpaeUlZIR0+eDqMiKwSuk+ePPXvAJh3AKXq3NDQeE+W1VWaQWQbNPgcwEYReW5NDWIRBXFSBFU+7xPvpTyWLyoFzEYkEvnunbd3dxiNRlblYLfbdcNs72fHdIvFeqC7p1vM1KAhkx8mT7Tcbdu2xerr66dPyHPvDw4O4siRIzYaxlKo6R9HgLV4ZWUlnE4nHA4HJicn9ZskO31HTOU8Kw6wvV6lLXYe7pcxG/KHDx/Om19TUzNjU3m8BrBgpgh0agDMCaXBREMWUqIa8qgX4DIKrVuser43btyo84CtPBQKUU0IsldfpR5gqqXOwhMlUzLZk7JRAT89xzoNxM46EfHHjo6ON7xeL8LhMO2GZqxcuRK1tbXsx+kS/QQ7t5np6nnaeTAtCf+rxuF/bn8JMAD7p5tHxLprSAAAAABJRU5ErkJggg=="
+                style="margin: 5px"
+              />
+            </td>
+            <td>
+              <img
+                id="DI2"
+                alt="0"
+                src="data:image/png;base64,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"
+                style="margin: 5px"
+              />
+            </td>
+          </tr>
+          <tr bgcolor="#FF3300">
+            <th colspan="3">ICA CPS - Interuption System Status</th>
+          </tr>
+          <tr>
+            <td id="DOPOLL" colspan="3">Polling 616 times...</td>
+          </tr>
+          <tr>
+            <td bgcolor="#FF3300" colspan="3">Parking Brake<br />System</td>
+          </tr>
+          <tr>
+            <td colspan="3">
+              <img
+                id="DO0"
+                alt="0"
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABjBJREFUeNrEV1tvVFUU/uacmel0pu3Q65ROW8CYEjHQFDBFWw1CeZDqT+DBFiQobxIFxYCtxFgeiKIQgaoJT4bEEIyJgaiUW1sgJoAQaqEX2rl0pnPptHM5d9c+0wtFZjodje7O7tlzzj5rfXut71t7j0HTNDytGQyG2fHjc9rbD5XTZRfNaKYZ65KT9U83/f+Zvh3/cP8+/0J2Zp8vBODx523thz61F+Tv3bp1K6qrq2AymcBxHFRVRSKRwODQMC6cv4BoZOrw6ODo+8e/Paa1tu4gcElbpzpPZAegre2TZ1VV27O5afPOhpc2zFsVNPaZs6EoKq5cuYbLl7o6DQbu8NDwUF86AEZk0GiFe5qbm3euXVenA9I0FTO4tbmBDoN931D/ArnUWi9dukxQDa3pbC8I4MDBts/W1tXtXL36eaiKPC8lM2NN1fSxyoDRmKVkxTMr4HK5WlRFiY26XO/SNPFp9rl0zvd9sL/YarW+19D4ImRZhCRLkJVk18eyTFdxtouiCEFI6HwQhDiclU4YTcbdBQX5VZRsLBoAz/O7amvXgOMBQUpMO5fndUkiMBI5JueSJECkzuZOTkUgKQKWLi2HzWZ7C9AWnwIi2+vLllcRsSQoqqznnkDNko+FXJFVSo2ih11R6apoiMWnCEgCZiOHMkcpRh6NNiXF+ncUaQGQxFYVFdrJkcKoSCsWyQmXlJUhaU8m5wpFQpEUyARASAh6RNhjBjYvP5ddaxZNwoMft/MUgXyjmafVSLozjYAk4iIsOSYCotItgx6BGS7IkopYIgaOvBMVISqivnADZ8grLS5jvqSMOXDwwEfkQ40liFTMsUarY0zvfzCAUHhCz38sGtPTw8jn9/oJXAwD/Y8oAjKBZqBU4obElBH3j/uURZOQCHY/MB4kJ5rOAZbniqUOjAy7KQo2WKwsvCYaW+Cg++4RL0pKltCiGTeInAR+gsASwAdIwcK0AKLR6PnhoREKZlJ2kiwgv8ACk9kMj8uTzL1GHTLGxsaI9RI9z9WBsj+NgExNRpmdi1kBuN7bc/LuH/chJpjmk3KTBAGOcjtcoy5amUAgFETjUYx5AygqXUJElHQ5cqT7XIsFXrcPt+/c+lpLRfR0ALq7r1ERc3fe6L1NSoBONoExnORXVFigh1wiED7POHLzcpGTa6LnxAkCyzYpj3scgUDgtM/vG8q2FEtfHv18r6rsrigsKnitankZrY5pXoLFxpPxIK5evQKz2YL6xvW6WmQpWS98Y0Fc7/m968yZ7/dWVDjjyCYC03kLu93uL2723tElqHHEbHISo1RUVJajdv1qVFY7SGxcUv+sNhDI+3cHCMTYV8QNf11dnZotACY9+ezZHy7SxnLs7q1+mE1GvayLsoJIIoL+PwcQjcWJD3F95UazEX5PGF6P92hPb/dPLS2tUtpih8yacO7c2bZHwx5ypMJqo3xPA7HkmCFSNHie08HxvJFy78evv/3S0dS0Jb6Q4YwAUBQ0j8cdCIaCne4RH4qLHVjmrIGjdCmql1VQvS8hApphsuQgHIgiFAyd7uvrG0slvWwigJYdb8qJhNA17ougsKCE9G6jeq8hGJxAvt2K3qs3YTHnIBKO0lYsdG3fnj70izoRzbRQKHgjSMw3GXNg4qn6lTvR+ApPxWYCAX9Izz8rPCTXe5nazBhA54lvsGnT5tFEPEFFhmP7EIy025mMFHpaeUlZIR0+eDqMiKwSuk+ePPXvAJh3AKXq3NDQeE+W1VWaQWQbNPgcwEYReW5NDWIRBXFSBFU+7xPvpTyWLyoFzEYkEvnunbd3dxiNRlblYLfbdcNs72fHdIvFeqC7p1vM1KAhkx8mT7Tcbdu2xerr66dPyHPvDw4O4siRIzYaxlKo6R9HgLV4ZWUlnE4nHA4HJicn9ZskO31HTOU8Kw6wvV6lLXYe7pcxG/KHDx/Om19TUzNjU3m8BrBgpgh0agDMCaXBREMWUqIa8qgX4DIKrVuser43btyo84CtPBQKUU0IsldfpR5gqqXOwhMlUzLZk7JRAT89xzoNxM46EfHHjo6ON7xeL8LhMO2GZqxcuRK1tbXsx+kS/QQ7t5np6nnaeTAtCf+rxuF/bn8JMAD7p5tHxLprSAAAAABJRU5ErkJggg=="
+                style="margin: 5px"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <canvas
+        id="adamCanvas"
+        style="border: 1px solid #d3d3d3"
+        width="346"
+        height="260"
+      >
+        Your browser doesn't support Canvas! Historical data disabled!</canvas
+      >
+      <br />
 
-      <!-- Status Table -->
-      <div class="status-table">
-        <div class="status-header">
-          <h3 class="text-center mb-0">Safe Zone Status</h3>
-        </div>
-        <div class="row m-0">
-          <div class="col-12">
-            <div class="status-cell" id="DIPOLL">Polling 616 times...</div>
-          </div>
-        </div>
-        <div class="row m-0">
-          <div class="col-6 status-cell">
-            <h4>FRONT Safe Zone</h4>
-            <img
-              id="DI0"
-              alt="0"
-              src="data:image/png;base64,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"
-              style="margin: 5px"
-            />
-          </div>
-          <div class="col-6 status-cell">
-            <h4>REAR Safe Zone</h4>
-            <img
-              id="DI2"
-              alt="0"
-              src="data:image/png;base64,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"
-              style="margin: 5px"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Interruption System Status -->
-      <div class="status-table">
-        <div class="status-header status-header-red">
-          <h3 class="text-center mb-0">Interruption System Status</h3>
-        </div>
-        <div class="row m-0">
-          <div class="col-12">
-            <div class="status-cell" id="DOPOLL">Polling 616 times...</div>
-          </div>
-        </div>
-        <div class="row m-0">
-          <div class="col-12 status-cell">
-            <h4>Parking Brake System</h4>
-            <img
-              id="DO0"
-              alt="0"
-              src="data:image/png;base64,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"
-              style="margin: 5px"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Canvas -->
-      <canvas id="adamCanvas" width="346" height="260">
-        Your browser doesn't support Canvas! Historical data disabled!
-      </canvas>
-
-      <!-- Log Section -->
-      <div class="log-container">
-        <textarea id="logBox" class="log-textarea" readonly></textarea>
-        <div id="saveStatus" class="log-status">
+      <!-- Tambahkan text box log -->
+      <div style="margin: 20px auto; width: 90%; max-width: 600px">
+        <textarea
+          id="logBox"
+          style="
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: monospace;
+          "
+          readonly
+        ></textarea>
+        <div
+          id="saveStatus"
+          style="
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-align: left;
+          "
+        >
           Status: Log akan tersimpan otomatis setiap 1 menit<br />
           Lokasi: Downloads/adam_log_[timestamp].txt
         </div>
-        <div id="lastSaveTime" class="log-status">Terakhir disimpan: -</div>
+        <div
+          id="lastSaveTime"
+          style="font-size: 12px; color: #666; text-align: left"
+        >
+          Terakhir disimpan: -
+        </div>
       </div>
-    </div>
 
-    <!-- Footer -->
-    <footer class="footer-fixed">
-      <div class="container">
-        <p class="mb-0">Version 1.0.0</p>
+      <footer
+        style="
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          background-color: #add8e6;
+          padding: 10px 0;
+          text-align: center;
+        "
+      >
+        <hr />
+        Version 1.0.0<br />
+        2025 by
         <a target="_blank" href="https://10.10.0.1/">TECHNOLOGY DEPT.</a>
-      </div>
-    </footer>
+      </footer>
+    </center>
 
-    <!-- Bootstrap JS dari CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Original JavaScript -->
     <script>
       var canvas;
       var ctx;
