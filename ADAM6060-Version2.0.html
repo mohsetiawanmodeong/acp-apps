@@ -73,6 +73,22 @@
       .topnav-left {
         display: flex;
         align-items: center;
+        width: 33%;
+      }
+
+      .topnav-center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34%;
+      }
+
+      .topnav-center h3 {
+        margin: 0;
+        color: #ffd43b;
+        font-size: 1.5rem;
+        text-align: center;
+        font-weight: bold;
       }
 
       .topnav-left h3 {
@@ -84,12 +100,20 @@
       .topnav-right {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
+        width: 33%;
       }
 
-      .logo {
+      .logo-trakindo {
         height: 50px;
         width: auto;
         margin-left: 10px;
+      }
+
+      .logo-freeport {
+        height: 30px;
+        width: auto;
+        margin-right: 10px;
       }
 
       .nav-btn {
@@ -131,7 +155,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         width: 50%; /* Menetapkan lebar panel kanan menjadi 50% */
         box-sizing: border-box;
-        margin-bottom: 20px; /* Menambahkan margin-bottom agar tidak terlalu panjang */
+        margin-bottom: 10px; /* Menambahkan margin-bottom agar tidak terlalu panjang */
         height: fit-content; /* Mengatur tinggi sesuai dengan konten */
       }
 
@@ -266,7 +290,7 @@
       }
 
       h4 {
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         color: var(--primary-color);
       }
 
@@ -302,7 +326,15 @@
   <body onload="pageOnInit()">
     <div class="topnav">
       <div class="topnav-left">
-        <h3>⚠️CPS (Collision Prevention System) - LHD 8200</h3>
+        <!-- logo freeport base64 -->
+        <img
+          src="data:image/png;base64,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"
+          alt="Freeport Logo"
+          class="logo-freeport"
+        />
+      </div>
+      <div class="topnav-center">
+        <h3>⚠️ICA CPS - LHD 8200</h3>
       </div>
       <div class="topnav-right">
         <button id="refreshBtn" class="nav-btn">↻</button>
@@ -311,7 +343,7 @@
         <img
           src="data:image/png;base64,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"
           alt="Trakindo Logo"
-          class="logo"
+          class="logo-trakindo"
         />
       </div>
     </div>
