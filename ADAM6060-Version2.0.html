@@ -9,226 +9,7 @@
     />
     <title>CPS - LHD 8200</title>
     <style>
-      /* Bootstrap 5.3.2 Core CSS (Minimal yang dibutuhkan) */
-      :root {
-        --bs-blue: #0d6efd;
-        --bs-indigo: #6610f2;
-        --bs-purple: #6f42c1;
-        --bs-pink: #d63384;
-        --bs-red: #dc3545;
-        --bs-orange: #fd7e14;
-        --bs-yellow: #ffc107;
-        --bs-green: #198754;
-        --bs-teal: #20c997;
-        --bs-cyan: #0dcaf0;
-        --bs-black: #000;
-        --bs-white: #fff;
-        --bs-gray: #6c757d;
-        --bs-gray-dark: #343a40;
-        --bs-gray-100: #f8f9fa;
-        --bs-gray-200: #e9ecef;
-        --bs-gray-300: #dee2e6;
-        --bs-gray-400: #ced4da;
-        --bs-gray-500: #adb5bd;
-        --bs-gray-600: #6c757d;
-        --bs-gray-700: #495057;
-        --bs-gray-800: #343a40;
-        --bs-gray-900: #212529;
-        --bs-primary: #0d6efd;
-        --bs-secondary: #6c757d;
-        --bs-success: #198754;
-        --bs-info: #0dcaf0;
-        --bs-warning: #ffc107;
-        --bs-danger: #dc3545;
-        --bs-light: #f8f9fa;
-        --bs-dark: #212529;
-        --bs-primary-rgb: 13, 110, 253;
-        --bs-secondary-rgb: 108, 117, 125;
-        --bs-success-rgb: 25, 135, 84;
-        --bs-info-rgb: 13, 202, 240;
-        --bs-warning-rgb: 255, 193, 7;
-        --bs-danger-rgb: 220, 53, 69;
-        --bs-light-rgb: 248, 249, 250;
-        --bs-dark-rgb: 33, 37, 41;
-        --bs-primary-text-emphasis: #052c65;
-        --bs-secondary-text-emphasis: #2b2f32;
-        --bs-success-text-emphasis: #0a3622;
-        --bs-info-text-emphasis: #055160;
-        --bs-warning-text-emphasis: #664d03;
-        --bs-danger-text-emphasis: #58151c;
-        --bs-light-text-emphasis: #495057;
-        --bs-dark-text-emphasis: #495057;
-        --bs-primary-bg-subtle: #cfe2ff;
-        --bs-secondary-bg-subtle: #e2e3e5;
-        --bs-success-bg-subtle: #d1e7dd;
-        --bs-info-bg-subtle: #cff4fc;
-        --bs-warning-bg-subtle: #fff3cd;
-        --bs-danger-bg-subtle: #f8d7da;
-        --bs-light-bg-subtle: #fcfcfd;
-        --bs-dark-bg-subtle: #ced4da;
-        --bs-primary-border-subtle: #9ec5fe;
-        --bs-secondary-border-subtle: #c4c8cb;
-        --bs-success-border-subtle: #a3cfbb;
-        --bs-info-border-subtle: #9eeaf9;
-        --bs-warning-border-subtle: #ffe69c;
-        --bs-danger-border-subtle: #f1aeb5;
-        --bs-light-border-subtle: #e9ecef;
-        --bs-dark-border-subtle: #adb5bd;
-        --bs-white-rgb: 255, 255, 255;
-        --bs-black-rgb: 0, 0, 0;
-        --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto,
-          "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif,
-          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-          "Noto Color Emoji";
-        --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas,
-          "Liberation Mono", "Courier New", monospace;
-        --bs-gradient: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.15),
-          rgba(255, 255, 255, 0)
-        );
-        --bs-body-font-family: var(--bs-font-sans-serif);
-        --bs-body-font-size: 1rem;
-        --bs-body-font-weight: 400;
-        --bs-body-line-height: 1.5;
-        --bs-body-color: #212529;
-        --bs-body-color-rgb: 33, 37, 41;
-        --bs-body-bg: #fff;
-        --bs-body-bg-rgb: 255, 255, 255;
-        --bs-emphasis-color: #000;
-        --bs-emphasis-color-rgb: 0, 0, 0;
-        --bs-secondary-color: rgba(33, 37, 41, 0.75);
-        --bs-secondary-color-rgb: 33, 37, 41;
-        --bs-secondary-bg: #e9ecef;
-        --bs-secondary-bg-rgb: 233, 236, 239;
-        --bs-tertiary-color: rgba(33, 37, 41, 0.5);
-        --bs-tertiary-color-rgb: 33, 37, 41;
-        --bs-tertiary-bg: #f8f9fa;
-        --bs-tertiary-bg-rgb: 248, 249, 250;
-        --bs-heading-color: inherit;
-        --bs-link-color: #0d6efd;
-        --bs-link-color-rgb: 13, 110, 253;
-        --bs-link-decoration: underline;
-        --bs-link-hover-color: #0a58ca;
-        --bs-link-hover-color-rgb: 10, 88, 202;
-        --bs-code-color: #d63384;
-        --bs-highlight-color: #212529;
-        --bs-highlight-bg: #fff3cd;
-        --bs-border-width: 1px;
-        --bs-border-style: solid;
-        --bs-border-color: #dee2e6;
-        --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
-        --bs-border-radius: 0.375rem;
-        --bs-border-radius-sm: 0.25rem;
-        --bs-border-radius-lg: 0.5rem;
-        --bs-border-radius-xl: 1rem;
-        --bs-border-radius-xxl: 2rem;
-        --bs-border-radius-2xl: var(--bs-border-radius-xxl);
-        --bs-border-radius-pill: 50rem;
-        --bs-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        --bs-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        --bs-box-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-        --bs-box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.075);
-        --bs-focus-ring-width: 0.25rem;
-        --bs-focus-ring-opacity: 0.25;
-        --bs-focus-ring-color: rgba(13, 110, 253, 0.25);
-        --bs-form-valid-color: #198754;
-        --bs-form-valid-border-color: #198754;
-        --bs-form-invalid-color: #dc3545;
-        --bs-form-invalid-border-color: #dc3545;
-      }
-      *,
-      ::after,
-      ::before {
-        box-sizing: border-box;
-      }
-      @media (prefers-reduced-motion: no-preference) {
-        :root {
-          scroll-behavior: smooth;
-        }
-      }
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f5f5f5;
-        color: #333;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-      }
-      .h1,
-      .h2,
-      .h3,
-      .h4,
-      .h5,
-      .h6,
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        line-height: 1.2;
-        color: var(--bs-heading-color);
-      }
-      .h1,
-      h1 {
-        font-size: calc(1.375rem + 1.5vw);
-      }
-      @media (min-width: 1200px) {
-        .h1,
-        h1 {
-          font-size: 2.5rem;
-        }
-      }
-      .h2,
-      h2 {
-        font-size: calc(1.325rem + 0.9vw);
-      }
-      @media (min-width: 1200px) {
-        .h2,
-        h2 {
-          font-size: 2rem;
-        }
-      }
-      .h3,
-      h3 {
-        font-size: calc(1.3rem + 0.6vw);
-      }
-      @media (min-width: 1200px) {
-        .h3,
-        h3 {
-          font-size: 1.75rem;
-        }
-      }
-      .h4,
-      h4 {
-        font-size: calc(1.275rem + 0.3vw);
-      }
-      @media (min-width: 1200px) {
-        .h4,
-        h4 {
-          font-size: 1.5rem;
-        }
-      }
-      .h5,
-      h5 {
-        font-size: 1.25rem;
-      }
-      .h6,
-      h6 {
-        font-size: 1rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-
-      /* Custom Styles */
+      /* CSS yang dioptimalkan untuk ADAM module */
       :root {
         --primary-color: #1a237e;
         --secondary-color: #0d47a1;
@@ -239,13 +20,47 @@
         --success-color: #00c853;
       }
 
+      *,
+      ::after,
+      ::before {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+
       /* Topnav Styles */
       .topnav {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        background-color: #0d2e4d;
+        background-color: #0a2351; /* Mengubah kembali ke warna navy yang lebih gelap */
         color: white;
         display: flex;
         justify-content: space-between;
@@ -272,7 +87,7 @@
       }
 
       .logo {
-        height: 40px;
+        height: 50px;
         width: auto;
         margin-left: 10px;
       }
@@ -281,7 +96,7 @@
         background: none;
         border: none;
         color: #ffd43b;
-        font-size: 1.2rem;
+        font-size: 1.5rem;
         cursor: pointer;
         margin-right: 10px;
       }
@@ -290,29 +105,53 @@
         color: #ffffff;
       }
 
-      .content {
-        padding-top: 80px;
+      /* Container Styles */
+      .container {
+        display: flex;
+        flex: 1;
+        padding: 20px;
+        gap: 20px;
+        margin-top: 70px; /* Menambah jarak antara topnav dan container dari 60px menjadi 80px */
+        margin-bottom: 60px; /* Memberikan ruang untuk footer fixed */
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
-      .header {
-        background: linear-gradient(
-          135deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
-        color: white;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      .left-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Mengurangi gap dari 20px menjadi 10px */
+        width: 50%; /* Menetapkan lebar panel kiri menjadi 50% */
       }
 
-      .status-card {
+      .right-panel {
         background: white;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
+        width: 50%; /* Menetapkan lebar panel kanan menjadi 50% */
+        box-sizing: border-box;
+        margin-bottom: 20px; /* Menambahkan margin-bottom agar tidak terlalu panjang */
+        height: fit-content; /* Mengatur tinggi sesuai dengan konten */
+      }
+
+      @media (max-width: 992px) {
+        .container {
+          flex-direction: column;
+        }
+
+        .left-panel,
+        .right-panel {
+          width: 100%;
+        }
+      }
+
+      .status-card {
+        background: white;
+        padding: 15px; /* Mengurangi padding dari 20px menjadi 15px */
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 0; /* Menghapus margin-bottom jika ada */
       }
 
       .status-header {
@@ -353,89 +192,58 @@
 
       .graph-container {
         background: white;
-        padding: 20px;
+        padding: 15px; /* Mengurangi padding dari 20px menjadi 15px */
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
+        margin-bottom: 0; /* Menghapus margin-bottom */
         overflow-x: auto;
       }
 
       #logBox {
         width: 100%;
-        height: 200px;
+        height: 350px; /* Mengurangi tinggi dari 350px menjadi 300px */
         margin-bottom: 10px;
         font-family: monospace;
+        font-size: 14px;
         background-color: #f5f5f5;
         color: #333;
         border: 1px solid #ccc;
-        padding: 5px;
+        padding: 10px;
         resize: vertical;
       }
 
-      #saveLogBtn {
-        display: block;
+      /* Wrapper untuk tombol save dan status terakhir disimpan */
+      .log-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 10px;
-        padding: 5px 10px;
+      }
+
+      #saveLogBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 15px;
         background-color: #0d6efd;
         color: white;
         border: none;
         border-radius: 4px;
         cursor: pointer;
+        font-size: 14px;
+        margin-left: auto; /* Mendorong tombol ke kanan */
       }
 
-      #saveLogBtn:hover {
-        background-color: #0b5ed7;
+      #saveLogBtn:before {
+        content: "⬇️"; /* Menambahkan ikon save (download) */
+        margin-right: 5px;
+        font-size: 16px;
       }
 
       #saveStatus,
       #lastSaveTime {
         font-size: 12px;
         margin-bottom: 5px;
-      }
-
-      .footer {
-        text-align: center;
-        padding: 20px;
-        color: var(--bs-gray-600);
-      }
-
-      /* Container Styles */
-      .container {
-        display: flex;
-        flex: 1;
-        padding: 20px;
-        gap: 20px;
-        margin-top: 60px; /* Memberikan ruang untuk header fixed */
-        margin-bottom: 60px; /* Memberikan ruang untuk footer fixed */
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-
-      .left-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        width: 50%; /* Menetapkan lebar panel kiri menjadi 50% */
-      }
-
-      .right-panel {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        width: 50%; /* Menetapkan lebar panel kanan menjadi 50% */
-        box-sizing: border-box;
-      }
-
-      @media (max-width: 992px) {
-        .container {
-          flex-direction: column;
-        }
-
-        .left-panel,
-        .right-panel {
-          width: 100%;
-        }
       }
 
       .polling-info {
@@ -477,49 +285,10 @@
         z-index: 1000;
       }
 
-      .footer-cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-        margin-bottom: 20px;
-      }
-
-      .footer-card {
-        background: linear-gradient(135deg, #1a237e, #0d47a1);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        width: 300px;
-        text-align: center;
-        transition: transform 0.3s ease;
-      }
-
-      .footer-card:hover {
-        transform: translateY(-5px);
-      }
-
-      .footer-card h3 {
-        margin-bottom: 10px;
-        font-size: 1.2rem;
-      }
-
-      .footer-card p {
-        font-size: 0.9rem;
-        margin-bottom: 15px;
-      }
-
-      .footer-card-icon {
-        font-size: 2rem;
-        margin-bottom: 10px;
-        color: #ffd700;
-      }
-
       .footer-copyright {
         text-align: center;
         padding: 10px 0;
-        color: var(--bs-gray-600);
+        color: #6c757d;
         background-color: #f8f9fa;
         border-top: 1px solid #dee2e6;
         font-size: 14px;
@@ -538,6 +307,7 @@
       <div class="topnav-right">
         <button id="refreshBtn" class="nav-btn">↻</button>
         <button id="fullscreenBtn" class="nav-btn">⛶</button>
+        <!-- logo trakindo base64 -->
         <img
           src="data:image/png;base64,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"
           alt="Trakindo Logo"
@@ -586,11 +356,12 @@
       </div>
 
       <div class="right-panel">
-        <h4 style="margin-top: 20px">System Log</h4>
+        <div class="status-header">SYSTEM LOG</div>
         <textarea id="logBox" readonly></textarea>
-        <button id="saveLogBtn" class="btn btn-primary">Save Log</button>
-        <div id="saveStatus"></div>
-        <div id="lastSaveTime"></div>
+        <div class="log-controls">
+          <div id="lastSaveTime">Terakhir disimpan: Invalid Date (Loaded)</div>
+          <button id="saveLogBtn">Save Log</button>
+        </div>
       </div>
     </div>
 
