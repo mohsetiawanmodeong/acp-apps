@@ -227,10 +227,46 @@
         width: 48px;
         height: 48px;
         transition: transform 0.2s;
+        display: block;
       }
 
       .status-light:hover {
         transform: scale(1.1);
+      }
+
+      /* Tambahkan CSS untuk loader */
+      .loader-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        position: relative;
+      }
+
+      .loader-image {
+        flex: 0 0 auto;
+        text-align: center;
+        margin: 0 20px;
+      }
+
+      .loader-icon {
+        width: 150px; /* Ubah ukuran loader menjadi lebih besar */
+        height: auto;
+        display: block;
+      }
+
+      .loader-indicator {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+      }
+
+      .loader-indicator.left {
+        margin-right: 10px;
+      }
+
+      .loader-indicator.right {
+        margin-left: 10px;
       }
 
       .graph-container {
@@ -354,6 +390,61 @@
       .footer-copyright p {
         margin: 2px 0;
       }
+
+      /* CSS yang dioptimalkan untuk loader dan indikator */
+      .loader-container {
+        padding: 20px;
+        position: relative;
+      }
+
+      .loader-indicators {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+      }
+
+      .loader-image {
+        flex: 0 0 auto;
+        text-align: center;
+        margin: 0 40px;
+      }
+
+      .loader-icon {
+        width: 200px;
+        height: auto;
+        display: block;
+      }
+
+      .loader-indicator {
+        flex: 0 0 auto;
+        text-align: center;
+      }
+
+      .loader-indicator h5 {
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .loader-indicator.front {
+        margin-right: 20px;
+      }
+
+      .loader-indicator.rear {
+        margin-left: 20px;
+      }
+
+      .status-light {
+        width: 48px;
+        height: 48px;
+        transition: transform 0.2s;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body onload="pageOnInit()">
@@ -388,17 +479,39 @@
 
     <div class="container">
       <div class="left-panel">
+        <!-- Card loader dengan indikator yang dimodifikasi -->
         <div class="status-card">
-          <div class="status-header">SAFE ZONE STATUS</div>
+          <div class="status-header">LOADER STATUS</div>
           <div class="polling-info" id="DIPOLL">Polling 0 times...</div>
-          <div class="status-grid">
-            <div class="status-item">
-              <h5>FRONT Safe Zone</h5>
-              <img id="DI0" src="" alt="0" class="status-light" />
-            </div>
-            <div class="status-item">
-              <h5>REAR Safe Zone</h5>
-              <img id="DI2" src="" alt="0" class="status-light" />
+          <div class="loader-container">
+            <div class="loader-indicators">
+              <div class="loader-indicator front">
+                <h5>FRONT Safe Zone</h5>
+                <img id="DI0" src="" alt="0" class="status-light" />
+                <img
+                  id="DI0_indicator"
+                  src=""
+                  alt="0"
+                  class="status-light hidden"
+                />
+              </div>
+              <div class="loader-image">
+                <img
+                  src="data:image/png;base64,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"
+                  alt="Loader"
+                  class="loader-icon"
+                />
+              </div>
+              <div class="loader-indicator rear">
+                <h5>REAR Safe Zone</h5>
+                <img id="DI2" src="" alt="0" class="status-light" />
+                <img
+                  id="DI2_indicator"
+                  src=""
+                  alt="0"
+                  class="status-light hidden"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -924,14 +1037,22 @@
           // Hanya proses DI0 dan DI2 (FRONT dan REAR SAFE ZONE)
           if (iCh === 0 || iCh === 2) {
             var diElement = document.getElementById("DI" + iCh);
-            if (diElement) {
+            var indicatorElement = document.getElementById(
+              "DI" + iCh + "_indicator"
+            );
+
+            if (diElement && indicatorElement) {
               if (diElement.alt == "0" && diStatus[iCh] == 1) {
                 diElement.alt = "1";
                 diElement.src = lightOnSrc;
+                indicatorElement.alt = "1";
+                indicatorElement.src = lightOnSrc;
                 updateLogBox("DI", iCh, 1);
               } else if (diElement.alt == "1" && diStatus[iCh] == 0) {
                 diElement.alt = "0";
                 diElement.src = lightOffSrc;
+                indicatorElement.alt = "0";
+                indicatorElement.src = lightOffSrc;
                 updateLogBox("DI", iCh, 0);
               }
             }
