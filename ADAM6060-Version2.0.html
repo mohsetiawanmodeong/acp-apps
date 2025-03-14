@@ -7,7 +7,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
-    <title>CPS - LHD 8200</title>
+    <title>CPS - LHD</title>
+    <script>
+      // Definisikan loaderName di awal agar bisa digunakan segera
+      var loaderName = "8200"; // Variabel untuk nama loader
+      document.title = "CPS - LHD " + loaderName;
+    </script>
     <style>
       /* CSS yang dioptimalkan untuk ADAM module */
       :root {
@@ -362,7 +367,12 @@
         />
       </div>
       <div class="topnav-center">
-        <h3>⚠️ICA CPS - LHD 8200</h3>
+        <h3>
+          ⚠️ICA CPS - LHD
+          <script>
+            document.write(loaderName);
+          </script>
+        </h3>
       </div>
       <div class="topnav-right">
         <button id="refreshBtn" class="nav-btn">↻</button>
@@ -469,7 +479,6 @@
       var maxWait = 5;
       var maxFail = 3;
       var lastAutoSaveTime = Date.now();
-      var loaderName = "8200"; // Variabel untuk nama loader
 
       // Variabel untuk mendeteksi refresh
       var isRefreshing = false;
