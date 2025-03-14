@@ -869,26 +869,27 @@
         var day = String(now.getDate()).padStart(2, "0");
         var timestamp =
           year + "-" + month + "-" + day + " " + now.toLocaleTimeString();
-        var status = value == 1 ? "ACTIVE" : "INACTIVE";
-        var zoneLabel = "";
+        var message = "";
 
-        // Tambahkan label untuk DI dan DO
+        // Format pesan berdasarkan tipe dan channel
         if (type === "DI") {
           if (channel === 0) {
-            zoneLabel = "FRONT SAFE ZONE";
+            message =
+              value == 1
+                ? "WARNING Wall Collision FRONT ON"
+                : "WARNING Wall Collision FRONT OFF";
           } else if (channel === 2) {
-            zoneLabel = "REAR SAFE ZONE";
-          } else {
-            // Untuk DI lain, gunakan label default
-            zoneLabel = type + channel;
+            message =
+              value == 1
+                ? "WARNING Wall Collision REAR ON"
+                : "WARNING Wall Collision REAR OFF";
           }
         } else if (type === "DO" && channel === 0) {
-          zoneLabel = "PARKING BRAKE SYSTEM";
-        } else {
-          zoneLabel = type + channel;
+          message =
+            value == 1 ? "Parking Brake System ON" : "Parking Brake System OFF";
         }
 
-        var logEntry = timestamp + " - " + zoneLabel + " is " + status + "\n";
+        var logEntry = timestamp + " - " + message + "\n";
         logBox.value = logEntry + logBox.value;
 
         // Tambahkan log error jika terjadi masalah koneksi
