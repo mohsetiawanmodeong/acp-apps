@@ -434,12 +434,12 @@
       }
 
       .loader-indicator.front {
-        left: 10px;
+        left: 50px; /* Geser ke kanan agar lebih dekat dengan loader */
         top: 180px;
       }
 
       .loader-indicator.rear {
-        bottom: 10px;
+        bottom: -20px; /* Geser lebih ke bawah */
         left: 50%;
         transform: translateX(-50%);
       }
@@ -454,6 +454,12 @@
 
       .hidden {
         display: none;
+      }
+
+      /* Header loader status warna abu-abu */
+      .status-header.loader-header {
+        background-color: #666666;
+        color: white;
       }
     </style>
   </head>
@@ -491,7 +497,7 @@
       <div class="left-panel">
         <!-- Card loader dengan indikator yang dimodifikasi -->
         <div class="status-card">
-          <div class="status-header">LOADER STATUS</div>
+          <div class="status-header loader-header">LOADER STATUS</div>
           <div class="polling-info" id="DIPOLL">Polling 0 times...</div>
           <div class="loader-container">
             <div class="loader-indicators">
