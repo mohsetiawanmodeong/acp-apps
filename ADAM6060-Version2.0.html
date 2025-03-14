@@ -395,48 +395,58 @@
       .loader-container {
         padding: 20px;
         position: relative;
+        min-height: 400px; /* Tinggi minimum yang lebih besar */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
 
       .loader-indicators {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         position: relative;
+        width: 100%;
+        height: 100%;
       }
 
       .loader-image {
-        flex: 0 0 auto;
+        position: relative;
+        margin: 0 auto;
+        margin-top: 20px;
+        margin-bottom: 20px;
         text-align: center;
-        margin: 0 40px;
       }
 
       .loader-icon {
-        width: 200px;
+        width: 180px;
         height: auto;
         display: block;
+        margin: 0 auto;
       }
 
       .loader-indicator {
-        flex: 0 0 auto;
+        position: absolute;
         text-align: center;
       }
 
       .loader-indicator h5 {
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         color: #333;
+        font-size: 0.9rem;
       }
 
       .loader-indicator.front {
-        margin-right: 20px;
+        left: 10px;
+        top: 180px;
       }
 
       .loader-indicator.rear {
-        margin-left: 20px;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       .status-light {
-        width: 48px;
-        height: 48px;
+        width: 40px;
+        height: 40px;
         transition: transform 0.2s;
         display: block;
         margin: 0 auto;
