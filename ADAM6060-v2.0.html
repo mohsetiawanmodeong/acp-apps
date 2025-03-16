@@ -195,7 +195,7 @@
       .loader-container {
         position: relative;
         width: 100%;
-        height: 370px;
+        height: 400px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -203,14 +203,30 @@
         overflow: visible;
       }
 
+      /* Card loader */
+      .status-card.loader-card {
+        background-color: #000000;
+      }
+
+      .loader-card .polling-info {
+        color: #999;
+      }
+
+      /* Loader icon */
+      .loader-icon {
+        position: absolute;
+        width: 100px;
+        height: auto;
+        transform: translateY(-15%);
+      }
+
       /* Zone images */
       .front-safe-zone {
         position: absolute;
-        left: 8%;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 45px;
-        height: auto;
+        left: 240px;
+        top: -30px;
+        width: 50px;
+        height: 180px;
         z-index: 1;
         opacity: 0.3;
         transition: opacity 0.3s ease;
@@ -225,10 +241,9 @@
 
       .rear-safe-zone {
         position: absolute;
-        right: 8%;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 45px;
+        left: 240px;
+        bottom: 15px;
+        width: 220px;
         height: auto;
         z-index: 1;
         opacity: 0.3;
@@ -245,10 +260,10 @@
       /* Parking brake icon */
       .parking-brake-icon {
         position: absolute;
-        top: 30px;
-        right: 30px;
-        width: 35px;
-        height: 35px;
+        top: -30px;
+        right: 40px;
+        width: 50px;
+        height: auto;
         z-index: 3;
         opacity: 0.3;
         transition: opacity 0.3s ease;
@@ -285,7 +300,7 @@
       /* Log box */
       #logBox {
         width: 100%;
-        height: 350px;
+        height: 380px;
         margin-bottom: 10px;
         font-family: monospace;
         font-size: 18px;
@@ -394,22 +409,59 @@
         margin: 2px 0;
       }
 
-      /* Card loader */
-      .status-card.loader-card {
-        background-color: #000000;
+      /*Batas atas Class testing untuk melihat posisi icon -> comment jika akan di test ke adam 6060*/
+      /* .test-visible {
+        display: block !important;
+        opacity: 1 !important;
+        animation: blink 1s infinite !important;
+        visibility: visible !important;
       }
 
-      .loader-card .polling-info {
-        color: #999;
+      .parking-brake-icon.test-visible {
+        display: block !important;
+        opacity: 1 !important;
+        background-color: red !important;
       }
 
-      /* Loader icon */
-      .loader-icon {
-        position: absolute;
-        width: 100px;
-        height: auto;
-        transform: translateY(-15%);
+      .front-safe-zone.test-visible {
+        display: block !important;
+        opacity: 1 !important;
+        background-color: red !important;
       }
+
+      .rear-safe-zone.test-visible {
+        display: block !important;
+        opacity: 1 !important;
+        background-color: red !important;
+      }
+
+      .parking-brake-icon {
+        display: block !important;
+        opacity: 1 !important;
+      }
+
+      .front-safe-zone {
+        display: block !important;
+        opacity: 1 !important;
+      }
+
+      .rear-safe-zone {
+        display: block !important;
+        opacity: 1 !important;
+      }
+
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+        100% {
+          opacity: 1;
+        }
+      } */
+      /* Batas bawah test visible */
     </style>
   </head>
   <body onload="pageOnInit()">
