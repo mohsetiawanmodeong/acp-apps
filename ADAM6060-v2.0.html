@@ -195,7 +195,7 @@
       .loader-container {
         position: relative;
         width: 100%;
-        height: 400px;
+        height: 450px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -215,22 +215,31 @@
       /* Loader icon */
       .loader-icon {
         position: absolute;
-        width: 100px;
+        width: 110px;
         height: auto;
-        transform: translateY(-15%);
+        object-fit: contain;
+        max-width: 140px;
+        min-width: 100px;
+        left: 50%;
+        top: 38%;
+        transform: translate(-50%, -50%);
       }
 
       /* Zone images */
       .front-safe-zone {
         position: absolute;
-        left: 240px;
-        top: -30px;
-        width: 50px;
-        height: 180px;
+        left: 49%;
+        top: -15%;
+        width: 55px;
+        height: 250px;
         z-index: 1;
         opacity: 0.3;
         transition: opacity 0.3s ease;
         display: none;
+        object-fit: contain;
+        max-width: 70px;
+        min-width: 50px;
+        transform: translateX(-200%);
       }
 
       .front-safe-zone.on {
@@ -241,14 +250,18 @@
 
       .rear-safe-zone {
         position: absolute;
-        left: 240px;
-        bottom: 15px;
-        width: 220px;
+        left: 50%;
+        top: calc(35% + 90px);
+        width: 250px;
         height: auto;
         z-index: 1;
         opacity: 0.3;
         transition: opacity 0.3s ease;
         display: none;
+        object-fit: contain;
+        max-width: 240px;
+        min-width: 200px;
+        transform: translateX(-50%);
       }
 
       .rear-safe-zone.on {
@@ -260,13 +273,16 @@
       /* Parking brake icon */
       .parking-brake-icon {
         position: absolute;
-        top: -30px;
+        top: -5%;
         right: 40px;
         width: 50px;
         height: auto;
         z-index: 3;
         opacity: 0.3;
         transition: opacity 0.3s ease;
+        object-fit: contain;
+        max-width: 60px;
+        min-width: 40px;
       }
 
       .parking-brake-icon.on {
@@ -300,7 +316,7 @@
       /* Log box */
       #logBox {
         width: 100%;
-        height: 380px;
+        height: 400px;
         margin-bottom: 10px;
         font-family: monospace;
         font-size: 18px;
@@ -410,7 +426,7 @@
       }
 
       /*Batas atas Class testing untuk melihat posisi icon -> comment jika akan di test ke adam 6060*/
-      /* .test-visible {
+      .test-visible {
         display: block !important;
         opacity: 1 !important;
         animation: blink 1s infinite !important;
@@ -460,7 +476,7 @@
         100% {
           opacity: 1;
         }
-      } */
+      }
       /* Batas bawah test visible */
     </style>
   </head>
