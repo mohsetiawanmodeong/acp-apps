@@ -1,0 +1,27 @@
+{
+  "name": "fltmachine",
+  "version": "1.0.0",
+  "description": "Subscribes to the Fleet Machine Changes event source and Loads the machine updates into the FLTMACHINE Table.",
+  "main": "fltmachine.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "FLT",
+    "API",
+    "MSSQL",
+    "PTFI"
+  ],
+  "author": "Mark Chambers",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "body-parser": "^1.20.3",
+    "config": "^3.3.12",
+    "csv-parser": "^3.2.0",
+    "dayjs": "^1.11.13",
+    "eventsource": "^1.1.0",
+    "express": "^4.21.2",
+    "mssql": "^6.4.0"
+  }
+}

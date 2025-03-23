@@ -1,0 +1,13 @@
+{
+  "apps": [
+    {
+      	"name": "fmiacp",
+      	"script": "./fmiacp.js",
+      	"node_args": "",
+      	"cwd": "/home/ugtrm/node_apps/fmiacp",
+      	"args": "",
+      	"timestamp": "YYYY-MM-DD HH:mm:ss",
+	"log_date_format": "YYYY-MM-DD HH:mm:ss",
+    }
+  ]
+}
