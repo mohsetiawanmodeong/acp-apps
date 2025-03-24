@@ -1,0 +1,17 @@
+Running mqtt broker mosquitto
+di broker: C:\Program Files\mosquitto>mosquitto.exe -c mosquitto.conf -v
+di subscriber: C:\Program Files\mosquitto>mosquitto_sub.exe -h 10.10.0.100 -t "Advantech/74FE488684C5/data" -u ACPtest -P 8618
+
+
+setting username password pwfile mosquitto:
+C:\Program Files\mosquitto>mosquitto_passwd.exe -c "C:C:\Program Files\mosquitto\pwfile" ACPtest
+masukkan password: 8618
+setelah itu akan muncul file pwfile berisi:
+ACPtest:$7$101$8nrCjhQl9Hvcf9f+$wUcf2rxpgyGQvfX+zFO77N1YLxd4eKroRM/+8OmEH57lX6/xUB0o7eS0GPVd4Bizc5mZ1NOCxN7WrnaoaaLTcA==
+
+
+setting mosquitto.conf:
+password_file C:\Program Files\mosquitto\pwfile
+allow_anonymous false
+listener 1883
+#bind_address 0.0.0.0
