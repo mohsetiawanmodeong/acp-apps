@@ -98,7 +98,7 @@
   "login": [
     {
       "user": "admin",
-      "passwd": "admin"
+      "passwd": "password"
     },
     {
       "user": "mrc",
