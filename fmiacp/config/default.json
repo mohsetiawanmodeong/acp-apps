@@ -1,185 +1,187 @@
 {
-  "FLTServer": "http://localhost:8080",
-  "FLTServerAuth": "Basic xxxx",
-  "FLTHealthServer": "10.211.236.70",
-  "FLTHealthServerAuth": "Basic dWd0ZWNoOnVndGVjaC1zYWZl",
-  "FLTServerAuth3": "Basic dWd0ZWNoOnVndGVjaC1NaW5lc3RhciMx",
-  "FLTServerAuth2": "Basic bWNoYW1iZXI6ODAwMTYzNTc=",
-  "MRCServerAuth": "Basic xxxx",
-  "FLTServerAMA": "10.211.240.21",
-  "CMDServer": "10.211.236.65",
-  "CMDServerB": "10.211.236.66",
-  "CMDServerC": "10.211.236.67",
-  "CMDUsername": "tech",
-  "CMDPasswd": "service",
-  "CMDOSUsername": "cat",
-  "CMDOSPasswd": "minegem0",
-  "MOServer": "172.16.1.5",
-  "MOOSUsername": "minetec",
-  "MOOSPasswd": "minetec2019",
-  "VPCUsername": "root",
-  "VPCPasswd": "miagctwi2015",
-  "VPCPort": "2201",
-  "dbConfigms": {
-    "user": "mrcapps",
-    "password": "mrcapps-safe",
-    "serverOld": "GRSP24SSDBX01.fmi.com",
-    "server": "grsd25ssdbx05.grsiacs.local",
-    "databaseOld": "gbc-mrcapps",
-    "database": "gbc_mrcapps",
-    "requestTimeout": 60000,
-    "options": {
-      "encrypt": false,
-      "enableArithAbort": true,
-      "useUTC": false
-    },
-    "pool": {
-      "max": 1,
-      "min": 0,
-      "idleTimeoutMillis": 10000,
-      "createRetryIntervalMillis": 200
-    },
-    "driver": "msnodesqlv8"
-  },
-  "dbConfig": {
-    "user": "root",
-    "password": "",
-    "server": "localhost",
-    "database": "gbc_mrcapps",
-    "requestTimeout": 60000,
-    "options": {
-      "encrypt": false,
-      "enableArithAbort": true,
-      "trustServerCertificate": true
-    },
-    "pool": {
-      "max": 10,
-      "min": 0,
-      "idleTimeoutMillis": 10000,
-      "createRetryIntervalMillis": 200
-    }
-  },
-  "healthdbConfig": {
-    "user": "mshist",
-    "password": "mshist",
-    "server": "10.211.236.71",
-    "database": "mshist",
-    "options": {
-      "encrypt": false,
-      "enableArithAbort": true,
-      "useUTC": false,
-      "requestTimeout": 1000
-    },
-    "pool": {
-      "max": 1,
-      "min": 0,
-      "idleTimeoutMillis": 20000,
-      "createRetryIntervalMillis": 200
-    }
-  },
-  "momsdbConfig": {
-    "user": "MinestarTemp",
-    "password": "Minestar345",
-    "server": "A35MOMS01.grsiacs.local",
-    "database": "moms",
-    "options": {
-      "encrypt": false,
-      "enableArithAbort": true,
-      "useUTC": false,
-      "requestTimeout": 1000
-    },
-    "pool": {
-      "max": 1,
-      "min": 0,
-      "idleTimeoutMillis": 20000,
-      "createRetryIntervalMillis": 200
-    }
-  },
-  "login": [
-    {
-      "user": "admin",
-      "passwd": "password"
-    },
-    {
-      "user": "mrc",
-      "passwd": "mrcapps-safe"
-    },
-    {
-      "user": "gbcops",
-      "passwd": "gbc-stf4"
-    },
-    {
-      "user": "mis",
-      "passwd": "uoms-pwd"
-    },
-    {
-      "user": "granitor",
-      "passwd": "midroc"
-    },
-    {
-      "user": "ugtech",
-      "passwd": "ugt-Au7oMG"
-    },
-    {
-      "user": "controller",
-      "passwd": "track1ndo"
-    },
-    {
-      "user": "gbcmtc",
-      "passwd": "f1x1tf2st"
-    },
-    {
-      "user": "poly",
-      "passwd": "orbanaught"
-    }
-  ],
-  "MaxManueverTime": "5000",
-  "MaxAvoidanceTime": "10000",
-  "dbConfigMPM": {
-    "user": "mcsadmin",
-    "password": "moomin4ever",
-    "server": "10.211.236.56",
-    "database": "mcshist",
-    "requestTimeout": 60000,
-    "options": {
-      "encrypt": false,
-      "enableArithAbort": true,
-      "useUTC": false
-    },
-    "pool": {
-      "max": 1,
-      "min": 0,
-      "idleTimeoutMillis": 10000,
-      "createRetryIntervalMillis": 200
-    }
-  },
-  "orudevicetypeid": "98",
-  "vpcdevicetypeid": "93",
-  "imsserver": "10.211.236.46",
-  "CMDLogPort": "2113",
-  "VIMSLogPort": "2114",
-  "CMDEventPort": "2115",
-  "CMDConsoleEventPort": "2116",
-  "CMDConsoleLogPort": "2118",
-  "FLTMachinePort": "2117",
-  "FLTDelayPort": "2119",
-  "FLTHealthPort": "2120",
-  "FLTPanelPort": "2121",
-  "CMDTelemetryPort": "2122",
-  "DashConfigPort": "2123",
-  "FLTChutePort": "2124",
-  "FLTLocationPort": "2125",
-  "ULTSPort": "2126",
-  "FLTCyclePort": "2127",
-  "MSCopilotPort": "2128",
-  "OPCUAAPIPort": "2129",
-  "ULTSHistoryPort": "2130",
-  "FMIChutePort": "2131",
-  "POLYAPIPort": "2132",
-  "FLTStatePort": "2133",
-  "FLTDrawpointPort": "2134",
-  "CMDStatsPort": "2135",
-  "FMIACPPort": 3000,
-  "FLTShiftStartHour": "6",
-  "FLTShiftEndHour": "18"
+	"FLTServer": "172.16.0.1",
+	"FLTServerAuth": "Basic dWd0ZWNoOnVndGVjaC1zYWZl",
+	"FLTHealthServer": "10.211.236.70",
+        "FLTHealthServerAuth": "Basic dWd0ZWNoOnVndGVjaC1zYWZl",
+	"FLTServerAuth3": "Basic dWd0ZWNoOnVndGVjaC1NaW5lc3RhciMx",
+        "FLTServerAuth2": "Basic bWNoYW1iZXI6ODAwMTYzNTc=",
+        "MRCServerAuth": "Basic bXJjOm1yY2FwcHMtc2FmZQ==",
+	"FLTServerAMA": "10.211.240.21",
+	"CMDServer": "10.211.236.65",
+	"CMDServerB": "10.211.236.66",
+	"CMDServerC": "10.211.236.67",
+	"CMDUsername": "tech",
+	"CMDPasswd": "service",
+	"CMDOSUsername": "cat",
+	"CMDOSPasswd": "minegem0",
+       	"MOServer": "172.16.1.5",
+        "MOOSUsername": "minetec",
+        "MOOSPasswd": "minetec2019",
+        "VPCUsername": "root",
+        "VPCPasswd": "miagctwi2015",
+        "VPCPort": "2201",
+	"dbConfigms" : {
+		"user":  "mrcapps",
+    		"password": "mrcapps-safe",
+    		"serverOld": "GRSP24SSDBX01.fmi.com",
+    		"server": "grsd25ssdbx05.grsiacs.local",
+    		"databaseOld": "gbc-mrcapps",
+    		"database": "gbc_mrcapps",
+		"requestTimeout": 60000,
+    		"options": {
+        		"encrypt": false,
+        		"enableArithAbort": true,
+			"useUTC": false
+    		},
+    		"pool": {
+           	 	"max": 1,
+            		"min": 0,
+            		"idleTimeoutMillis": 10000,
+            		"createRetryIntervalMillis": 200
+        	},
+		"driver": "msnodesqlv8"
+	},
+	"dbConfig": {
+		"user": "mrcapps",
+		"password": "mrcapps-safe",
+		"server": "localhost\\SQLEXPRESS",
+		"database": "gbc_mrcapps",
+		"driver": "msnodesqlv8",
+		"options": {
+			"encrypt": false,
+			"enableArithAbort": true,
+			"trustServerCertificate": true,
+			"trustedConnection": false
+		},
+		"pool": {
+			"max": 10,
+			"min": 0,
+			"idleTimeoutMillis": 30000
+		},
+		"connectionTimeout": 15000,
+		"requestTimeout": 15000
+	},
+	"healthdbConfig" : {
+                "user":  "mshist",
+                "password": "mshist",
+                "server": "10.211.236.71",
+                "database": "mshist",
+                "options": {
+                        "encrypt": false,
+                        "enableArithAbort": true,
+                        "useUTC": false,
+                        "requestTimeout": 1000
+                },
+                "pool": {
+                        "max": 1,
+                        "min": 0,
+                        "idleTimeoutMillis": 20000,
+                        "createRetryIntervalMillis": 200
+                }
+        },
+	"momsdbConfig" : {
+                "user":  "MinestarTemp",
+                "password": "Minestar345",
+                "server": "A35MOMS01.grsiacs.local",
+                "database": "moms",
+                "options": {
+                        "encrypt": false,
+                        "enableArithAbort": true,
+                        "useUTC": false,
+                        "requestTimeout": 1000
+                },
+                "pool": {
+                        "max": 1,
+                        "min": 0,
+                        "idleTimeoutMillis": 20000,
+                        "createRetryIntervalMillis": 200
+		}
+	},
+	"login" : [
+		{
+			"user": "mrc",
+			"passwd": "mrcapps-safe"
+		},
+		{
+			"user": "gbcops",
+			"passwd": "gbc-stf4"
+		},
+		{	
+			"user": "mis",
+			"passwd": "uoms-pwd"
+		},
+		{
+			"user": "granitor",
+			"passwd": "midroc"
+		},
+                {
+                        "user": "ugtech",
+                        "passwd": "ugt-Au7oMG"
+                },
+		{
+                        "user": "controller",
+                        "passwd": "track1ndo"
+                },
+		{
+                        "user": "gbcmtc",
+                        "passwd": "f1x1tf2st"
+                },
+		{
+                	"user": "admin",
+                        "passwd": "password"
+                },
+		{
+                        "user": "poly",
+                        "passwd": "orbanaught"
+                }
+	],
+       	"MaxManueverTime": "5000",
+        "MaxAvoidanceTime": "10000",
+	"dbConfigMPM" : {
+                "user":  "mcsadmin",
+                "password": "moomin4ever",
+                "server": "10.211.236.56",
+                "database": "mcshist",
+                "requestTimeout": 60000,
+                "options": {
+                        "encrypt": false,
+                        "enableArithAbort": true,
+                        "useUTC": false
+                },
+                "pool": {
+                        "max": 1,
+                        "min": 0,
+                        "idleTimeoutMillis": 10000,
+                        "createRetryIntervalMillis": 200
+                }
+        },
+	"orudevicetypeid": "98",
+        "vpcdevicetypeid": "93",
+	"imsserver": "10.211.236.46",
+	"CMDLogPort": "2113",
+	"VIMSLogPort": "2114",
+	"CMDEventPort": "2115",
+	"CMDConsoleEventPort": "2116",
+	"CMDConsoleLogPort": "2118",
+	"FLTMachinePort": "2117",
+	"FLTDelayPort": "2119",
+	"FLTHealthPort": "2120",
+	"FLTPanelPort": "2121",
+	"CMDTelemetryPort": "2122",
+	"DashConfigPort": "2123",
+	"FLTChutePort": "2124",
+	"FLTLocationPort": "2125",
+	"ULTSPort": "2126",
+	"FLTCyclePort": "2127",
+        "MSCopilotPort": "2128",
+        "OPCUAAPIPort": "2129",
+	"ULTSHistoryPort": "2130",
+	"FMIChutePort": "2131",
+	"POLYAPIPort": "2132",
+	"FLTStatePort": "2133",
+	"FLTDrawpointPort": "2134",
+	"CMDStatsPort": "2135",
+	"FMIACPPort": "2136",
+	"FLTShiftStartHour": "6",
+	"FLTShiftEndHour": "18"
 }

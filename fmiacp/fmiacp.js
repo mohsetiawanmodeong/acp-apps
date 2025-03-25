@@ -1,7 +1,7 @@
 //LIBRARIES
 const cp = require('child_process');
 const EventSource = require('eventsource');
-var sql = require("mssql");
+var sql = require("mssql/msnodesqlv8");
 const config = require('config');
 const dayjs = require('dayjs');
 var utc = require('dayjs/plugin/utc');
@@ -23,7 +23,7 @@ const vFMIACPPort = config.get('FMIACPPort');
 const fs = require('fs');
 const csv = require("csv-parser");
 //STATIC VARIABLES - SETTINGS
-var APP_VERSION = "1.3";
+var APP_VERSION = "2.0";
 //const vDoSyncInterval = 30000;
 const vLoadDataInterval = 30000;
 var vReadQSize = 50;
@@ -33,17 +33,75 @@ var PORT = process.env.PORT || vFMIACPPort;
 var vFMIACPData = new Map();
 var vFMIACPDataCurrent = new Map();
 var vLastUpdateFMIACPLog = 0;
-//FUNCTIONS
+
+// Variable untuk menyimpan koneksi database
+var pool = null;
+
+// Fungsi untuk mendapatkan koneksi ke database
+async function getConnection() {
+    try {
+        console.log("FMIACP:GETCONNECTION:Mencoba terhubung ke database...");
+        
+        // Buat objek konfigurasi baru yang mutable
+        const dbConfigSource = config.get('dbConfig');
+        const dbConnectionConfig = {
+            user: dbConfigSource.user,
+            password: dbConfigSource.password,
+            server: dbConfigSource.server,
+            database: dbConfigSource.database,
+            driver: dbConfigSource.driver,
+            options: {
+                encrypt: dbConfigSource.options.encrypt,
+                enableArithAbort: dbConfigSource.options.enableArithAbort,
+                trustServerCertificate: dbConfigSource.options.trustServerCertificate,
+                trustedConnection: dbConfigSource.options.trustedConnection
+            },
+            pool: {
+                max: dbConfigSource.pool.max,
+                min: dbConfigSource.pool.min,
+                idleTimeoutMillis: dbConfigSource.pool.idleTimeoutMillis
+            },
+            connectionTimeout: dbConfigSource.connectionTimeout,
+            requestTimeout: dbConfigSource.requestTimeout
+        };
+        
+        console.log(`FMIACP:GETCONNECTION:Server: ${dbConnectionConfig.server}, Database: ${dbConnectionConfig.database}, User: ${dbConnectionConfig.user}`);
+        
+        // Koneksi menggunakan konfigurasi properti dari default.json
+        pool = await sql.connect(dbConnectionConfig);
+        console.log("FMIACP:GETCONNECTION:Berhasil terhubung ke database SQL Server!");
+        return pool;
+    } catch (err) {
+        console.log("FMIACP:GETCONNECTION:Error koneksi database:", err);
+        pool = null;
+        return null;
+    }
+}
+
+// Fungsi untuk memastikan ada koneksi database
+async function ensureConnection() {
+    if (!pool) {
+        console.log("FMIACP:ENSURECONNECTION:Koneksi database belum ada, mencoba membuat koneksi baru...");
+        await getConnection();
+    }
+    return pool;
+}
+
+// Fungsi inisialisasi koneksi database
 async function startDBConnect() {
     try {
-        await dbConn.connect();
+        console.log("FMIACP:STARTDBCONNECT:Memulai proses koneksi database...");
+        await getConnection();
+        
+        if (pool) {
+            console.log("FMIACP:STARTDBCONNECT:Koneksi berhasil. Memuat data FMIACP...");
+            await loadFMIACPData();
+        } else {
+            console.log("FMIACP:STARTDBCONNECT:Gagal terhubung ke database. Coba lagi nanti.");
+        }
     } catch (err) {
-        console.log("FMIACP:STARTDBCONNECT:CONNECTION-ERROR:" + err);
-    };
-    console.log("FMIACP:STARTDBCONNECT:Starting process to load/save MineStar ACP data...");
-    //await loadMOMSACPData();
-    //await loadCSVACPStaticData();
-    await loadFMIACPData();
+        console.log("FMIACP:STARTDBCONNECT:ERROR:", err);
+    }
 }
 
 var vCPUPercent = 0;
@@ -54,84 +112,123 @@ var vLoadingFMIACPData = false;
 async function loadFMIACPData() {
     if (!vLoadingFMIACPData) {
         vLoadingFMIACPData = true;
-        var vElapsedUsage = process.cpuUsage(vlastCPU);
-        var vElapsedTime = secNSec2ms(process.hrtime(vlastTime));
-        var vElapsedUsageUser = secNSec2ms(vElapsedUsage.user);
-        var vElapsedUsageSystem = secNSec2ms(vElapsedUsage.system);
-        vCPUPercent = Number(100 * (vElapsedUsageUser + vElapsedUsageSystem) / vElapsedTime).toFixed(2);
-        vlastCPU = process.cpuUsage();
-        vlastTime = process.hrtime();
-        //var vMapACP = new Map();
-        //Now lets load the DEZAPP ACP Data
-        console.log("FMIACP:LOADFMIACPDATA:Getting FMIACPDATA Rows...");
+        console.log("FMIACP:LOADFMIACPDATA:Memuat data FMIACP...");
+        
         try {
-            vFMIACPDataCurrent = new Map();
-            var request = dbConn.request();
-            //SELECT [ID] ,[START_TIME] ,[MACHINE_NAME] ,[CATEGORY],[TYPE],[MEASUREMENT],[VALUE] FROM [gbc_mrcapps].[dbo].[FMIACP]
-            let result = await request.query("SELECT * FROM [gbc_mrcapps].[dbo].[FMIACP] WHERE LAST_UPDATE >= DATEADD(s, " + vLastUpdateFMIACPLog / 1000 + ", '1970-01-01 00:00:00') ORDER BY ID ASC;");
-            if (result !== null) {
-                for (const recordset of result.recordsets) {
-                    console.log("FMIACP:LOADFMIACPDATA:NEW SUM DATA SIZE[" + recordset.length + "].");
-                    for (const value of recordset) {
-                        vFMIACPData.set(value.ID, value);
-                        vFMIACPDataCurrent.set(value.MACHINE_NAME + "-" + value.TYPE, value);
-                        var vUpdate = (new Date(value.LAST_UPDATE).getTime());
-                        if (vUpdate > vLastUpdateFMIACPLog) {
-                            vLastUpdateFMIACPLog = vUpdate;
-                        }
-                    };
+            // Pastikan ada koneksi database
+            const connection = await ensureConnection();
+            if (!connection) {
+                throw new Error("Tidak ada koneksi database");
+            }
+            
+            // Bersihkan data Map
+            vFMIACPData.clear();
+            vFMIACPDataCurrent.clear();
+            
+            const request = connection.request();
+            
+            // Query untuk mengambil semua data
+            console.log("FMIACP:LOADFMIACPDATA:Menjalankan query...");
+            let result = await request.query(`
+                SELECT * FROM [gbc_mrcapps].[dbo].[FMIACP] 
+                ORDER BY ID DESC
+            `);
+            
+            if (result && result.recordset) {
+                console.log("FMIACP:LOADFMIACPDATA:Data baru ditemukan, jumlah:", result.recordset.length);
+                
+                for (const row of result.recordset) {
+                    vFMIACPData.set(row.ID, row);
+                    vFMIACPDataCurrent.set(row.MACHINE_NAME + "-" + row.TYPE, row);
                 }
-                console.log("FMIACP:LOADFMIACPDATA:TOTAL SUM DATA SIZE[" + vFMIACPData.size + "]CURRENT[" + vFMIACPDataCurrent.size + "].");
+                
+                console.log("FMIACP:LOADFMIACPDATA:Total data yang dimuat - Total:", vFMIACPData.size, "Data Current:", vFMIACPDataCurrent.size);
+            } else {
+                console.log("FMIACP:LOADFMIACPDATA:Tidak ada data yang dikembalikan oleh query");
             }
         } catch (err) {
-            console.log("FMIACP:LOADFMIACPDATA:SQL-ERROR:" + err);
-        };
-        console.log("FMIACP:LOADFMIACPDATA:FINISHED LOADING ALL FMI ACP DATA"); //["+JSON.stringify(vMAPACP)+"].");
-        //return vMapACP;
-        vLoadingFMIACPData = false;
+            console.log("FMIACP:LOADFMIACPDATA:ERROR SQL:", err);
+            
+            // Reset koneksi jika error
+            if (pool) {
+                try {
+                    await pool.close();
+                } catch (closeErr) {
+                    console.log("FMIACP:LOADFMIACPDATA:Error saat menutup koneksi:", closeErr);
+                }
+                pool = null;
+            }
+        } finally {
+            vLoadingFMIACPData = false;
+        }
+    } else {
+        console.log("FMIACP:LOADFMIACPDATA:Proses memuat data sedang berlangsung, dilewati...");
     }
 }
 
 //[OID] [bigint] NOT NULL,[ACTIVE] [bit] NULL, [MACHINE_NAME] [nvarchar](64) NULL, [OREPASS_NAME] [nvarchar](64) NULL, [LOADING_POINT_NAME] [nvarchar](64) NULL, [TOTAL_CAPACITY_TONNES] [float] NULL, [MIDSENSOR_TONNES] [float] NULL, [CAPACITY_LIMIT_TONNES] [float] NULL, [INITIAL_LEVEL_TONNES] [float] NULL, [CURRENT_LEVEL_TONNES] [float] NULL, [TAKEN_AMOUNT_TONNES] [float] NULL, [DUMPED_AMOUNT_TONNES] [float] NULL
 //Stores the event source data into the SQL Datbase.
 async function storeFMIACP(vData) {
-    //vCurrentMachine.set(vData.name,vData);
     try {
-        console.log('FMIACP:STOREFMIACP:Storing ACP Data...');
-        var request = dbConn.request();
-        if (vData.START_TIME != null) {
-            vStart = new Date(vData.START_TIME.getTime()); // - (9 * 60 * 60 * 1000)); //Overcome bug in node-mssql
+        console.log('FMIACP:STOREFMIACP:Menyimpan data ACP...');
+        
+        // Pastikan ada koneksi database
+        const connection = await ensureConnection();
+        if (!connection) {
+            console.log('FMIACP:STOREFMIACP:Tidak ada koneksi database, gagal menyimpan');
+            vDataStoreFailCount++;
+            return false;
         }
-        var vTimeStamp = vData.START_TIME.getTime() / 1000;
-        let result = await request
-            .input("machine_name", sql.NVarChar(64), vData.MACHINE_NAME)
-            .input("start_time", sql.DateTimeOffset(3), vStart)
-            .input("category", sql.NVarChar(64), vData.CATEGORY)
-            .input("type", sql.NVarChar(64), vData.TYPE)
-            .input("measurement", sql.NVarChar(64), vData.MEASUREMENT)
-            .input("value", sql.NVarChar(256), vData.VALUE)
-            .input("vUNIQUE_CONST", sql.NVarChar(128), (vTimeStamp + '-' + vLog.MACHINE_NAME + '-' + vData.TYPE))
-            .query("EXECUTE mrcFMIACPMerge @machine_name, @start_time, @category, @type, @measurement,  @value, @vUNIQUE_CONST ");
-        if (result !== null) {
-            console.log('FMIACP:STOREFMIACP:DATA[' + vData.MACHINE_NAME + '] SAVED RESULT:' + result.rowsAffected);
+        
+        const request = connection.request();
+        
+        // Persiapkan data untuk stored procedure
+        let vStart = null;
+        if (vData.START_TIME != null) {
+            vStart = new Date(vData.START_TIME);
+        }
+        
+        // Buat UNIQUE_CONST dengan format timestamp-machine-type
+        const vTimeStamp = Math.floor(Date.now() / 1000);
+        const vUniqueConst = `${vTimeStamp}-${vData.MACHINE_NAME}-${vData.TYPE}`;
+        
+        console.log('FMIACP:STOREFMIACP:Data untuk stored procedure:', {
+            machine_name: vData.MACHINE_NAME,
+            start_time: vStart,
+            category: vData.CATEGORY,
+            type: vData.TYPE,
+            measurement: vData.MEASUREMENT,
+            value: vData.VALUE,
+            unique_const: vUniqueConst
+        });
+
+        // Jalankan stored procedure
+        const result = await request
+            .input("vmachine_name", sql.NVarChar(64), vData.MACHINE_NAME)
+            .input("vstart_time", sql.DateTimeOffset(3), vStart)
+            .input("vcategory", sql.NVarChar(64), vData.CATEGORY)
+            .input("vtype", sql.NVarChar(64), vData.TYPE)
+            .input("vmeasurement", sql.NVarChar(64), vData.MEASUREMENT)
+            .input("vvalue", sql.NVarChar(64), vData.VALUE)
+            .input("vUNIQUE_CONST", sql.NVarChar(128), vUniqueConst)
+            .execute('mrcFMIACPMerge');
+        
+        if (result && result.rowsAffected && result.rowsAffected[0] > 0) {
+            console.log('FMIACP:STOREFMIACP:Data berhasil disimpan:', vData.MACHINE_NAME, result.rowsAffected);
             vDataStoreCount++;
+            return true;
         } else {
-            console.log('FMIACP:STOREFMIACP:DATA[' + vData.MACHINE_NAME + '] Failed...');
+            console.log('FMIACP:STOREFMIACP:Gagal menyimpan data:', vData.MACHINE_NAME);
             vDataStoreFailCount++;
             return false;
         }
     } catch (err) {
-        console.log('FMIACP:STOREFMIACP:SQL ERROR:' + err + ' DATA[' + JSON.stringify(vData) + '].');
+        console.log('FMIACP:STOREFMIACP:ERROR SQL:', err);
+        console.log('FMIACP:STOREFMIACP:Data yang gagal disimpan:', JSON.stringify(vData, null, 2));
         vDataStoreFailCount++;
         return false;
     }
-    return true;
 }
-
-//Setup the database connection pool.
-var dbConn = new sql.ConnectionPool(dbConfig);
-startDBConnect();
-//setInterval(doSync,vDoSyncInterval);
 
 //Now lets setup the WEB API ENDPOINTS
 var app = express();
@@ -223,46 +320,149 @@ app.post('/api/createFMIACP', async (req, res) => {
     res.json(vResult); //{ id: vNewZone.id});
 });
 
-app.get('/api/getFMIACP', (req, res) => {
-    var vReturnData = utils.getArray(vFMIACPData);
-    vReturnData = filter.doFilters(vReturnData, req);
-    res.send(vReturnData);
-    //Stats
-    vDataOutputRequestCount++;
-    vDataOutputCount = vDataOutputCount + vReturnData.length;
+app.get('/api/getFMIACP', async (req, res) => {
+    try {
+        console.log("FMIACP:API:getFMIACP:Request diterima");
+        
+        // Tambahkan timeout untuk mencegah request menggantung
+        const timeout = setTimeout(() => {
+            console.log("FMIACP:API:getFMIACP:Request timeout setelah 30 detik");
+            res.status(504).json({ error: "Request timeout" });
+        }, 30000);
+        
+        // Pastikan data terbaru
+        console.log("FMIACP:API:getFMIACP:Memuat data terbaru...");
+        await loadFMIACPData();
+        
+        // Bersihkan timeout karena data sudah dimuat
+        clearTimeout(timeout);
+        
+        // Periksa apakah ada koneksi database
+        if (!pool) {
+            console.log("FMIACP:API:getFMIACP:Tidak ada koneksi database");
+            return res.status(503).json({ error: "Database connection not available" });
+        }
+        
+        // Konversi data Map ke array untuk response
+        console.log("FMIACP:API:getFMIACP:Mempersiapkan response...");
+        var vReturnData = Array.from(vFMIACPData.values());
+        
+        // Terapkan filter jika ada
+        vReturnData = filter.doFilters(vReturnData, req);
+        
+        console.log("FMIACP:API:getFMIACP:Mengirim response, jumlah data:", vReturnData.length);
+        res.json(vReturnData);
+        
+        // Update statistik
+        vDataOutputRequestCount++;
+        vDataOutputCount = vDataOutputCount + vReturnData.length;
+    } catch (error) {
+        console.error("FMIACP:API:getFMIACP:Error:", error);
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
 });
 
-app.get('/api/getFMIACPCurrent', (req, res) => {
-    var vReturnData = utils.getArray(vFMIACPDataCurrent);
-    vReturnData = filter.doFilters(vReturnData, req);
-    res.send(vReturnData);
-    //Stats
-    vDataOutputRequestCount++;
-    vDataOutputCount = vDataOutputCount + vReturnData.length;
+// Endpoint untuk mendapatkan data FMIACP saat ini (terbaru)
+app.get('/api/getFMIACPCurrent', async (req, res) => {
+    try {
+        console.log("FMIACP:API:getFMIACPCurrent:Request diterima");
+        
+        // Tambahkan timeout untuk mencegah request menggantung
+        const timeout = setTimeout(() => {
+            console.log("FMIACP:API:getFMIACPCurrent:Request timeout setelah 30 detik");
+            res.status(504).json({ error: "Request timeout" });
+        }, 30000);
+        
+        // Pastikan data terbaru
+        console.log("FMIACP:API:getFMIACPCurrent:Memuat data terbaru...");
+        await loadFMIACPData();
+        
+        // Bersihkan timeout
+        clearTimeout(timeout);
+        
+        // Periksa koneksi database
+        if (!pool) {
+            console.log("FMIACP:API:getFMIACPCurrent:Tidak ada koneksi database");
+            return res.status(503).json({ error: "Database connection not available" });
+        }
+        
+        // Konversi data ke array
+        console.log("FMIACP:API:getFMIACPCurrent:Mempersiapkan response...");
+        var vReturnData = Array.from(vFMIACPDataCurrent.values());
+        
+        // Terapkan filter
+        vReturnData = filter.doFilters(vReturnData, req);
+        
+        console.log("FMIACP:API:getFMIACPCurrent:Mengirim response, jumlah data:", vReturnData.length);
+        res.json(vReturnData);
+        
+        // Update statistik
+        vDataOutputRequestCount++;
+        vDataOutputCount = vDataOutputCount + vReturnData.length;
+    } catch (error) {
+        console.error("FMIACP:API:getFMIACPCurrent:Error:", error);
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
 });
 
-
+// Endpoint untuk mendapatkan status aplikasi
 app.get('/api/getAppStatusFMIACP', (req, res) => {
-    var vAppStatus = {};
-    vAppStatus.Name = "FMIACP";
-    vAppStatus.Version = APP_VERSION;
-    vAppStatus.DataStoreSize = vFMIACPData.size;
-    vAppStatus.DataStoreCount = vDataStoreCount;
-    vAppStatus.DataStoreFailCount = vDataStoreFailCount;
-    vAppStatus.DataInputCount = vDataInputCount;
-    vAppStatus.DataInputRequestCount = vDataInputRequestCount;
-    vAppStatus.DataOutputCount = vDataOutputCount;
-    vAppStatus.DataOutputRequestCount = vDataOutputRequestCount;
-    vAppStatus.UsageMemory = process.memoryUsage();
-    vAppStatus.UsageCPU = process.cpuUsage();
-    vAppStatus.CPU = vCPUPercent;
-    res.send(vAppStatus);
+    try {
+        console.log("FMIACP:API:getAppStatusFMIACP:Request diterima");
+        
+        var vAppStatus = {
+            Name: "FMIACP",
+            Version: APP_VERSION,
+            DataStoreSize: vFMIACPData.size,
+            DataStoreCount: vDataStoreCount,
+            DataStoreFailCount: vDataStoreFailCount,
+            DataInputCount: vDataInputCount,
+            DataInputRequestCount: vDataInputRequestCount,
+            DataOutputCount: vDataOutputCount,
+            DataOutputRequestCount: vDataOutputRequestCount,
+            DatabaseConnection: pool ? "Connected" : "Disconnected",
+            UsageMemory: process.memoryUsage(),
+            UsageCPU: process.cpuUsage(),
+            CPU: vCPUPercent
+        };
+        
+        console.log("FMIACP:API:getAppStatusFMIACP:Mengirim status aplikasi");
+        res.json(vAppStatus);
+    } catch (error) {
+        console.error("FMIACP:API:getAppStatusFMIACP:Error:", error);
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
 });
 
-console.log("FMIACP:Starting API endpoints...");
+console.log("FMIACP:Memulai API endpoints...");
 var server = http.createServer(app);
-server.listen(PORT, function() {
-    console.log('FMIACP:Server running, version ' + APP_VERSION + ', Express is listening... at ' + PORT + " for requests");
+
+// Tangani error server
+server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+        console.log(`FMIACP:Port ${PORT} sudah digunakan. Mencoba port alternatif...`);
+        // Coba port alternatif
+        server.listen(0); // Akan otomatis mencari port yang tersedia
+    } else {
+        console.error('FMIACP:Server error:', error);
+        process.exit(1);
+    }
 });
-setInterval(loadFMIACPData, vLoadDataInterval); // Now it starts the same thing.
-//
+
+// Listener saat server berhasil berjalan
+server.on('listening', () => {
+    const address = server.address();
+    PORT = address.port;
+    console.log('FMIACP:Server berjalan, versi ' + APP_VERSION + ', mendengarkan pada port ' + PORT);
+    
+    // Inisialisasi koneksi database setelah server berjalan
+    startDBConnect().catch(err => {
+        console.error("FMIACP:Gagal memulai koneksi database:", err);
+    });
+});
+
+// Mulai server
+server.listen(PORT);
+
+// Jadwalkan pembaruan data secara berkala
+setInterval(loadFMIACPData, vLoadDataInterval);
