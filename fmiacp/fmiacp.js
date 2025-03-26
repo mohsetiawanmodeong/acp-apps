@@ -159,7 +159,7 @@ async function loadFMIACPData() {
                 pool = null;
             }
         } finally {
-            vLoadingFMIACPData = false;
+        vLoadingFMIACPData = false;
         }
     } else {
         console.log("FMIACP:LOADFMIACPDATA:Proses memuat data sedang berlangsung, dilewati...");
@@ -188,9 +188,12 @@ async function storeFMIACP(vData) {
             vStart = new Date(vData.START_TIME);
         }
         
-        // Buat UNIQUE_CONST dengan format timestamp-machine-type
-        const vTimeStamp = Math.floor(Date.now() / 1000);
-        const vUniqueConst = `${vTimeStamp}-${vData.MACHINE_NAME}-${vData.TYPE}`;
+        // Gunakan UNIQUE_CONST yang sudah ada atau buat baru jika tidak ada
+        let vUniqueConst = vData.UNIQUE_CONST;
+        if (!vUniqueConst) {
+            const vTimeStamp = Math.floor(Date.now() / 1000);
+            vUniqueConst = `${vTimeStamp}-${vData.MACHINE_NAME}-${vData.TYPE}`;
+        }
         
         console.log('FMIACP:STOREFMIACP:Data untuk stored procedure:', {
             machine_name: vData.MACHINE_NAME,
@@ -307,7 +310,12 @@ app.post('/api/createFMIACP', async (req, res) => {
     vElement.TYPE = "" + vFLTACPUpdate.TYPE;
     vElement.MEASUREMENT = "" + vFLTACPUpdate.MEASUREMENT;
     vElement.VALUE = "" + vFLTACPUpdate.VALUE;
-    vResult = storeFMIACP(vElement);
+    
+    // Buat UNIQUE_CONST dengan format timestamp-machine-type
+    const vTimeStamp = Math.floor(Date.now() / 1000);
+    vElement.UNIQUE_CONST = `${vTimeStamp}-${vElement.MACHINE_NAME}-${vElement.TYPE}`;
+    
+    vResult = await storeFMIACP(vElement);
     var vKey = vElement.MACHINE_NAME + "-" + vElement.TYPE;
     if (vFMIACPDataCurrent.has(vKey)) {
         if (vFMIACPDataCurrent.get(vKey).START_TIME < vElement.START_TIME) {
@@ -348,14 +356,14 @@ app.get('/api/getFMIACP', async (req, res) => {
         var vReturnData = Array.from(vFMIACPData.values());
         
         // Terapkan filter jika ada
-        vReturnData = filter.doFilters(vReturnData, req);
+    vReturnData = filter.doFilters(vReturnData, req);
         
         console.log("FMIACP:API:getFMIACP:Mengirim response, jumlah data:", vReturnData.length);
         res.json(vReturnData);
         
         // Update statistik
-        vDataOutputRequestCount++;
-        vDataOutputCount = vDataOutputCount + vReturnData.length;
+    vDataOutputRequestCount++;
+    vDataOutputCount = vDataOutputCount + vReturnData.length;
     } catch (error) {
         console.error("FMIACP:API:getFMIACP:Error:", error);
         res.status(500).json({ error: "Internal server error", details: error.message });
@@ -391,14 +399,14 @@ app.get('/api/getFMIACPCurrent', async (req, res) => {
         var vReturnData = Array.from(vFMIACPDataCurrent.values());
         
         // Terapkan filter
-        vReturnData = filter.doFilters(vReturnData, req);
+    vReturnData = filter.doFilters(vReturnData, req);
         
         console.log("FMIACP:API:getFMIACPCurrent:Mengirim response, jumlah data:", vReturnData.length);
         res.json(vReturnData);
         
         // Update statistik
-        vDataOutputRequestCount++;
-        vDataOutputCount = vDataOutputCount + vReturnData.length;
+    vDataOutputRequestCount++;
+    vDataOutputCount = vDataOutputCount + vReturnData.length;
     } catch (error) {
         console.error("FMIACP:API:getFMIACPCurrent:Error:", error);
         res.status(500).json({ error: "Internal server error", details: error.message });

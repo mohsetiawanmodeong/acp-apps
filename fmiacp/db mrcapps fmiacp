@@ -29,8 +29,10 @@ MERGE INTO FMIACP USING ( VALUES (@vmachine_name, @vstart_time, @vcategory, @vty
 ON (FMIACP.[UNIQUE_CONST]= @vUNIQUE_CONST) 
 WHEN MATCHED AND (I.machine_name <> @vmachine_name OR I.[category] <> @vcategory OR I.[measurement] <> @vmeasurement OR I.[value] <> @vvalue) THEN
 UPDATE SET machine_name=@vmachine_name, [category]=@vcategory,[measurement]=@vmeasurement,[value]=@vvalue, LAST_UPDATE=SYSDATETIMEOFFSET()
-WHEN NOT MATCHED THEN INSERT ( machine_name, start_time, [category], [type], [measurement], [value],LAST_UPDATE ) 
-VALUES (@vmachine_name, @vstart_time, @vcategory, @vtype, @vmeasurement, @vvalue, SYSDATETIMEOFFSET());
+-- WHEN NOT MATCHED THEN INSERT ( machine_name, start_time, [category], [type], [measurement], [value],LAST_UPDATE ) 
+-- VALUES (@vmachine_name, @vstart_time, @vcategory, @vtype, @vmeasurement, @vvalue, SYSDATETIMEOFFSET());
+WHEN NOT MATCHED THEN INSERT (machine_name, start_time, [category], [type], [measurement], [value], [UNIQUE_CONST], LAST_UPDATE) 
+VALUES (@vmachine_name, @vstart_time, @vcategory, @vtype, @vmeasurement, @vvalue, @vUNIQUE_CONST, SYSDATETIMEOFFSET());
 END;
 GO
 
