@@ -34,6 +34,77 @@ var vFMIACPData = new Map();
 var vFMIACPDataCurrent = new Map();
 var vLastUpdateFMIACPLog = 0;
 
+// Inisialisasi Express app
+const app = express();
+
+// Middleware untuk logging request
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.ip || 'unknown'}`);
+    next();
+});
+
+// Authentication middleware
+app.use(function authentication(req, res, next) {
+    // Exclude OPTIONS preflight requests from authentication
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
+    
+    var authheader = req.headers.authorization;
+    if (!authheader) {
+        var err = new Error('You are not authenticated!');
+        res.setHeader('WWW-Authenticate', 'Basic');
+        err.status = 401;
+        return next(err);
+    }
+
+    var auth = new Buffer.from(authheader.split(' ')[1],
+        'base64').toString().split(':');
+    var user = auth[0];
+    var pass = auth[1];
+
+    var vAuthenticated = false;
+    var vLogin = config.get('login');
+    for (vUser in vLogin) {
+        if (user == vLogin[vUser].user && pass == vLogin[vUser].passwd) {
+            console.log("LOGGED IN: " + JSON.stringify(user) + ".");
+            // If Authorized user
+            vAuthenticated = true;
+            next();
+            return;
+        }
+    }
+    
+    if (!vAuthenticated) {
+        var err = new Error('You are not authenticated!');
+        res.setHeader('WWW-Authenticate', 'Basic');
+        err.status = 401;
+        return next(err);
+    }
+});
+
+// Tambahkan middleware CORS untuk mengatasi masalah Cross-Origin
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Expose-Headers", "Cache-Control");
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    next();
+});
+
+// Body parser middlewares
+app.use(bodyParser.json()); // for parsing application/json
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+
 // Variable untuk menyimpan koneksi database
 var pool = null;
 
@@ -234,77 +305,6 @@ async function storeFMIACP(vData) {
 }
 
 //Now lets setup the WEB API ENDPOINTS
-var app = express();
-app.use((req, res, next) => {
-    // Allow CORS from any origin
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.header('Access-Control-Allow-Credentials', true);
-    
-    // Handle preflight OPTIONS request
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    return next();
-});
-
-// Log all incoming requests for debugging
-app.use((req, res, next) => {
-    console.log(`FMIACP:REQUEST: ${req.method} ${req.url} from ${req.ip || 'unknown'}`);
-    next();
-});
-
-function secNSec2ms(secNSec) {
-    if (Array.isArray(secNSec)) {
-        return secNSec[0] * 1000 + secNSec[1] / 1000000;
-    }
-    return secNSec / 1000;
-}
-
-function authentication(req, res, next) {
-    var authheader = req.headers.authorization;
-    //console.log(req.headers);
-
-    if (!authheader) {
-        var err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err)
-    }
-
-    var auth = new Buffer.from(authheader.split(' ')[1],
-        'base64').toString().split(':');
-    var user = auth[0];
-    var pass = auth[1];
-
-    var vAuthenticated = false;
-    var vLogin = config.get('login');
-    //console.log("LOGIN:"+JSON.stringify(vLogin));
-    for (vUser in vLogin) {
-        //console.log("USER:"+JSON.stringify(vLogin[vUser]));
-        if (user == vLogin[vUser].user && pass == vLogin[vUser].passwd) {
-            console.log("LOGGED IN: " + JSON.stringify(user) + ".");
-            // If Authorized user
-            vAuthenticated = true;
-            next();
-        }
-    }
-    if (!vAuthenticated) {
-        var err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err);
-    }
-}
-
-app.use(authentication);
-app.use(bodyParser.json()); // for parsing application/json
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-
 var vDataStoreCount = 0;
 var vDataStoreFailCount = 0;
 var vDataInputCount = 0;
@@ -488,3 +488,10 @@ server.listen(PORT);
 
 // Jadwalkan pembaruan data secara berkala
 setInterval(loadFMIACPData, vLoadDataInterval);
+
+function secNSec2ms(secNSec) {
+    if (Array.isArray(secNSec)) {
+        return secNSec[0] * 1000 + secNSec[1] / 1000000;
+    }
+    return secNSec / 1000;
+}
