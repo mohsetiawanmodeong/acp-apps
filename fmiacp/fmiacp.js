@@ -236,10 +236,24 @@ async function storeFMIACP(vData) {
 //Now lets setup the WEB API ENDPOINTS
 var app = express();
 app.use((req, res, next) => {
+    // Allow CORS from any origin
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.header('Access-Control-Allow-Credentials', true);
+    
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
     return next();
+});
+
+// Log all incoming requests for debugging
+app.use((req, res, next) => {
+    console.log(`FMIACP:REQUEST: ${req.method} ${req.url} from ${req.ip || 'unknown'}`);
+    next();
 });
 
 function secNSec2ms(secNSec) {
