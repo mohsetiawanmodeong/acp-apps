@@ -11,7 +11,471 @@
     <script>
       // Definisikan loaderName di awal agar bisa digunakan segera
       var loaderName = "8200"; // Variabel untuk nama loader
+      var serverName = "localhost"; // Variabel untuk nama server API
+      var apiPort = "4990"; // Variabel untuk port API
       document.title = "CPS - LHD " + loaderName;
+
+      // Variabel untuk health check API
+      var lastApiCheckTime = 0;
+      var apiCheckInterval = 60000; // 1 menit
+      var isApiHealthy = true;
+
+      // Konfigurasi API sederhana
+      var apiConfig = {
+        url: "http://" + serverName + ":" + apiPort + "/api/createFMIACP",
+        auth: "Basic YWRtaW46cGFzc3dvcmQ="  // Base64 dari admin:password
+      };
+
+      // Array untuk menyimpan data ketika API tidak tersedia
+      var pendingData = [];
+      var lastPostAttempt = 0; // Waktu terakhir mencoba post ke API
+      var postInterval = 5000; // 5 detik interval antara post
+      var pendingDataLimit = 100; // Batasan jumlah data yang disimpan lokal
+
+      // Helper function untuk mendapatkan tipe dari kategori
+      function getTypeFromCategory(category, value) {
+        switch(category) {
+          case "DI-0":
+            return "FRONT_SAFE_ZONE";
+          case "DI-2":
+            return "REAR_SAFE_ZONE";
+          case "DO-0":
+            return "PARKING_BRAKE";
+          default:
+            return "";
+        }
+      }
+
+      // Helper function untuk memparse log message
+      function parseLogMessage(message) {
+        // Format: "2025-03-26 5:04:28 PM - Parking Brake System OFF"
+        const parts = message.split(" - ");
+        if (parts.length < 2) {
+          console.log("Format pesan log tidak valid:", message);
+          return { timestamp: "", category: "", value: "0" };
+        }
+        
+        const timestamp = parts[0]; // "2025-03-26 5:04:28 PM"
+        const statusMessage = parts[1]; // "Parking Brake System OFF"
+        
+        let category = "";
+        let value = "0";
+        
+        if (statusMessage.includes("Wall Collision FRONT")) {
+          category = "DI-0";
+          value = statusMessage.endsWith("ON") ? "1" : "0";
+          console.log("Deteksi Wall Collision FRONT:", value === "1" ? "ON" : "OFF");
+        } else if (statusMessage.includes("Wall Collision REAR")) {
+          category = "DI-2";
+          value = statusMessage.endsWith("ON") ? "1" : "0";
+          console.log("Deteksi Wall Collision REAR:", value === "1" ? "ON" : "OFF");
+        } else if (statusMessage.includes("Parking Brake System")) {
+          category = "DO-0";
+          value = statusMessage.endsWith("ON") ? "1" : "0";
+          console.log("Deteksi Parking Brake System:", value === "1" ? "ON" : "OFF");
+        } else {
+          console.log("Pesan tidak dikenali:", statusMessage);
+        }
+        
+        return {
+          timestamp: timestamp,
+          category: category,
+          value: value
+        };
+      }
+
+      // Fungsi untuk menyimpan data ke localStorage ketika API tidak tersedia
+      function storeDataLocally(data) {
+        lastPostAttempt = Date.now();
+        pendingData.push(data);
+        console.log("Menyimpan data lokal, total data tertunda:", pendingData.length);
+        
+        // Batasi jumlah data tertunda ke 1000 entri untuk menghindari memory issue
+        if (pendingData.length > 1000) {
+          pendingData = pendingData.slice(-1000);
+        }
+        
+        // Simpan ke localStorage
+        try {
+          localStorage.setItem('pendingData', JSON.stringify(pendingData));
+        } catch (e) {
+          console.log("Gagal menyimpan ke localStorage:", e);
+        }
+      }
+
+      // Fungsi untuk mengirim data yang tersimpan
+      function sendPendingData() {
+        if (pendingData.length === 0) return;
+        
+        console.debug("Mencoba mengirim", pendingData.length, "data tertunda");
+        
+        // Ambil data tertua (paling depan)
+        const dataToSend = pendingData[0];
+        
+        // Kirim data
+        var xhr = new XMLHttpRequest();
+        var endpoint = "http://" + serverName + ":" + apiPort + "/api/createFMIACP";
+        
+        xhr.open("POST", endpoint, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.setRequestHeader("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=");
+        xhr.timeout = 5000; // 5 detik timeout
+        
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Berhasil, hapus data dari array dan update localStorage
+            pendingData.shift();
+            localStorage.setItem('pendingData', JSON.stringify(pendingData));
+            console.debug("Berhasil mengirim data tertunda, tersisa:", pendingData.length);
+            
+            // Jika masih ada data, kirim lagi setelah interval
+            if (pendingData.length > 0) {
+              setTimeout(sendPendingData, postInterval);
+            }
+          } else {
+            console.debug("Gagal mengirim data tertunda:", xhr.status);
+            // Jangan mencoba lagi untuk sementara
+            setTimeout(sendPendingData, postInterval * 2);
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.debug("Network error saat mengirim data tertunda");
+          // Jangan mencoba lagi untuk sementara
+          setTimeout(sendPendingData, postInterval * 2);
+        };
+        
+        xhr.ontimeout = function() {
+          console.debug("Timeout saat mengirim data tertunda");
+          // Jangan mencoba lagi untuk sementara
+          setTimeout(sendPendingData, postInterval * 2);
+        };
+        
+        try {
+          // Hapus properti _savedAt sebelum mengirim
+          const dataCopy = {...dataToSend};
+          delete dataCopy._savedAt;
+          xhr.send(JSON.stringify(dataCopy));
+        } catch (e) {
+          console.debug("Error saat mengirim data tertunda:", e);
+          setTimeout(sendPendingData, postInterval);
+        }
+      }
+
+      // Fungsi untuk mengirim data langsung ke API
+      function sendToApiDirect(data) {
+        var endpoint = "http://" + serverName + ":" + apiPort + "/api/createFMIACP";
+        console.log("Mengirim data ke: " + endpoint, data);
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", endpoint, true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.setRequestHeader("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=");
+        xhr.timeout = 5000; // timeout setelah 5 detik
+        
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("Data berhasil dikirim ke API");
+            isApiHealthy = true;
+            lastPostAttempt = Date.now();
+          } else {
+            console.log("Gagal kirim data ke API. Status:", xhr.status);
+            storeDataLocally(data);
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.log("Error koneksi API, menyimpan data lokal");
+          isApiHealthy = false;
+          storeDataLocally(data);
+        };
+        
+        xhr.ontimeout = function() {
+          console.log("Koneksi API timeout");
+          isApiHealthy = false;
+          storeDataLocally(data);
+        };
+        
+        try {
+          xhr.send(JSON.stringify(data));
+        } catch(e) {
+          console.log("Error saat kirim data:", e);
+          storeDataLocally(data);
+        }
+      }
+
+      // Fungsi untuk memeriksa kesehatan API dan mengirim data tertunda jika sehat
+      function checkApiHealth() {
+        // Jika belum waktunya memeriksa API, lewati
+        if (Date.now() - lastApiCheckTime < apiCheckInterval && lastApiCheckTime > 0) {
+          return;
+        }
+        
+        // Load data tertunda dari localStorage saat halaman dimuat
+        try {
+          const savedData = localStorage.getItem('pendingData');
+          if (savedData) {
+            pendingData = JSON.parse(savedData);
+            console.log("Memuat", pendingData.length, "data tertunda dari localStorage");
+          }
+        } catch (e) {
+          console.error("Gagal memuat data tertunda:", e);
+        }
+        
+        // Periksa kesehatan API dengan request GET ke /api/getFMIACP
+        var healthEndpoint = "http://" + serverName + ":" + apiPort + "/api/getFMIACP";
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", healthEndpoint, true);
+        xhr.setRequestHeader("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=");
+        
+        xhr.timeout = 5000; // 5 detik timeout
+        
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("API tersedia dan sehat");
+            isApiHealthy = true;
+            lastApiCheckTime = Date.now();
+            sendPendingData();
+          } else {
+            console.log("API tidak sehat:", xhr.status);
+            isApiHealthy = false;
+            lastApiCheckTime = Date.now();
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.log("API tidak tersedia (network error)");
+          isApiHealthy = false;
+          lastApiCheckTime = Date.now();
+        };
+        
+        xhr.ontimeout = function() {
+          console.log("API timeout");
+          isApiHealthy = false;
+          lastApiCheckTime = Date.now();
+        };
+        
+        try {
+          xhr.send();
+        } catch(e) {
+          console.log("Error saat health check:", e);
+          isApiHealthy = false;
+          lastApiCheckTime = Date.now();
+        }
+      }
+
+      // Fungsi untuk mengirim data ke API dengan fallback ke penyimpanan lokal
+      function sendToApi(type, channel, value) {
+        let category = `${type}-${channel}`;
+        
+        // Siapkan data sesuai format API
+        var data = {
+          MACHINE_NAME: loaderName,
+          START_TIME: getCurrentTimeISO(),
+          CATEGORY: category,
+          TYPE: getTypeFromCategory(category, value),
+          MEASUREMENT: "BIT",
+          VALUE: value.toString()
+        };
+
+        // Log ke console untuk debugging
+        console.log("Mengirim data ke API:", data);
+        
+        // Cek apakah ada TYPE untuk data ini
+        if (!data.TYPE || data.TYPE === "") {
+          console.log("Data tidak dikirim: TYPE kosong untuk kategori", category);
+          return;
+        }
+        
+        // Pastikan format waktu sudah benar
+        try {
+          // Validasi waktu untuk memastikan format sudah benar
+          const timeTest = new Date(data.START_TIME);
+          if (isNaN(timeTest.getTime())) {
+            // Format waktu tidak valid, gunakan format yang lebih sederhana
+            data.START_TIME = new Date().toISOString().replace('T', ' ').replace('Z', ' +00:00');
+            console.log("Format waktu dikoreksi:", data.START_TIME);
+          }
+        } catch (e) {
+          console.log("Error validasi waktu:", e);
+          data.START_TIME = new Date().toISOString().replace('T', ' ').replace('Z', ' +00:00');
+        }
+        
+        // Jika ada data tertunda dan API sehat, kirim data tertunda terlebih dahulu
+        if (pendingData.length > 0 && isApiHealthy) {
+          sendPendingData();
+        }
+        
+        // Kirim data baru ke API
+        sendToApiDirect(data);
+      }
+
+      // Fungsi untuk menampilkan notifikasi (dinonaktifkan)
+      function showNotification(message, color) {
+        // Console log only, tidak menampilkan di UI
+        console.log(message);
+      }
+      
+      // Inisialisasi untuk mengurangi error: coba kirim data tertunda secara berkala
+      window.addEventListener('load', function() {
+        // Tunda inisialisasi untuk mengurangi masalah loading
+        setTimeout(function() {
+          // Test koneksi API terlebih dahulu
+          console.log("Mencoba koneksi ke API...");
+          var testXhr = new XMLHttpRequest();
+          var healthEndpoint = "http://" + serverName + ":" + apiPort + "/api/getAppStatusFMIACP";
+          
+          testXhr.open("GET", healthEndpoint, true);
+          testXhr.setRequestHeader("Authorization", "Basic YWRtaW46cGFzc3dvcmQ=");
+          testXhr.timeout = 5000;
+          
+          testXhr.onload = function() {
+            if (testXhr.status >= 200 && testXhr.status < 300) {
+              console.log("Koneksi API berhasil!");
+              isApiHealthy = true;
+            } else {
+              console.log("API tersedia tetapi status error:", testXhr.status);
+              isApiHealthy = false;
+            }
+          };
+          
+          testXhr.onerror = function() {
+            console.log("Tidak dapat terhubung ke API, akan menyimpan data lokal");
+            isApiHealthy = false;
+          };
+          
+          testXhr.ontimeout = function() {
+            console.log("Koneksi API timeout");
+            isApiHealthy = false;
+          };
+          
+          try {
+            testXhr.send();
+          } catch(e) {
+            console.log("Error saat koneksi API:", e);
+            isApiHealthy = false;
+          }
+          
+          // Load data tertunda dari localStorage
+          try {
+            const savedData = localStorage.getItem('pendingData');
+            if (savedData) {
+              pendingData = JSON.parse(savedData);
+              console.debug("Memuat", pendingData.length, "data tertunda dari localStorage");
+              
+              // Jika ada data tertunda, coba kirim setelah halaman dimuat
+              if (pendingData.length > 0) {
+                setTimeout(sendPendingData, 10000); // Tunggu 10 detik sebelum mencoba kirim data tertunda
+              }
+            }
+          } catch (e) {
+            console.debug("Gagal memuat data tertunda:", e);
+            pendingData = [];
+          }
+          
+          // Set interval untuk mencoba kirim data tertunda secara berkala
+          setInterval(function() {
+            if (pendingData.length > 0 && Date.now() - lastPostAttempt > postInterval * 2) {
+              sendPendingData();
+            }
+          }, 30000); // Cek tiap 30 detik
+        }, 5000);
+      });
+
+      // Fungsi untuk meredam error gambar atau resource yang tidak ditemukan
+      window.addEventListener('error', function(e) {
+        // Jika error adalah gambar yang tidak ditemukan, redam error
+        if (e.target.tagName === 'IMG' || e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
+          e.preventDefault();
+          e.stopPropagation();
+          console.debug('Resource error ditangani:', e.target.src || e.target.href);
+          return true;
+        }
+      }, true);
+
+      // Tambahkan fungsi untuk mendapatkan waktu saat ini dalam format ISO 8601 dengan timezone
+      function getCurrentTimeISO() {
+        var now = new Date();
+        // Format: YYYY-MM-DD HH:MM:SS +TZ
+        // Gunakan format yang lebih sederhana dan dipastikan tidak menyebabkan masalah parsing
+        return now.toISOString()
+          .replace('T', ' ')  // Ganti T dengan spasi
+          .replace('Z', '')   // Hapus Z
+          .split('.')[0] +    // Hilangkan milidetik
+          ' +00:00';         // Tambahkan timezone secara eksplisit
+      }
+
+      // Fungsi untuk mengirim data ke API
+      function sendToApi(type, channel, value) {
+        let category = `${type}-${channel}`;
+        
+        // Siapkan data sesuai format API
+        var data = {
+          MACHINE_NAME: loaderName,
+          START_TIME: getCurrentTimeISO(),
+          CATEGORY: category,
+          TYPE: getTypeFromCategory(category, value),
+          MEASUREMENT: "BIT",
+          VALUE: value.toString()
+        };
+
+        // Hanya log ke console browser, tidak menampilkan di UI
+        console.debug("Mengirim data ke API:", data);
+        
+        // Jika belum waktunya mengirim data baru, simpan saja
+        if (Date.now() - lastPostAttempt < postInterval) {
+          console.debug("Terlalu cepat untuk post baru, menyimpan lokal");
+          storeDataLocally(data);
+          return;
+        }
+        
+        // Coba kirim langsung, jika gagal akan disimpan lokal oleh sendToApiDirect
+        sendToApiDirect(data);
+      }
+
+      // Fungsi untuk memperbarui log box berdasarkan perubahan status
+      function updateLogBox(newMessage) {
+        var logBox = document.getElementById("logBox");
+        var now = new Date();
+        
+        // Format ISO timestamp tapi dengan format yang mudah dibaca
+        var year = now.getFullYear();
+        var month = (now.getMonth() + 1).toString().padStart(2, '0');
+        var day = now.getDate().toString().padStart(2, '0');
+        var hours = now.getHours().toString().padStart(2, '0');
+        var minutes = now.getMinutes().toString().padStart(2, '0');
+        var seconds = now.getSeconds().toString().padStart(2, '0');
+        var timestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        
+        // Tambahkan pesan baru ke log box (hanya jika bukan pesan sukses API)
+        if (!newMessage.includes("berhasil dikirim ke API")) {
+          var message = timestamp + " AM - " + newMessage;
+          
+          // Tambahkan pesan ke logBox terlebih dahulu
+          logBox.value += message + "\n";
+          logBox.scrollTop = logBox.scrollHeight;
+          
+          // Kemudian parsing pesan log untuk kirim ke API
+          const logData = parseLogMessage(message);
+          if (logData.category && logData.category !== "") {
+            // Kirim data ke API
+            const apiData = {
+              MACHINE_NAME: loaderName,
+              START_TIME: getCurrentTimeISO(),
+              CATEGORY: logData.category,
+              TYPE: getTypeFromCategory(logData.category),
+              MEASUREMENT: "BIT",
+              VALUE: logData.value
+            };
+            
+            console.log("Mengirim data dari log ke API:", apiData);
+            setTimeout(function() {
+              sendToApi(logData.category.split("-")[0], logData.category.split("-")[1], logData.value);
+            }, 100); // Sedikit delay untuk memastikan UI update dulu
+          }
+        }
+      }
     </script>
     <style>
       /* CSS yang dioptimalkan untuk ADAM module */
@@ -1033,6 +1497,17 @@
         console.log("Initial DI status:", diStatus);
         console.log("Initial DO status:", doStatus);
 
+        // Kirim status awal ke API
+        // Kirim status DI-0 (FRONT_SAFE_ZONE)
+        sendToApi("DI", 0, diStatus[0]);
+        // Kirim status DI-2 (REAR_SAFE_ZONE)
+        sendToApi("DI", 2, diStatus[2]);
+        // Kirim status DO-0 (PARKING_BRAKE)
+        sendToApi("DO", 0, doStatus[0]);
+
+        // Log ke console bahwa data awal telah dikirim (tidak ke logBox)
+        console.log("Status awal dikirim ke API");
+
         // Mulai timer untuk polling
         pageOnTimer();
       }
@@ -1068,6 +1543,7 @@
           }, scanInterval);
       }
 
+      // Update fungsi updateLogBox untuk juga mengirim data ke API
       function updateLogBox(type, channel, value) {
         var logBox = document.getElementById("logBox");
         var now = new Date();
@@ -1105,6 +1581,9 @@
             timestamp + " - CONNECTION ERROR: Device may be disconnected\n";
           logBox.value = errorEntry + logBox.value;
         }
+
+        // Kirim data ke API tanpa menambah log
+        sendToApi(type, channel, value);
       }
 
       function pageUpdateLights() {
@@ -1170,38 +1649,33 @@
                     diRecords = xmlDoc.getElementsByTagName("DI");
                     if (diRecords != null) {
                       for (var iCnt = 0; iCnt < diRecords.length; iCnt++) {
-                        iCh =
-                          diRecords[iCnt].getElementsByTagName("ID")[0]
-                            .childNodes[0].nodeValue;
+                        iCh = diRecords[iCnt].getElementsByTagName("ID")[0].childNodes[0].nodeValue;
                         if (iCh < diTotal)
-                          diStatus[iCh] =
-                            diRecords[iCnt].getElementsByTagName(
-                              "VALUE"
-                            )[0].childNodes[0].nodeValue;
+                          diStatus[iCh] = diRecords[iCnt].getElementsByTagName("VALUE")[0].childNodes[0].nodeValue;
                       }
-                      // Panggil updateIndicatorBoxes setelah update diStatus
                       updateIndicatorBoxes();
-                    } else
-                      document.getElementById("DIPOLL").innerHTML +=
-                        " DiErr0:DI null!";
-                  } else
-                    document.getElementById("DIPOLL").innerHTML +=
-                      " DiErr1:" +
-                      xmlDoc.documentElement.attributes[0].nodeValue +
-                      "!";
-                } else
-                  document.getElementById("DIPOLL").innerHTML +=
-                    " DiErr2:" + xmlHttp.status + "!";
+                    } else {
+                      // Kurangi log error dengan hanya mencatat di debug level
+                      console.debug("Digital Input: Tidak ada data DI ditemukan");
+                    }
+                  } else {
+                    // Kurangi log error dengan hanya mencatat di debug level
+                    console.debug("Digital Input: Status bukan OK");
+                  }
+                } else {
+                  // Kurangi log error dengan hanya mencatat di debug level
+                  console.debug("Digital Input: HTTP status error:", xmlHttp.status);
+                }
                 diPolling = 0;
-                diFailCount = 0; // reset fail count
+                diFailCount = 0;
               }
             };
-            xmlHttp.open("GET", "digitalinput/all/value", true);
+            // Gunakan path relatif untuk akses ke device sendiri
+            xmlHttp.open("GET", "/digitalinput/all/value", true);
             xmlHttp.send();
             diPolling = 1;
             diPollingCount++;
-            document.getElementById("DIPOLL").innerHTML =
-              "Polling " + diPollingCount + " times...";
+            document.getElementById("DIPOLL").innerHTML = "Digital Input: Polling " + diPollingCount + " times...";
           } else {
             diWaitCount++;
             if (diWaitCount == maxWait) {
@@ -1213,7 +1687,7 @@
           }
         } catch (e) {
           diPolling = 0;
-          document.getElementById("DIPOLL").innerHTML = "DiErr3:" + e + "!";
+          console.debug("Digital Input polling error:", e);
         }
       }
 
@@ -1241,48 +1715,44 @@
                     doRecords = xmlDoc.getElementsByTagName("DO");
                     if (doRecords != null) {
                       for (var iCnt = 0; iCnt < doRecords.length; iCnt++) {
-                        iCh =
-                          doRecords[iCnt].getElementsByTagName("ID")[0]
-                            .childNodes[0].nodeValue;
+                        iCh = doRecords[iCnt].getElementsByTagName("ID")[0].childNodes[0].nodeValue;
                         if (iCh < doTotal)
-                          doStatus[iCh] =
-                            doRecords[iCnt].getElementsByTagName(
-                              "VALUE"
-                            )[0].childNodes[0].nodeValue;
+                          doStatus[iCh] = doRecords[iCnt].getElementsByTagName("VALUE")[0].childNodes[0].nodeValue;
                       }
-                    } else
-                      document.getElementById("DOPOLL").innerHTML +=
-                        " DoErr0:DO null!";
-                  } else
-                    document.getElementById("DOPOLL").innerHTML +=
-                      " DoErr1:" +
-                      xmlDoc.documentElement.attributes[0].nodeValue +
-                      "!";
-                } else
-                  document.getElementById("DOPOLL").innerHTML +=
-                    " DoErr2:" + xmlHttp.status + "!";
+                    } else {
+                      // Kurangi log error dengan hanya mencatat di debug level
+                      console.debug("Digital Output: Tidak ada data DO ditemukan");
+                    }
+                  } else {
+                    // Kurangi log error dengan hanya mencatat di debug level
+                    console.debug("Digital Output: Status bukan OK");
+                  }
+                } else {
+                  // Kurangi log error dengan hanya mencatat di debug level
+                  console.debug("Digital Output: HTTP status error:", xmlHttp.status);
+                }
                 doPolling = 0;
-                doFailCount = 0; // reset fail count
+                doFailCount = 0;
               }
             };
-            xmlHttp.open("GET", "digitaloutput/all/value", true);
+            // Gunakan path relatif untuk akses ke device sendiri
+            xmlHttp.open("GET", "/digitaloutput/all/value", true);
             xmlHttp.send();
             doPolling = 1;
             doPollingCount++;
-            document.getElementById("DOPOLL").innerHTML =
-              "Polling " + doPollingCount + " times...";
+            document.getElementById("DOPOLL").innerHTML = "Digital Output: Polling " + doPollingCount + " times...";
           } else {
             doWaitCount++;
             if (doWaitCount == maxWait) {
               doFailCount++;
               if (doFailCount < maxFail) {
-                doPolling = 0; // resend
+                doPolling = 0;
               }
             }
           }
         } catch (e) {
           doPolling = 0;
-          document.getElementById("DOPOLL").innerHTML = "DoErr3:" + e + "!";
+          console.debug("Digital Output polling error:", e);
         }
       }
 
@@ -1433,6 +1903,81 @@
         toggleBtn.classList.toggle("off", !autoSaveEnabled);
       });
 
+      // Tambahkan fungsi untuk mengupdate kotak indikator
+      function updateIndicatorBoxes() {
+        // Update front safe zone berdasarkan diStatus[0]
+        var frontSafeZone = document.getElementById("frontSafeZone");
+        if (diStatus[0] == 1) {
+          frontSafeZone.style.display = "block";
+          frontSafeZone.classList.add("on");
+        } else {
+          frontSafeZone.style.display = "none";
+          frontSafeZone.classList.remove("on");
+        }
+
+        // Update rear safe zone berdasarkan diStatus[2]
+        var rearSafeZone = document.getElementById("rearSafeZone");
+        if (diStatus[2] == 1) {
+          rearSafeZone.style.display = "block";
+          rearSafeZone.classList.add("on");
+        } else {
+          rearSafeZone.style.display = "none";
+          rearSafeZone.classList.remove("on");
+        }
+
+        // Update parking brake berdasarkan doStatus[0]
+        var parkingBrake = document.getElementById("parkingBrakeIcon");
+        if (doStatus[0] == 1) {
+          parkingBrake.style.display = "block";
+          parkingBrake.classList.add("on");
+        } else {
+          parkingBrake.style.display = "none";
+          parkingBrake.classList.remove("on");
+        }
+      }
+
+      // Fungsi untuk menampilkan notifikasi
+      function showNotification(message, bgColor, persistent = false) {
+        // Hapus notifikasi yang sudah ada (jika ada)
+        var existingNotification = document.querySelector(".api-notification");
+        if (existingNotification) {
+          document.body.removeChild(existingNotification);
+        }
+
+        // Buat notifikasi baru
+        var notification = document.createElement("div");
+        notification.className = "api-notification";
+        notification.style.position = "fixed";
+        notification.style.bottom = "70px";
+        notification.style.right = "20px";
+        notification.style.backgroundColor = bgColor;
+        notification.style.color = bgColor === "#ffc107" ? "black" : "white";
+        notification.style.padding = "10px";
+        notification.style.borderRadius = "5px";
+        notification.style.zIndex = "1000";
+        notification.style.opacity = "0.9";
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        // Hilangkan notifikasi setelah 3 detik kecuali jika persistent = true
+        if (!persistent) {
+          setTimeout(function () {
+            if (notification && notification.parentNode) {
+              notification.style.opacity = "0";
+              notification.style.transition = "opacity 1s";
+              setTimeout(function () {
+                if (notification && notification.parentNode) {
+                  document.body.removeChild(notification);
+                }
+              }, 1000);
+            }
+          }, 3000);
+        }
+        
+        return notification;
+      }
+
       // Fungsi untuk mengatur status DO
       function setDOStatus(channel, value) {
         if (channel < doTotal) {
@@ -1511,39 +2056,6 @@
       // Panggil fungsi updateCurrentTime setiap detik
       setInterval(updateCurrentTime, 1000);
       updateCurrentTime(); // Panggil sekali saat halaman dimuat
-
-      // Tambahkan fungsi untuk mengupdate kotak indikator
-      function updateIndicatorBoxes() {
-        // Update front safe zone berdasarkan diStatus[0]
-        var frontSafeZone = document.getElementById("frontSafeZone");
-        if (diStatus[0] == 1) {
-          frontSafeZone.style.display = "block";
-          frontSafeZone.classList.add("on");
-        } else {
-          frontSafeZone.style.display = "none";
-          frontSafeZone.classList.remove("on");
-        }
-
-        // Update rear safe zone berdasarkan diStatus[2]
-        var rearSafeZone = document.getElementById("rearSafeZone");
-        if (diStatus[2] == 1) {
-          rearSafeZone.style.display = "block";
-          rearSafeZone.classList.add("on");
-        } else {
-          rearSafeZone.style.display = "none";
-          rearSafeZone.classList.remove("on");
-        }
-
-        // Update parking brake berdasarkan doStatus[0]
-        var parkingBrake = document.getElementById("parkingBrakeIcon");
-        if (doStatus[0] == 1) {
-          parkingBrake.style.display = "block";
-          parkingBrake.classList.add("on");
-        } else {
-          parkingBrake.style.display = "none";
-          parkingBrake.classList.remove("on");
-        }
-      }
     </script>
   </body>
 </html>
