@@ -614,102 +614,7 @@
                 
             } catch (error) {
                 console.error("Error performing real-time ping:", error);
-                
-                // In case of error, fall back to using our ping simulation for testing
-                console.log("Falling back to ping simulation...");
-                performSimulatedPing();
             }
-        }
-        
-        // Fallback ping simulation for testing when the backend is unavailable
-        async function performSimulatedPing() {
-            try {
-                const promises = [];
-                
-                // Process each device
-                for (const device of adamDevices) {
-                    // ACP ping
-                    promises.push(simulatePing(device.id, device.adamIp, 'adam'));
-                    
-                    // ORU ping
-                    promises.push(simulatePing(device.id, device.oruIp, 'oru'));
-                }
-                
-                // Wait for all pings to complete
-                await Promise.all(promises);
-                
-                // Update the dashboard
-                updateOverviewTable();
-                updateStatusCounts();
-                
-            } catch (error) {
-                console.error("Error performing simulated ping:", error);
-            }
-        }
-        
-        // Simulate ping for testing
-        async function simulatePing(deviceId, ip, deviceType) {
-            // For demo purposes: known online IPs are 10.211.210.248 and 10.211.210.249
-            const onlineIPs = ['10.211.210.248', '10.211.210.249'];
-            const isReachable = onlineIPs.includes(ip);
-            
-            // Add some realistic delay
-            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 100));
-            
-            // Prepare the ping result
-            let result;
-            if (isReachable) {
-                // Generate realistic response times
-                const responseTime = ip === '10.211.210.248' ? 
-                    (5 + Math.floor(Math.random() * 3)) : // 5-7ms for this IP
-                    (10 + Math.floor(Math.random() * 5)); // 10-14ms for other IP
-                
-                result = {
-                    success: true,
-                    deviceType: deviceType,
-                    ip: ip,
-                    responseTime: responseTime,
-                    responseText: `Reply from ${ip}`,
-                    timestamp: new Date()
-                };
-            } else {
-                result = {
-                    success: false,
-                    deviceType: deviceType,
-                    ip: ip,
-                    responseTime: '-',
-                    responseText: 'Request timed out.',
-                    timestamp: new Date()
-                };
-            }
-            
-            // Store the result
-            if (!pingResults[deviceId]) {
-                pingResults[deviceId] = {};
-            }
-            pingResults[deviceId][deviceType] = result;
-            
-            // Add to history
-            if (!pingHistory[deviceId]) {
-                pingHistory[deviceId] = {
-                    adam: [],
-                    oru: []
-                };
-            }
-            
-            pingHistory[deviceId][deviceType].push({
-                ...result,
-                timestampFormatted: new Date().toLocaleString()
-            });
-            
-            if (pingHistory[deviceId][deviceType].length > MAX_HISTORY_ENTRIES) {
-                pingHistory[deviceId][deviceType].shift();
-            }
-            
-            // Update the card and tables
-            updateAdamCard(deviceId, result, deviceType);
-            
-            return result;
         }
         
         // Update status counts
@@ -907,7 +812,7 @@
                 const adamRow = document.createElement('tr');
                 adamRow.innerHTML = `
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.name} (ACP)</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.adamIp}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;"><a href="http://${device.adamIp}" target="_blank">${device.adamIp}</a></td>
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">
                         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${adamResult.success ? '#2ecc71' : '#e74c3c'}; margin-right: 5px;"></span>
                         ${adamResult.success ? 'Online' : 'Offline'}
@@ -931,7 +836,7 @@
                 const oruRow = document.createElement('tr');
                 oruRow.innerHTML = `
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.name} (ORU)</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.oruIp}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;"><a href="http://${device.oruIp}" target="_blank">${device.oruIp}</a></td>
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">
                         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${oruResult.success ? '#2ecc71' : '#e74c3c'}; margin-right: 5px;"></span>
                         ${oruResult.success ? 'Online' : 'Offline'}
@@ -1133,7 +1038,7 @@
                                 <div class="indicator offline"></div>
                                 <span>Offline</span>
                             </div>
-                            <div class="details">IP: ${device.adamIp}</div>
+                            <div class="details">IP: <a href="http://${device.adamIp}" target="_blank">${device.adamIp}</a></div>
                             <div class="ping-stats">
                                 Request timed out.
                             </div>
@@ -1148,7 +1053,7 @@
                                 <div class="indicator offline"></div>
                                 <span>Offline</span>
                             </div>
-                            <div class="details">IP: ${device.oruIp}</div>
+                            <div class="details">IP: <a href="http://${device.oruIp}" target="_blank">${device.oruIp}</a></div>
                             <div class="ping-stats">
                                 Request timed out.
                             </div>
@@ -1168,7 +1073,7 @@
                 acpRow.id = `acp-row-${device.id}`;
                 acpRow.innerHTML = `
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.name}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.adamIp}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;"><a href="http://${device.adamIp}" target="_blank">${device.adamIp}</a></td>
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">
                         <div style="display: flex; align-items: center;">
                             <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #e74c3c; margin-right: 8px;"></div>
@@ -1189,7 +1094,7 @@
                 oruRow.id = `oru-row-${device.id}`;
                 oruRow.innerHTML = `
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.name}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${device.oruIp}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;"><a href="http://${device.oruIp}" target="_blank">${device.oruIp}</a></td>
                     <td style="padding: 10px; border-bottom: 1px solid #ddd;">
                         <div style="display: flex; align-items: center;">
                             <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #e74c3c; margin-right: 8px;"></div>
