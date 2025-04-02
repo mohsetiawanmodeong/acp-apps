@@ -55,7 +55,7 @@
             width: 33%;
         }
         .logo-trakindo {
-            height: 40px;
+            height: 45px;
             width: auto;
             margin-left: 10px;
         }
@@ -265,7 +265,7 @@
         .download-bar {
             margin: 0 10px 10px 10px;
             background-color: white;
-            padding: 8px 10px;
+            padding: 12px 15px;
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
@@ -273,9 +273,29 @@
         }
         .download-bar button {
             background-color: #27ae60;
+            padding: 8px 12px;
         }
         .download-bar button:hover {
             background-color: #219651;
+        }
+        .update-controls {
+            text-align: right;
+        }
+        .update-frequency {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 0.9rem;
+        }
+        .update-frequency label {
+            margin-right: 8px;
+        }
+        .last-update {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            text-align: right;
         }
         .device-container {
             display: flex;
@@ -308,6 +328,39 @@
             font-size: 0.75em;
             padding: 4px;
         }
+        .footer {
+            position: static;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid #ddd;
+            margin-top: 20px;
+        }
+        .footer-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-center {
+            text-align: center;
+        }
+        .footer-text {
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #777;
+            font-weight: bold;
+        }
+        .footer-version {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -319,15 +372,18 @@
             <h3>LHD ACP & ORU Monitoring Dashboard</h3>
         </div>
         <div class="topnav-right">
-            <button id="refresh-all-btn" class="nav-btn">↻</button>
             <button id="fullscreen-btn" class="nav-btn">⛶</button>
             <img src="data:image/webp;base64,UklGRjAEAABXRUJQVlA4WAoAAAAQAAAAYwAAMQAAQUxQSCEAAAABFyAQSFLbH2qNiAgHMmmbmpzJKt05dkX0P1nEPke0ZxEAVlA4IOgDAAAwFACdASpkADIAPpFAmUklpCKhJdzNiLASCWYAy9Rgevcj+PJ3KMBtgPMB+yXq8egDeOPQd6WL/BVvroEPOx+dh3wGshc+c94D+zegHbOca0XTz7/TPsFfq/1jDSfy3p4+ussnYbf9/CgOxQDtbNJLplUalwSnSaReoSW0sKsnBqA23c4amTE3UdDnJVfzRMTKsPCjYbrenLwD6KzW29XzI0u6UIuF/orkAAD+/sy+XN7JawCcx/aZIIzXkbUCPY7/8N9I6Hc1YfyArx5/eto0UbNcSb3gCy16i4EdM6I3hS38W/Lo4NwaHA3DvAFnn/T/mONiK/fIO0z8HyTirb/gLcPzhsfC0dfg1/+YnmxLQbxfi8afTikJwkXqk/EHkkz7RuFVC6v8XlKsJfXEbT66/bAnyuwAPYukHjuuCoVIaoSaX4xMQv+6TIGiBSArermlXeJvKH1MvKpnrY/F+B5wvag85h9Nz72xbhMnt2n1aTFlBNGzReDRaKc6UNqNa4wJAyaCA4qY9Z1WpwYh3dVZX37nkhK8Hg/7mE5P4PKYseLxY5e2ccVG+RNoH3X5G+oUGzLJmbyIZJDXeXHZ5QUrYFpEQjK4FS8T3MrI9JAJHOMKb5ZATfvQWJs3RIGdx90ovpEKfDdez16cBaxxMSSLsEikYoTatJOX9H2bNfNuy1LOzlpcM0Qa+hKAfi9Dx5DCwTC2kwPVBlOSdwnYAYrwK7OhYZLhAmjcv1hj1sQQVQHFVyPw0pe7gqdyMCSkzBccVGJcN4vuRpByAmHuoaps7XmlOf/tJhbPsJJU90JKbZxzQ2fAEjGTqYFUnFJ5LWc9tN+Zb5+4iLyYih4weTiAsJi0agqhCpDbz/fGHd4NZytmSmNZ0Rq9dCQi8PsUx57UZw0kHZKMPgoj0A/511rvpX7BPVPKvuKdQlD/Hi9+DVRdQbrvc4axiz8gnfrsyj7WdN1BUKCsfT7nltdsfkzlNj1zhHKfOsUce94GsDSSCvMNx3pPaqtw55JWwQHetncnmFYy+ynjFDhxHTJiXmOmbaAgFB4Q2JdRjQl+WxYxN2uPoMip2vpjGWbNrN4vOLiJbbYADT5Ua/eTITfB62FBvY+mwvSmut+hSiVdItEFSJaLTIT4zzch6/e9adUrmDOjMaOOapy93csJ+MdAoL5++NWpImkA3qigJDJAfFCzyzkb4wC0VneAiQf63qI8X+yHknE/wj93j+bcH0wo6TY2t58L4eVXm5h8NmsRxk66KXI0EP+hLMnNXBnV1/6/rmbC9TKrZWBG95HQcJq+2i1nMDf+7pzYTUBZFEVFnAgpTBe8SVAAAAAA" alt="Trakindo Logo" class="logo-trakindo">
         </div>
     </div>
     
     <div class="container">
-        <div class="refresh-bar">
+        <div class="download-bar">
             <div>
+                <button id="download-history-btn">Download Log (.txt)</button>
+                <span style="margin-left: 10px; font-size: 0.9em; color: #666;">Download Log ping format (.txt)</span>
+            </div>
+            <div class="update-controls">
                 <div class="update-frequency">
                     <label>Update interval:</label>
                     <select id="refresh-interval">
@@ -337,14 +393,7 @@
                         <option value="30000">30 detik</option>
                     </select>
                 </div>
-            </div>
-            <div class="last-update">Last update: <span id="last-update-time">-</span></div>
-        </div>
-        
-        <div class="download-bar">
-            <div>
-                <button id="download-history-btn">Download History (TXT)</button>
-                <span style="margin-left: 10px; font-size: 0.9em; color: #666;">Download history ping dalam format TXT</span>
+                <div class="last-update">Last update: <span id="last-update-time">-</span></div>
             </div>
         </div>
         
@@ -482,6 +531,17 @@
             <p>Simulasi ping ACP ADAM Monitoring...</p>
         </div>
     </div>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-center">
+                <span class="footer-version">LHD ACP & ORU Monitoring v2.0</span>
+                <br>
+                <span class="footer-text">Copyright © 2025 by Trakindo Technology Dept.</span>
+            </div>
+        </div>
+    </footer>
 
     <script>
         // ACP ADAM IP addresses
