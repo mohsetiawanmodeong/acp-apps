@@ -114,33 +114,33 @@
 			"user": "granitor",
 			"passwd": "midroc"
 		},
-                {
-                        "user": "ugtech",
-                        "passwd": "ugt-Au7oMG"
-                },
-				{
-                        "user": "controller",
-                        "passwd": "track1ndo"
-                },
-				{
-                        "user": "gbcmtc",
-                        "passwd": "f1x1tf2st"
-                },
-				{
-                		"user": "admin",
-                        "passwd": "password"
-                },
-				{
-					"user": "fmiacp",
-					"passwd": "track1nd0"
-				},
-				{
-                        "user": "poly",
-                        "passwd": "orbanaught"
-                }
+        {
+            "user": "ugtech",
+            "passwd": "ugt-Au7oMG"
+        },
+        {
+            "user": "controller",
+            "passwd": "track1ndo"
+        },
+        {
+            "user": "gbcmtc",
+            "passwd": "f1x1tf2st"
+        },
+        {
+            "user": "admin",
+            "passwd": "password"
+        },
+		{
+			"user": "fmiacp",
+			"passwd": "track1nd0"
+		},
+		{
+			"user": "poly",
+			"passwd": "orbanaught"
+		}
 	],
-       	"MaxManueverTime": "5000",
-        "MaxAvoidanceTime": "10000",
+    "MaxManueverTime": "5000",
+    "MaxAvoidanceTime": "10000",
 	"dbConfigMPM" : {
                 "user":  "mcsadmin",
                 "password": "moomin4ever",
