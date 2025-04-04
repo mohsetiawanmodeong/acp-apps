@@ -85,8 +85,7 @@ app.use(function authentication(req, res, next) {
 
 // Tambahkan middleware CORS untuk mengatasi masalah Cross-Origin
 app.use(function(req, res, next) {
-    // res.header("Access-Control-Allow-Origin", "*");
-    // res.header("Access-Control-Expose-Headers", "Cache-Control");
+    // res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.header("Access-Control-Allow-Credentials", "true");
