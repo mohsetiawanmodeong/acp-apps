@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMIACP Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+    
+    <!-- Favicon (embedded base64) -->
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAA2FBMVEUAAAAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyD///9r5VNNAAAAR3RSTlMAAhMqP1BcZW54dXBmWUpBLhcDCjBbg6DAz9jf4OHi19C/n4JZLQkntePy+/z9/Pvy4rMlm9n3/uuxkGxKMBD55MWRVTQIFWjmoegAAAABYktHRFGUaXwqAAAAB3RJTUUH5AQPCQwghMP5UwAAAOVJREFUOMvt0sdSwzAQBdCnYtmWbbnHvdAChNCSkIJh//9/MgQYZgI5h132Zu/gzsxqpMj/lhDJXkqlhaHREoI13jQxOTU9Y5mQ1WVudn5hcWlZCLGyagdbXlldC7mH9Q0CVnezbQbcYGs73A4DO8QcBO5EnRwSKrXLvY1Oznd2xbHnw/0D6Yh9PASyjk8ip+cXl1chjHJNC3d3f/8gVHFo1x5lbfP0rNWer1A3L682eDNCvPOu3byvX4qg+2GAQAgvHv76AcUwMA7jbJ8f0IAQjUH4BNRAwLqvfQmm/oTdX6ZvXSHypX8A1K844ncuRa4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjAtMDQtMTVUMDk6MTI6MzIrMDA6MDDH0VGDAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIwLTA0LTE1VDA5OjEyOjMyKzAwOjAwto7pPwAAAFd6VFh0UmF3IHByb2ZpbGUgdHlwZSBpcHRjAAB4nOPyDAhxVigoyk/LzEnlUgADIwsuYwsTIxNLkxQDEyBEgDTDZAMjs1Qgy9jUyMTMxBzEB8uASKBKLgDqFxF08kI1lQAAAABJRU5ErkJggg==">
+</head>
+<body>
+    <!-- Navbar - Hanya logo dan judul di tengah -->
+    <nav class="navbar navbar-dark sticky-top text-center">
+        <div class="container">
+            <a class="navbar-brand mx-auto d-flex align-items-center justify-content-center" href="#">
+                <img src="data:image/webp;base64,UklGRhoFAABXRUJQVlA4WAoAAAAQAAAAxwAAIAAAQUxQSBcAAAABD/Dz/4iIQKRtszmf/POTiP5PgKz7BwBWUDgg3AQAAPAaAJ0BKsgAIQA+kUCbSKWkIqEqs7uwsBIJZQDUXXAOksyLnoB2bf1PwR8JHpeQJzHeg/0L/beU3ej7mMnX908IHYE8p7gHUC7Z+h3+cf6T0m70ygH/G/7H/2v8H+N3x3Z1PpX2Bv5b/autZ6Ev61ndRJmJOWbNwLm7gx4e9nDMwNbepwvPOKVI+sAAN28VSc9Mxicn8wp8QxC8P2DmIilZ3xPglHaGo24Lz3D71PFJjqHRzsBpIJM+zKt6POIqjtmdzmgM7tFlZFlNXz7cjCAvEFpH0LePL4LpGE0sW9wAAP74JIX+J3gP8qtGOyuCdHauaJO44ikrTxNn7qNGr0Ic/kW/id/PvnPxez9FHjNQObL/pXTwUcqd22ZhbfkONkuUYshDCcWxYDf3+oAAq7Te4VDT/fZMl2ydVqkfHr9CVV/Ja1pDlxDybQ0im1Qtw/+kZCe8IRgH4cz/M2wU//KAdGf1qlBw95t/skHuJ2w3scPYFdACR0fhEIY6rDLHbIAnP3G9QCZM4olyIPcbuJIpzLMs22oAgGRUcou8HjuV+bLUe2ltCO7Sp6/q//EI5gM0/zUm4BMDbkZf/vTdfAArxJWGFepacT0kxtXz0PaFB0qkpx9z+WQTF40yTEiGD5faWQsbzdl+ea5PTbBD1y1DWiJwd9faDkRCpe4wXHPz/8cX//kZxDxP+Uh59BOLIN1oNt7Ri/ajxYtg34C+TiVov0v0QAkd+7u1O4qWd/pIOPQkGDZAKIH4X2a7iP6mjgek//AM/+mrbOSDn2dec48yhQIT7gcPb1dtGqe1zgX4R2pyeNzYqY83t1+OV7nQJ+3aTIXRKHer6dXIXC3MiUZcH/6RgEMWPa+Xb24ernUNw8PH800HKpXVAh4gMzT2xZkQU4tWbZ0iLJ7WkHV7juSlXbs7qZv9ehOYzFf9NHHVlnDWPkcWahyWHmGN4IT6qJUcJ0GZUuTrvtRHwNcqfUTy8IV7f62X3QLQvVtRI0ZTP/KJEnBFH8E0pOrqcpYHgTijmgO91Fa/AYOow+1XMRJUnS7zxPoj08N9YPzCV1vd5Qv8ru8nqMFptOsU4/zOz5AoZXicZYDygSxNnOOLBZxQ7X5+XaEKEiq4QXszSxiJ0hruDFtOHRif8nM2xbWIdOQAO9PdZ3PJ1QY4BhjvKSf106T9gwqUpgeKSSxgpGtOxyLIKo3uKoQbi8LANmIIwRVUpZOO/DvIqfn7AY2cSJqhuEMRtWFJZyxmFR6QOJYn8FKpj5p2kynaKylKGM5N6LC4jW/I2i34pJ7C00S4MzUzDy04xDjQL+8614Eraqy3TH/BuWjLE9v0mJ6W8frUC34E7idqINIVKRxWbVOvwKqtqOjQXDO177j9SMyZxESdvUWPc6d0rM8AH/n2w/k4ySVv6MxwYUOPnhOaUl+6FPhRGT1tJgM7c5+7T2ymfBdk7vsZIxuYzpvOF2xc8AGfJ1bYSbYnbcD4LgEfXgB6KOsF5F17NelS+iqXoFSentvrrMpecJJ4cf9bfvRwYP+/tkVVbomIX5CZj67DnGZf3uxYNY9t1uh4l2pULN1pYt1GqmfiL7XbkKvm6k/qIJM7IWSC7Gf/GH02OQf80IS6KZaasq187/GGgGh8dGfIn5Dj4dojyIxAAAAAAAAA" alt="Freeport" class="me-2" style="height: 40px;">
+                <span class="title-text">FMIACP Dashboard</span>
+                <img src="data:image/webp;base64,UklGRjAEAABXRUJQVlA4WAoAAAAQAAAAYwAAMQAAQUxQSCEAAAABFyAQSFLbH2qNiAgHMmmbmpzJKt05dkX0P1nEPke0ZxEAVlA4IOgDAAAwFACdASpkADIAPpFAmUklpCKhJdzNiLASCWYAy9Rgevcj+PJ3KMBtgPMB+yXq8egDeOPQd6WL/BVvroEPOx+dh3wGshc+c94D+zegHbOca0XTz7/TPsFfq/1jDSfy3p4+ussnYbf9/CgOxQDtbNJLplUalwSnSaReoSW0sKsnBqA23c4amTE3UdDnJVfzRMTKsPCjYbrenLwD6KzW29XzI0u6UIuF/orkAAD+/sy+XN7JawCcx/aZIIzXkbUCPY7/8N9I6Hc1YfyArx5/eto0UbNcSb3gCy16i4EdM6I3hS38W/Lo4NwaHA3DvAFnn/T/mONiK/fIO0z8HyTirb/gLcPzhsfC0dfg1/+YnmxLQbxfi8afTikJwkXqk/EHkkz7RuFVC6v8XlKsJfXEbT66/bAnyuwAPYukHjuuCoVIaoSaX4xMQv+6TIGiBSArermlXeJvKH1MvKpnrY/F+B5wvag85h9Nz72xbhMnt2n1aTFlBNGzReDRaKc6UNqNa4wJAyaCA4qY9Z1WpwYh3dVZX37nkhK8Hg/7mE5P4PKYseLxY5e2ccVG+RNoH3X5G+oUGzLJmbyIZJDXeXHZ5QUrYFpEQjK4FS8T3MrI9JAJHOMKb5ZATfvQWJs3RIGdx90ovpEKfDdez16cBaxxMSSLsEikYoTatJOX9H2bNfNuy1LOzlpcM0Qa+hKAfi9Dx5DCwTC2kwPVBlOSdwnYAYrwK7OhYZLhAmjcv1hj1sQQVQHFVyPw0pe7gqdyMCSkzBccVGJcN4vuRpByAmHuoaps7XmlOf/tJhbPsJJU90JKbZxzQ2fAEjGTqYFUnFJ5LWc9tN+Zb5+4iLyYih4weTiAsJi0agqhCpDbz/fGHd4NZytmSmNZ0Rq9dCQi8PsUx57UZw0kHZKMPgoj0A/511rvpX7BPVPKvuKdQlD/Hi9+DVRdQbrvc4axiz8gnfrsyj7WdN1BUKCsfT7nltdsfkzlNj1zhHKfOsUce94GsDSSCvMNx3pPaqtw55JWwQHetncnmFYy+ynjFDhxHTJiXmOmbaAgFB4Q2JdRjQl+WxYxN2uPoMip2vpjGWbNrN4vOLiJbbYADT5Ua/eTITfB62FBvY+mwvSmut+hSiVdItEFSJaLTIT4zzch6/e9adUrmDOjMaOOapy93csJ+MdAoL5++NWpImkA3qigJDJAfFCzyzkb4wC0VneAiQf63qI8X+yHknE/wj93j+bcH0wo6TY2t58L4eVXm5h8NmsRxk66KXI0EP+hLMnNXBnV1/6/rmbC9TKrZWBG95HQcJq+2i1nMDf+7pzYTUBZFEVFnAgpTBe8SVAAAAAA" alt="Trakindo" class="ms-2" style="height: 40px;">
+            </a>
+            
+            <!-- Status connection and fullscreen di pojok kanan -->
+            <div class="position-absolute end-0 me-3">
+                <span id="login-status" class="status-disconnected me-2">Terputus</span>
+                <button id="fullscreen-btn" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-fullscreen"></i> Fullscreen
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container-fluid my-4">
+        <!-- Menu & Dashboard Controls -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card dashboard-controls">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <!-- Menu Tabs -->
+                            <div class="col-md-8">
+                                <ul class="nav nav-pills dashboard-nav">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard-tab">Dashboard</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#machine-tab">Machine Data</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#table-tab">Data Tables</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#status-tab">App Status</a>
+                                    </li>
+                                    <li class="nav-item ms-2">
+                                        <button id="download-data-btn" class="btn btn-success btn-sm">
+                                            <i class="bi bi-download"></i> Download Data
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Update interval & last update -->
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-end align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <label for="refresh-interval" class="me-2 mb-0">Update interval:</label>
+                                        <select id="refresh-interval" class="form-select form-select-sm" style="width: auto;">
+                                            <option value="1000">1 detik</option>
+                                            <option value="3000">3 detik</option>
+                                            <option value="5000" selected>5 detik</option>
+                                            <option value="10000">10 detik</option>
+                                            <option value="30000">30 detik</option>
+                                            <option value="60000">1 menit</option>
+                                        </select>
+                                        <div class="ms-3 text-muted small">
+                                            Last update: <span id="last-update-time">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane fade show active" id="dashboard-tab">
+                <!-- Stat Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Total Machines</h6>
+                                <div class="stat-value total" id="total-machines">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Active Machines</h6>
+                                <div class="stat-value online" id="active-machines">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Inactive Machines</h6>
+                                <div class="stat-value offline" id="inactive-machines">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Data Points</h6>
+                                <div class="stat-value total" id="total-data-points">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Overview -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Latest Machine Data Overview</h5>
+                            </div>
+                            <div class="card-body" id="latest-data-overview">
+                                <p class="text-muted">Loading data overview...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Machine Cards -->
+                <div class="row" id="dashboard-grid">
+                    <!-- Machine cards will be dynamically added here -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2">Loading machine data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Machine Data Tab -->
+            <div class="tab-pane fade" id="machine-tab">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Machine Data by Type</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="machine-filter" class="form-label">Filter Machine:</label>
+                            <select id="machine-filter" class="form-select" style="max-width: 300px;">
+                                <option value="all">All Machines</option>
+                                <!-- Machine options will be dynamically added -->
+                            </select>
+                        </div>
+                        <div class="row" id="machine-data-list">
+                            <!-- Machine data cards will be dynamically added here -->
+                            <div class="col-12">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2">Loading machine data...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Tables Tab -->
+            <div class="tab-pane fade" id="table-tab">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">FMIACP Data Table</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-2 mb-md-0">
+                                <div class="input-group">
+                                    <input type="text" id="table-search" class="form-control" placeholder="Search data...">
+                                    <button class="btn btn-outline-secondary" type="button">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <select id="table-filter" class="form-select">
+                                    <option value="all">All Categories</option>
+                                    <!-- Category options will be dynamically added -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table id="fmiacp-data-table" class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Machine Name</th>
+                                        <th>Start Time</th>
+                                        <th>Category</th>
+                                        <th>Type</th>
+                                        <th>Measurement</th>
+                                        <th>Value</th>
+                                        <th>Last Update</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fmiacp-table-body">
+                                    <!-- Table rows will be dynamically added -->
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="py-4">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                                <p class="mt-2">Loading data...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="pagination-info mt-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button id="prev-page" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </button>
+                                    <button id="next-page" class="btn btn-sm btn-outline-primary ms-2">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                <div id="page-info">Page 1 of 1</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- App Status Tab -->
+            <div class="tab-pane fade" id="status-tab">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">FMIACP App Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">App Name</h6>
+                                        <p class="h4" id="app-name">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Version</h6>
+                                        <p class="h4" id="app-version">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Database Connection</h6>
+                                        <p class="h4" id="db-connection">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Data Statistics</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Data Store Size:</td>
+                                                    <td id="data-store-size">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Data Store Count:</td>
+                                                    <td id="data-store-count">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Data Store Fail Count:</td>
+                                                    <td id="data-store-fail-count">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Data Input Count:</td>
+                                                    <td id="data-input-count">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Data Input Request Count:</td>
+                                                    <td id="data-input-request-count">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Data Output Count:</td>
+                                                    <td id="data-output-count">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Data Output Request Count:</td>
+                                                    <td id="data-output-request-count">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">System Usage</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>CPU Usage:</td>
+                                                    <td id="cpu-usage">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Memory Usage:</td>
+                                                    <td id="memory-usage">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3">Loading FMIACP data...</p>
+        </div>
+    </div>
+    
+    <!-- Login Modal -->
+    <div class="modal fade" id="login-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login FMIACP</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="login-error" class="login-error"></div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username:</label>
+                        <input type="text" class="form-control" id="username" value="fmiacp">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password:</label>
+                        <input type="password" class="form-control" id="password" value="track1nd0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="login-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="login-submit">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast-notification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toast-title">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message"></div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container text-center">
+            <p class="footer-version">FMIACP Dashboard v2.0</p>
+            <p class="small text-muted">Copyright © 2025 by Trakindo Technology Dept.</p>
+        </div>
+    </footer>
+    
+    <!-- jQuery JS -->
+    <script src="assets/js/jquery.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/ui-handlers.js"></script>
+    <script src="assets/js/data-handlers.js"></script>
+</body>
+</html> 

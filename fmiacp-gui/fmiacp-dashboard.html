@@ -650,7 +650,7 @@
         let useMockData = false; // Set to true to use mock data instead of real API
         let apiBaseUrl = 'http://localhost:4990'; // Global API base URL that can be updated
         
-        // Replace the makeApiRequest function with this enhanced version
+        // Function to make API requests with proper authentication
         function makeApiRequest(url) {
             return new Promise((resolve, reject) => {
                 // If using mock data, return mock response
@@ -689,52 +689,85 @@
                     return;
                 }
                 
-                // Make actual API request
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', url, true);
-                
-                // Add authentication header
+                // Make actual API request - Use fetch instead of XMLHttpRequest
                 const authString = btoa(`fmiacp:track1nd0`);
-                xhr.setRequestHeader('Authorization', 'Basic ' + authString);
                 
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            try {
-                                const response = JSON.parse(xhr.responseText);
-                                updateLoginStatus(true); // Update status on successful response
-                                resolve(response);
-                            } catch (error) {
-                                console.error("Error parsing response:", error);
-                                updateLoginStatus(false);
-                                reject(new Error("Invalid response format"));
-                            }
-                        } else if (xhr.status === 401) {
-                            console.error("Authentication failed");
-                            updateLoginStatus(false);
-                            reject(new Error("Authentication failed. Please try again."));
-                        } else {
-                            console.error("Request failed with status:", xhr.status);
-                            updateLoginStatus(false);
-                            reject(new Error(`Request failed with status: ${xhr.status}`));
-                        }
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Basic ${authString}`
+                    },
+                    // Don't include credentials to avoid CORS issues
+                    credentials: 'omit'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else if (response.status === 401) {
+                        throw new Error("Authentication failed. Please try again.");
+                    } else {
+                        throw new Error(`Request failed with status: ${response.status}`);
                     }
-                };
-                
-                xhr.onerror = function() {
-                    console.error("Network error occurred");
+                })
+                .then(data => {
+                    updateLoginStatus(true);
+                    resolve(data);
+                })
+                .catch(error => {
+                    console.error("API request error:", error);
                     updateLoginStatus(false);
-                    reject(new Error("Network error occurred"));
-                };
-                
-                xhr.timeout = 10000; // 10 second timeout
-                xhr.ontimeout = function() {
-                    console.error("Request timed out");
-                    updateLoginStatus(false);
-                    reject(new Error("Request timed out"));
-                };
-                
-                xhr.send();
+                    
+                    // If we're running from file protocol and got a CORS error
+                    if (window.location.protocol === 'file:' && 
+                        (error.message.includes('NetworkError') || error.message.includes('Failed to fetch'))) {
+                        
+                        console.log("CORS issue detected when running from file:// protocol");
+                        
+                        // Try enabling mock data automatically
+                        if (!useMockData) {
+                            console.log("Switching to mock data due to CORS error");
+                            const mockCheckbox = document.getElementById('use-mock-data');
+                            if (mockCheckbox) {
+                                mockCheckbox.checked = true;
+                            }
+                            useMockData = true;
+                            
+                            // Try generating mock data instead
+                            const { mockData, mockCurrentData } = generateMockData();
+                            if (url.includes('getFMIACP')) {
+                                resolve(mockData);
+                            } else if (url.includes('getFMIACPCurrent')) {
+                                resolve(mockCurrentData);
+                            } else if (url.includes('getAppStatusFMIACP')) {
+                                resolve({
+                                    Name: "FMIACP Mock Server",
+                                    Version: "2.0 (Simulator)",
+                                    DataStoreSize: mockData.length,
+                                    DataStoreCount: mockData.length,
+                                    DataStoreFailCount: 0,
+                                    DataInputCount: 200,
+                                    DataInputRequestCount: 20,
+                                    DataOutputCount: 300,
+                                    DataOutputRequestCount: 30,
+                                    DatabaseConnection: "Connected",
+                                    UsageMemory: {
+                                        heapTotal: 50 * 1024 * 1024,
+                                        heapUsed: 25 * 1024 * 1024
+                                    },
+                                    CPU: 15
+                                });
+                            }
+                            return;
+                        }
+                        
+                        reject(new Error("Terjadi masalah CORS saat mengakses API. Solusinya:\n" +
+                                       "1. Gunakan opsi 'Gunakan Data Simulasi'\n" +
+                                       "2. Jalankan dashboard dari domain yang sama dengan API\n" +
+                                       "3. Hosting dashboard di web server"));
+                    } else {
+                        reject(error);
+                    }
+                });
             });
         }
         
@@ -822,20 +855,20 @@
             // Add logout button to the top navigation
             const logoutBtn = document.querySelector('#logout-btn') || document.createElement('button');
             if (!document.querySelector('#logout-btn')) {
-                logoutBtn.className = 'nav-btn';
+            logoutBtn.className = 'nav-btn';
                 logoutBtn.id = 'logout-btn';
-                logoutBtn.innerHTML = '⏻'; // Logout icon
-                logoutBtn.title = 'Logout';
-                logoutBtn.style.marginRight = '10px';
+            logoutBtn.innerHTML = '⏻'; // Logout icon
+            logoutBtn.title = 'Logout';
+            logoutBtn.style.marginRight = '10px';
                 logoutBtn.style.display = 'none'; // Hidden by default until logged in
-                
-                logoutBtn.addEventListener('click', () => {
+            
+            logoutBtn.addEventListener('click', () => {
                     alert('Berhasil logout. Silahkan login kembali untuk mengakses data.');
                     // Trigger login on next request
                     fetchData();
-                });
-                
-                topnavRight.insertBefore(logoutBtn, topnavRight.firstChild);
+            });
+            
+            topnavRight.insertBefore(logoutBtn, topnavRight.firstChild);
             }
             
             // Set up tab navigation
@@ -944,23 +977,23 @@
                 
                 try {
                     // Make requests with error handling
-                    const [dataAll, dataCurrent, appStatus] = await Promise.all([
-                        makeApiRequest(`${apiBaseUrl}/api/getFMIACP`),
-                        makeApiRequest(`${apiBaseUrl}/api/getFMIACPCurrent`),
-                        makeApiRequest(`${apiBaseUrl}/api/getAppStatusFMIACP`)
-                    ]);
-                    
-                    // Update data & UI
-                    fmiacpData = dataAll;
-                    fmiacpCurrentData = dataCurrent;
-                    
-                    updateDashboard();
-                    renderMachineData();
-                    renderDataTable();
-                    updateAppStatus(appStatus);
-                    
-                    document.getElementById('last-update-time').textContent = new Date().toLocaleString();
-                } catch (err) {
+                        const [dataAll, dataCurrent, appStatus] = await Promise.all([
+                            makeApiRequest(`${apiBaseUrl}/api/getFMIACP`),
+                            makeApiRequest(`${apiBaseUrl}/api/getFMIACPCurrent`),
+                            makeApiRequest(`${apiBaseUrl}/api/getAppStatusFMIACP`)
+                        ]);
+                        
+                        // Update data & UI
+                        fmiacpData = dataAll;
+                        fmiacpCurrentData = dataCurrent;
+                        
+                        updateDashboard();
+                        renderMachineData();
+                        renderDataTable();
+                        updateAppStatus(appStatus);
+                        
+                        document.getElementById('last-update-time').textContent = new Date().toLocaleString();
+                    } catch (err) {
                     console.error('Error fetching data:', err);
                     displayError(err);
                     // Try with mock data if API fails
@@ -1362,8 +1395,7 @@
                     `"${item.TYPE || ''}"`,
                     `"${item.MEASUREMENT || ''}"`,
                     `"${item.VALUE || ''}"`,
-                    `"${lastUpdate}"`
-                ];
+                    `"${lastUpdate}"`                ];
                 
                 csvContent += row.join(',') + '\n';
             });
@@ -1423,7 +1455,7 @@
             console.log(`Mock data ${enabled ? 'enabled' : 'disabled'}`);
             fetchData(); // Refresh data with new setting
         }
-        
+
         // Function to update API URL
         function updateApiUrl() {
             const newUrl = document.getElementById('api-url-input').value;
@@ -1432,6 +1464,126 @@
                 console.log(`API URL updated to: ${apiBaseUrl}`);
                 fetchData(); // Refresh data with new URL
             }
+        }
+
+        // Function to attempt connection to a specific port
+        async function attemptConnection(port) {
+            try {
+                const tempUrl = `http://localhost:${port}`;
+                notification.innerHTML = `Mencoba koneksi ke port ${port}...`;
+                
+                // Create a promise that will resolve when we get a response
+                return new Promise((resolve) => {
+                    // Use fetch with no-cors mode to check if server exists
+                    // We can't read the response in no-cors mode, but we can detect if the server exists
+                    fetch(`${tempUrl}/api/getAppStatusFMIACP`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Basic ${btoa('fmiacp:track1nd0')}`
+                        },
+                        mode: 'no-cors',  // This prevents CORS errors
+                        credentials: 'omit'  // Don't send cookies
+                    })
+                    .then(() => {
+                        // If fetch succeeds in no-cors mode, server exists
+                        resolve(true);
+                    })
+                    .catch(() => {
+                        // If fetch fails, try an alternative method
+                        const img = new Image();
+                        img.onload = function() {
+                            // If image loads, server likely exists
+                            resolve(true);
+                        };
+                        img.onerror = function() {
+                            // Server might exist but doesn't serve images
+                            resolve(false);
+                        };
+                        // Try to load a favicon or other common file to see if server responds
+                        img.src = `${tempUrl}/favicon.ico?${new Date().getTime()}`;
+                        
+                        // Set a timeout to resolve false if image loading takes too long
+                        setTimeout(() => {
+                            resolve(false);
+                        }, 2000);
+                    });
+                });
+            } catch (error) {
+                console.error("Error checking port:", error);
+                return false;
+            }
+        }
+
+        // Function to try next port in sequence
+        async function tryNextPort() {
+            // List of common ports to try
+            const commonPorts = [4990, 50790, 8080, 3000, 5000];
+            let currentPortIndex = 0;
+            
+            // Display notification to user
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.padding = '12px 20px';
+            notification.style.backgroundColor = '#3498db';
+            notification.style.color = 'white';
+            notification.style.borderRadius = '4px';
+            notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            notification.style.zIndex = '9999';
+            notification.style.maxWidth = '350px';
+            notification.style.transition = 'opacity 0.5s ease-in-out';
+            notification.innerHTML = 'Mencari port server API...';
+            document.body.appendChild(notification);
+            
+            // Try ports sequentially
+            for (const port of commonPorts) {
+                const success = await attemptConnection(port);
+                if (success) {
+                    // Update API URL with successful port
+                    apiBaseUrl = `http://localhost:${port}`;
+                    document.getElementById('api-url-input').value = apiBaseUrl;
+                    
+                    // Update notification
+                    notification.style.backgroundColor = '#2ecc71';
+                    notification.innerHTML = `Terhubung ke server API pada port ${port}`;
+                    setTimeout(() => {
+                        notification.style.opacity = '0';
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 500);
+                    }, 3000);
+                    
+                    // Try to fetch data with new URL
+                    try {
+                        await fetchData();
+                        return true;
+                    } catch (error) {
+                        console.error("Error fetching data after port detection:", error);
+                        // Continue trying other ports if data fetch fails
+                    }
+                }
+            }
+            
+            // If all ports failed
+            notification.style.backgroundColor = '#e74c3c';
+            notification.innerHTML = 'Tidak dapat menemukan server API pada port manapun. Menggunakan data simulasi.';
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 5000);
+            
+            // Switch to mock data if all ports fail
+            useMockData = true;
+            const mockCheckbox = document.getElementById('use-mock-data');
+            if (mockCheckbox) {
+                mockCheckbox.checked = true;
+            }
+            fetchData();
+            
+            return false;
         }
     </script>
 </body>

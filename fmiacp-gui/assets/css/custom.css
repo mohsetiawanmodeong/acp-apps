@@ -1,0 +1,325 @@
+/**
+ * FMIACP Dashboard Custom Styles
+ */
+
+:root {
+    --fmiacp-primary: #0a2351;
+    --fmiacp-secondary: #ffd43b;
+    --fmiacp-success: #28a745;
+    --fmiacp-danger: #dc3545;
+    --fmiacp-warning: #ffc107;
+    --fmiacp-info: #17a2b8;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    overflow-x: hidden;
+}
+
+/* Navbar styling */
+.navbar {
+    background-color: var(--fmiacp-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    color: var(--fmiacp-secondary) !important;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.navbar-brand img {
+    height: 40px;
+    width: auto;
+}
+
+/* Tab navigation */
+.nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: #fff !important;
+}
+
+.nav-link.active {
+    color: var(--fmiacp-secondary) !important;
+    font-weight: bold;
+    border-bottom: 2px solid var(--fmiacp-secondary);
+}
+
+/* Dashboard nav pills */
+.dashboard-nav .nav-link {
+    color: var(--fmiacp-primary) !important;
+    border-radius: 0.25rem;
+    margin-right: 0.5rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.dashboard-nav .nav-link:hover {
+    background-color: rgba(10, 35, 81, 0.1);
+    color: var(--fmiacp-primary) !important;
+}
+
+.dashboard-nav .nav-link.active {
+    background-color: var(--fmiacp-primary);
+    color: white !important;
+    border: none;
+    font-weight: 600;
+}
+
+/* Title text styling */
+.title-text {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* Fullscreen button */
+#fullscreen-btn {
+    border-color: rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+}
+
+#fullscreen-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+}
+
+/* Dashboard header area */
+.dashboard-controls {
+    background-color: #fff;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+/* Status indicators */
+.status-connected {
+    color: var(--fmiacp-success) !important;
+    font-weight: bold;
+}
+
+.status-disconnected {
+    color: var(--fmiacp-danger) !important;
+}
+
+.status-indicator {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.status-active {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: var(--fmiacp-success);
+}
+
+.status-inactive {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--fmiacp-danger);
+}
+
+.status-running {
+    color: var(--fmiacp-success);
+}
+
+.status-stopped {
+    color: var(--fmiacp-danger);
+}
+
+#login-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+/* Loading overlay */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.25rem;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Stat cards */
+.stat-card {
+    text-align: center;
+    padding: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
+
+.stat-value.total {
+    color: var(--fmiacp-primary);
+}
+
+.stat-value.online {
+    color: var(--fmiacp-success);
+}
+
+.stat-value.offline {
+    color: var(--fmiacp-danger);
+}
+
+/* Table styling */
+.table-responsive {
+    border-radius: 0.25rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    border-top: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.pagination-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom cards */
+.card {
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: rgba(10, 35, 81, 0.1);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Machine Data cards */
+.machine-data-items {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.machine-data-items table {
+    margin-bottom: 0;
+}
+
+/* Login modal */
+.login-error {
+    color: var(--fmiacp-danger);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Footer styling */
+.footer {
+    background-color: #f0f0f0;
+    color: #666;
+    padding: 1rem 0;
+    margin-top: 2rem;
+    border-top: 1px solid #ddd;
+}
+
+.footer-version {
+    font-weight: bold;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+/* Error container */
+.error-container {
+    border-radius: 0.25rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.error-help {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 0.25rem;
+}
+
+/* Fix for Bootstrap 5 tabs */
+.tab-content > .tab-pane {
+    display: none;
+}
+
+.tab-content > .active {
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+    
+    .navbar-brand img {
+        height: 30px;
+    }
+}
+
+/* Custom icons and indicators */
+.indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+} 
