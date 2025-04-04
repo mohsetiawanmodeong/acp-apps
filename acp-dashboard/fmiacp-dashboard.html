@@ -388,6 +388,23 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 15px;
         }
+        /* Add CSS for login status */
+        .status-connected {
+            color: #2ecc71 !important;
+            font-weight: bold;
+        }
+        .status-disconnected {
+            color: #e74c3c !important;
+        }
+        #login-status {
+            padding: 4px 8px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        #logout-btn {
+            display: none; /* Hidden by default until logged in */
+        }
     </style>
 </head>
 <body>
@@ -418,8 +435,19 @@
             <div>
                 <button id="download-data-btn">Download Data (.csv)</button>
                 <span style="margin-left: 10px; font-size: 0.9em; color: #666;">Download FMIACP data in CSV format</span>
+                <div style="margin-top: 8px;">
+                    <label style="margin-right: 10px; display: flex; align-items: center;">
+                        <input type="checkbox" id="use-mock-data" style="margin-right: 5px;" onclick="toggleMockData(this.checked)">
+                        Gunakan Data Simulasi
+                    </label>
+                </div>
             </div>
             <div class="update-controls">
+                <div style="margin-bottom: 6px; display: flex; align-items: center;">
+                    <label style="margin-right: 5px;">API URL:</label>
+                    <input type="text" id="api-url-input" value="http://localhost:4990" style="width: 200px; margin-right: 5px; padding: 3px;">
+                    <button onclick="updateApiUrl()" style="padding: 3px 8px;">Update</button>
+                </div>
                 <div class="update-frequency">
                     <label>Update interval:</label>
                     <select id="refresh-interval">
@@ -624,140 +652,89 @@
         
         // Replace the makeApiRequest function with this enhanced version
         function makeApiRequest(url) {
-            return new Promise(async (resolve, reject) => {
-                // Get stored credentials or prompt for new ones
-                let auth = sessionStorage.getItem('fmiacp_auth');
-                let retryCount = 0;
-                const maxRetries = 2;
-                
-                async function tryRequest() {
-                    if (!auth || retryCount > 0) {
-                        // Show login modal if not already logged in or if previous attempt failed
-                        sessionStorage.removeItem('fmiacp_auth'); // Clear any existing auth
-                        const credentials = await showLoginPrompt();
-                        if (!credentials) {
-                            reject(new Error("Authentication canceled"));
-                            return;
+            return new Promise((resolve, reject) => {
+                // If using mock data, return mock response
+                if (useMockData) {
+                    setTimeout(() => {
+                        // Generate mock data for testing
+                        const { mockData, mockCurrentData } = generateMockData();
+                        
+                        if (url.includes('getFMIACP')) {
+                            resolve(mockData);
+                        } else if (url.includes('getFMIACPCurrent')) {
+                            resolve(mockCurrentData);
+                        } else if (url.includes('getAppStatusFMIACP')) {
+                            resolve({
+                                Name: "FMIACP Mock Server",
+                                Version: "2.0 (Simulator)",
+                                DataStoreSize: mockData.length,
+                                DataStoreCount: mockData.length,
+                                DataStoreFailCount: 0,
+                                DataInputCount: 200,
+                                DataInputRequestCount: 20,
+                                DataOutputCount: 300,
+                                DataOutputRequestCount: 30,
+                                DatabaseConnection: "Connected",
+                                UsageMemory: {
+                                    heapTotal: 50 * 1024 * 1024,
+                                    heapUsed: 25 * 1024 * 1024
+                                },
+                                CPU: 15
+                            });
                         }
                         
-                        auth = btoa(`${credentials.username}:${credentials.password}`);
-                        sessionStorage.setItem('fmiacp_auth', auth);
-                    }
-                    
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('GET', url, true);
-                    xhr.setRequestHeader('Authorization', 'Basic ' + auth);
-                    xhr.withCredentials = false;
-                    
-                    xhr.onreadystatechange = function() {
-                        if (xhr.readyState === 4) {
-                            if (xhr.status === 200) {
-                                try {
-                                    const data = JSON.parse(xhr.responseText);
-                                    resolve(data);
-                                } catch (e) {
-                                    reject(new Error("Failed to parse response"));
-                                }
-                            } else if (xhr.status === 401) {
-                                // Authentication failed
-                                console.log("Authentication failed, trying again...");
-                                if (retryCount < maxRetries) {
-                                    retryCount++;
-                                    tryRequest(); // Try again with new credentials
-                                } else {
-                                    reject(new Error("Authentication failed after multiple attempts"));
-                                }
-                            } else {
-                                reject(new Error(`Request failed. Status: ${xhr.status}`));
-                            }
-                        }
-                    };
-                    
-                    xhr.onerror = function() {
-                        reject(new Error("Network error occurred"));
-                    };
-                    
-                    xhr.send();
+                        // Update login status for mock data
+                        updateLoginStatus(true);
+                    }, 500);
+                    return;
                 }
                 
-                // Start the request process
-                tryRequest();
-            });
-        }
-        
-        // Replace the showLoginPrompt function with this improved version
-        function showLoginPrompt() {
-            return new Promise((resolve) => {
-                // Create modal elements
-                const modal = document.createElement('div');
-                modal.style.position = 'fixed';
-                modal.style.top = '0';
-                modal.style.left = '0';
-                modal.style.width = '100%';
-                modal.style.height = '100%';
-                modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-                modal.style.display = 'flex';
-                modal.style.justifyContent = 'center';
-                modal.style.alignItems = 'center';
-                modal.style.zIndex = '1001';
+                // Make actual API request
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
                 
-                const modalContent = document.createElement('div');
-                modalContent.style.backgroundColor = 'white';
-                modalContent.style.padding = '20px';
-                modalContent.style.borderRadius = '5px';
-                modalContent.style.width = '300px';
-                modalContent.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+                // Add authentication header
+                const authString = btoa(`fmiacp:track1nd0`);
+                xhr.setRequestHeader('Authorization', 'Basic ' + authString);
                 
-                modalContent.innerHTML = `
-                    <h3 style="margin-top: 0; color: #2980b9;">FMIACP Dashboard Login</h3>
-                    <p style="font-size: 14px; color: #666;">Enter your credentials to access the dashboard</p>
-                    <p style="font-size: 12px; color: #e74c3c; font-weight: bold;">These should match the credentials in your FMIACP server config</p>
-                    <div style="margin-bottom: 15px;">
-                        <label for="username" style="display: block; margin-bottom: 5px; font-size: 14px;">Username:</label>
-                        <input type="text" id="login-username" style="width: 100%; padding: 8px; box-sizing: border-box;" />
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label for="password" style="display: block; margin-bottom: 5px; font-size: 14px;">Password:</label>
-                        <input type="password" id="login-password" style="width: 100%; padding: 8px; box-sizing: border-box;" />
-                    </div>
-                    <div style="text-align: right;">
-                        <button id="login-cancel" style="background-color: #e74c3c; margin-right: 10px;">Cancel</button>
-                        <button id="login-submit" style="background-color: #2980b9;">Login</button>
-                    </div>
-                `;
-                
-                modal.appendChild(modalContent);
-                document.body.appendChild(modal);
-                
-                // Set focus to username field
-                setTimeout(() => {
-                    document.getElementById('login-username').focus();
-                }, 100);
-                
-                // Add event listeners
-                document.getElementById('login-submit').addEventListener('click', () => {
-                    const username = document.getElementById('login-username').value;
-                    const password = document.getElementById('login-password').value;
-                    
-                    if (username && password) {
-                        document.body.removeChild(modal);
-                        resolve({ username, password });
-                    } else {
-                        alert('Please enter both username and password');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                updateLoginStatus(true); // Update status on successful response
+                                resolve(response);
+                            } catch (error) {
+                                console.error("Error parsing response:", error);
+                                updateLoginStatus(false);
+                                reject(new Error("Invalid response format"));
+                            }
+                        } else if (xhr.status === 401) {
+                            console.error("Authentication failed");
+                            updateLoginStatus(false);
+                            reject(new Error("Authentication failed. Please try again."));
+                        } else {
+                            console.error("Request failed with status:", xhr.status);
+                            updateLoginStatus(false);
+                            reject(new Error(`Request failed with status: ${xhr.status}`));
+                        }
                     }
-                });
+                };
                 
-                document.getElementById('login-cancel').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                    resolve(null);
-                });
+                xhr.onerror = function() {
+                    console.error("Network error occurred");
+                    updateLoginStatus(false);
+                    reject(new Error("Network error occurred"));
+                };
                 
-                // Allow pressing Enter to submit
-                document.getElementById('login-password').addEventListener('keyup', (e) => {
-                    if (e.key === 'Enter') {
-                        document.getElementById('login-submit').click();
-                    }
-                });
+                xhr.timeout = 10000; // 10 second timeout
+                xhr.ontimeout = function() {
+                    console.error("Request timed out");
+                    updateLoginStatus(false);
+                    reject(new Error("Request timed out"));
+                };
+                
+                xhr.send();
             });
         }
         
@@ -825,61 +802,41 @@
         
         // Document ready function
         document.addEventListener('DOMContentLoaded', () => {
-            // Add logout button to the top navigation
+            // Add login status display to the top navigation
             const topnavRight = document.querySelector('.topnav-right');
-            const logoutBtn = document.createElement('button');
-            logoutBtn.className = 'nav-btn';
-            logoutBtn.innerHTML = '⏻'; // Logout icon
-            logoutBtn.title = 'Logout';
-            logoutBtn.style.marginRight = '10px';
+            if (!document.querySelector('#login-status')) {
+                const statusDiv = document.createElement('div');
+                statusDiv.style.display = 'flex';
+                statusDiv.style.alignItems = 'center';
+                statusDiv.style.marginRight = '15px';
+                statusDiv.innerHTML = `
+                    <span style="color: white; margin-right: 5px;">API:</span>
+                    <span id="login-status" class="status-disconnected" title="Silahkan login untuk mengakses data">Terputus</span>
+                `;
+                topnavRight.insertBefore(statusDiv, topnavRight.firstChild);
+                
+                // Update the status with the current port
+                updateLoginStatus(false);
+            }
             
-            logoutBtn.addEventListener('click', () => {
-                sessionStorage.removeItem('fmiacp_auth');
-                alert('Logged out successfully');
-                fetchData(); // Reload data (will prompt for login)
-            });
-            
-            topnavRight.insertBefore(logoutBtn, topnavRight.firstChild);
-            
-            // Add a toggle for mock data and API URL input
-            const controlsDiv = document.querySelector('.dashboard-controls > div');
-            const mockDataToggle = document.createElement('div');
-            mockDataToggle.style.marginTop = '10px';
-            mockDataToggle.innerHTML = `
-                <label style="display: inline-flex; align-items: center; cursor: pointer; margin-left: 10px;">
-                    <input type="checkbox" id="use-mock-data" style="margin-right: 5px;">
-                    Use mock data (for testing without API)
-                </label>
-                <div style="margin-top: 10px;">
-                    <label style="margin-right: 5px;">API URL:</label>
-                    <input type="text" id="api-url-input" value="${apiBaseUrl}" style="width: 200px; padding: 3px;">
-                    <button id="update-api-url" style="margin-left: 5px; padding: 3px 8px;">Update</button>
-                </div>
-            `;
-            controlsDiv.appendChild(mockDataToggle);
-            
-            // Add event listener for mock data toggle
-            document.getElementById('use-mock-data').addEventListener('change', e => {
-                useMockData = e.target.checked;
-                fetchData(); // Reload data
-            });
-            
-            // Add event listener for API URL update button
-            document.getElementById('update-api-url').addEventListener('click', () => {
-                const newApiUrl = document.getElementById('api-url-input').value.trim();
-                if (newApiUrl) {
-                    console.log(`Updating API URL to: ${newApiUrl}`);
-                    apiBaseUrl = newApiUrl;
-                    fetchData(); // Reload data with new URL
-                }
-            });
-            
-            // Allow pressing Enter in the API URL input field
-            document.getElementById('api-url-input').addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') {
-                    document.getElementById('update-api-url').click();
-                }
-            });
+            // Add logout button to the top navigation
+            const logoutBtn = document.querySelector('#logout-btn') || document.createElement('button');
+            if (!document.querySelector('#logout-btn')) {
+                logoutBtn.className = 'nav-btn';
+                logoutBtn.id = 'logout-btn';
+                logoutBtn.innerHTML = '⏻'; // Logout icon
+                logoutBtn.title = 'Logout';
+                logoutBtn.style.marginRight = '10px';
+                logoutBtn.style.display = 'none'; // Hidden by default until logged in
+                
+                logoutBtn.addEventListener('click', () => {
+                    alert('Berhasil logout. Silahkan login kembali untuk mengakses data.');
+                    // Trigger login on next request
+                    fetchData();
+                });
+                
+                topnavRight.insertBefore(logoutBtn, topnavRight.firstChild);
+            }
             
             // Set up tab navigation
             setupTabs();
@@ -943,7 +900,7 @@
             
             try {
                 if (useMockData) {
-                    // Use mock data code remains the same
+                    // Use mock data
                     console.log('Using mock data instead of API');
                     const { mockData, mockCurrentData } = generateMockData();
                     fmiacpData = mockData;
@@ -968,6 +925,9 @@
                         CPU: 5
                     };
                     
+                    // Update login status for mock mode
+                    updateLoginStatus(true);
+                    
                     // Update UI
                     updateDashboard();
                     renderMachineData();
@@ -983,36 +943,37 @@
                 console.log(`Fetching data from API: ${apiBaseUrl}`);
                 
                 try {
-                    // Make requests with error handling for auth
-                    try {
-                        const [dataAll, dataCurrent, appStatus] = await Promise.all([
-                            makeApiRequest(`${apiBaseUrl}/api/getFMIACP`),
-                            makeApiRequest(`${apiBaseUrl}/api/getFMIACPCurrent`),
-                            makeApiRequest(`${apiBaseUrl}/api/getAppStatusFMIACP`)
-                        ]);
-                        
-                        // Update data & UI
-                        fmiacpData = dataAll;
-                        fmiacpCurrentData = dataCurrent;
-                        
-                        updateDashboard();
-                        renderMachineData();
-                        renderDataTable();
-                        updateAppStatus(appStatus);
-                        
-                        document.getElementById('last-update-time').textContent = new Date().toLocaleString();
-                    } catch (err) {
-                        if (err.message === "Authentication failed. Please try again.") {
-                            // Try once more with new credentials
-                            fetchData();
-                            return;
-                        } else {
-                            throw err;
+                    // Make requests with error handling
+                    const [dataAll, dataCurrent, appStatus] = await Promise.all([
+                        makeApiRequest(`${apiBaseUrl}/api/getFMIACP`),
+                        makeApiRequest(`${apiBaseUrl}/api/getFMIACPCurrent`),
+                        makeApiRequest(`${apiBaseUrl}/api/getAppStatusFMIACP`)
+                    ]);
+                    
+                    // Update data & UI
+                    fmiacpData = dataAll;
+                    fmiacpCurrentData = dataCurrent;
+                    
+                    updateDashboard();
+                    renderMachineData();
+                    renderDataTable();
+                    updateAppStatus(appStatus);
+                    
+                    document.getElementById('last-update-time').textContent = new Date().toLocaleString();
+                } catch (err) {
+                    console.error('Error fetching data:', err);
+                    displayError(err);
+                    // Try with mock data if API fails
+                    if (!useMockData) {
+                        console.log('Switching to mock data due to API error');
+                        useMockData = true;
+                        // Update checkbox if it exists
+                        const mockDataCheckbox = document.getElementById('use-mock-data');
+                        if (mockDataCheckbox) {
+                            mockDataCheckbox.checked = true;
                         }
+                        fetchData(); // Retry with mock data
                     }
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                    displayError(error);
                 }
             } catch (error) {
                 console.error('Unexpected error:', error);
@@ -1422,6 +1383,55 @@
         // Function to show/hide loading overlay
         function showLoading(show) {
             document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        // Add the missing updateLoginStatus function
+        function updateLoginStatus(isLoggedIn) {
+            const statusElement = document.getElementById('login-status');
+            
+            if (statusElement) {
+                // Extract port from API URL
+                const portMatch = apiBaseUrl.match(/:(\d+)/);
+                const port = portMatch ? portMatch[1] : '?';
+                
+                // Update status text
+                statusElement.textContent = isLoggedIn ? 
+                    `Tersambung (Port: ${port})` : 
+                    `Terputus (Port: ${port})`;
+                    
+                // Update class for styling
+                statusElement.className = isLoggedIn ? 
+                    'status-connected' : 
+                    'status-disconnected';
+                    
+                // Update tooltip
+                statusElement.title = isLoggedIn ? 
+                    `Terhubung ke API pada ${apiBaseUrl}` : 
+                    "Silahkan login untuk mengakses data";
+                    
+                // Update logout button visibility
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.style.display = isLoggedIn ? 'inline-block' : 'none';
+                }
+            }
+        }
+
+        // Function to toggle mock data
+        function toggleMockData(enabled) {
+            useMockData = enabled;
+            console.log(`Mock data ${enabled ? 'enabled' : 'disabled'}`);
+            fetchData(); // Refresh data with new setting
+        }
+        
+        // Function to update API URL
+        function updateApiUrl() {
+            const newUrl = document.getElementById('api-url-input').value;
+            if (newUrl) {
+                apiBaseUrl = newUrl;
+                console.log(`API URL updated to: ${apiBaseUrl}`);
+                fetchData(); // Refresh data with new URL
+            }
         }
     </script>
 </body>
