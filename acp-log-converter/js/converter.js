@@ -1,9 +1,9 @@
 /**
  * ACP Log Converter
- * Mengonversi log dari ACP ADAM ke format JSON
+ * Converts ACP ADAM logs to JSON format
  */
 
-// Data yang akan disimpan dalam memori
+// Data stored in memory
 let convertedData = {};
 
 // DOM elements
@@ -11,10 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Input elements
     const logFileInput = document.getElementById('logFileInput');
     const convertBtn = document.getElementById('convertBtn');
-    const customMachineNameCheck = document.getElementById('customMachineNameCheck');
-    const customMachineNameDiv = document.getElementById('customMachineNameDiv');
-    const customMachineName = document.getElementById('customMachineName');
-    const timezoneSelect = document.getElementById('timezoneSelect');
     
     // Output elements
     const resultSection = document.getElementById('resultSection');
@@ -25,18 +21,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const closePreviewBtn = document.getElementById('closePreviewBtn');
     const copyJsonBtn = document.getElementById('copyJsonBtn');
 
-    // Event listeners
-    customMachineNameCheck.addEventListener('change', function() {
-        customMachineNameDiv.classList.toggle('d-none', !this.checked);
-    });
+    // Default timezone WIT (UTC+9)
+    const DEFAULT_TIMEZONE = "+09:00";
 
+    // Event listeners
     convertBtn.addEventListener('click', function() {
         if (logFileInput.files.length === 0) {
-            alert('Silakan pilih file log terlebih dahulu.');
+            alert('Please select at least one log file.');
             return;
         }
 
-        // Konversi semua file yang dipilih
+        // Convert all selected files
         convertFiles(logFileInput.files);
     });
 
@@ -44,37 +39,37 @@ document.addEventListener('DOMContentLoaded', function() {
         previewCard.classList.add('d-none');
     });
     
-    // Tambahkan event listener untuk tombol copy
+    // Add event listener for copy button
     copyJsonBtn.addEventListener('click', function() {
         const jsonText = jsonPreview.textContent;
         copyToClipboard(jsonText);
     });
 
-    // Pastikan tombol tutup menggunakan class btn-secondary
+    // Ensure close button uses btn-secondary class
     if (closePreviewBtn && !closePreviewBtn.classList.contains('btn-secondary')) {
         closePreviewBtn.classList.remove('btn-primary', 'btn-danger', 'btn-success', 'btn-info', 'btn-warning');
         closePreviewBtn.classList.add('btn-secondary');
     }
 
-    // Fungsi untuk menyalin teks ke clipboard
+    // Function to copy text to clipboard
     function copyToClipboard(text) {
-        // Menggunakan Clipboard API jika tersedia (modern browsers)
+        // Use Clipboard API if available (modern browsers)
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text)
                 .then(() => {
                     showCopySuccess();
                 })
                 .catch((err) => {
-                    console.error('Gagal menyalin: ', err);
+                    console.error('Failed to copy: ', err);
                     fallbackCopyToClipboard(text);
                 });
         } else {
-            // Fallback untuk browser yang tidak mendukung Clipboard API
+            // Fallback for browsers that don't support Clipboard API
             fallbackCopyToClipboard(text);
         }
     }
 
-    // Fallback method untuk menyalin teks ke clipboard
+    // Fallback method to copy text to clipboard
     function fallbackCopyToClipboard(text) {
         try {
             const textArea = document.createElement('textarea');
@@ -92,24 +87,24 @@ document.addEventListener('DOMContentLoaded', function() {
             if (success) {
                 showCopySuccess();
             } else {
-                console.error('Fallback: Gagal menyalin teks');
+                console.error('Fallback: Failed to copy text');
             }
         } catch (err) {
-            console.error('Fallback: Gagal menyalin teks', err);
+            console.error('Fallback: Failed to copy text', err);
         }
     }
 
-    // Menampilkan indikator sukses setelah menyalin
+    // Show success indicator after copying
     function showCopySuccess() {
-        // Simpan teks asli tombol
+        // Save original button text
         const originalText = copyJsonBtn.textContent;
         
-        // Ubah teks dan tampilan tombol
-        copyJsonBtn.textContent = 'Tersalin!';
+        // Change button text and appearance
+        copyJsonBtn.textContent = 'Copied!';
         copyJsonBtn.classList.remove('btn-primary');
         copyJsonBtn.classList.add('btn-success');
         
-        // Kembalikan ke tampilan asli setelah 2 detik
+        // Restore original appearance after 2 seconds
         setTimeout(() => {
             copyJsonBtn.textContent = originalText;
             copyJsonBtn.classList.remove('btn-success');
@@ -117,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
 
-    // Fungsi untuk mengonversi file yang dipilih
+    // Function to convert selected files
     function convertFiles(files) {
         // Reset output
         resultTable.innerHTML = '';
@@ -126,38 +121,38 @@ document.addEventListener('DOMContentLoaded', function() {
         let processedCount = 0;
         const totalFiles = files.length;
         
-        // Proses setiap file
+        // Process each file
         Array.from(files).forEach(file => {
             const reader = new FileReader();
             
             reader.onload = function(e) {
                 try {
-                    // Parse dan konversi data
+                    // Parse and convert data
                     const fileContent = e.target.result;
                     const fileName = file.name;
-                    const machineNameFromFile = extractMachineNameFromFilename(fileName);
-                    const machineName = customMachineNameCheck.checked ? customMachineName.value : machineNameFromFile;
-                    const timezone = timezoneSelect.value;
+                    const machineName = extractMachineNameFromFilename(fileName);
                     
-                    // Konversi log ke JSON
-                    const jsonData = convertLogToJson(fileContent, machineName, timezone);
+                    // Convert log to JSON
+                    const jsonData = convertLogToJson(fileContent, machineName, DEFAULT_TIMEZONE);
                     
-                    // Simpan hasil konversi
+                    // Save conversion result
                     convertedData[fileName] = jsonData;
                     
-                    // Tambahkan ke tabel hasil
+                    // Add to results table
                     addResultRow(fileName, jsonData.length);
                     
                     // Update counter
                     processedCount++;
                     
-                    // Cek apakah semua file sudah diproses
+                    // Check if all files have been processed
                     if (processedCount === totalFiles) {
-                        // Tampilkan ringkasan hasil konversi
+                        // Show conversion summary
                         resultSection.classList.remove('d-none');
-                        conversionResult.textContent = `Berhasil mengonversi ${totalFiles} file log menjadi format JSON.`;
+                        conversionResult.textContent = `Successfully converted ${totalFiles} log file${totalFiles !== 1 ? 's' : ''} to JSON format.`;
+                        conversionResult.classList.remove('alert-danger');
+                        conversionResult.classList.add('alert-success');
                         
-                        // Tampilkan preview JSON dari file pertama jika ada
+                        // Show preview of first file if available
                         if (Object.keys(convertedData).length > 0) {
                             const firstFileName = Object.keys(convertedData)[0];
                             showJsonPreview(firstFileName);
@@ -166,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch (error) {
                     console.error(`Error processing file ${file.name}:`, error);
                     resultSection.classList.remove('d-none');
-                    conversionResult.textContent = `Error saat memproses file ${file.name}: ${error.message}`;
+                    conversionResult.textContent = `Error processing file ${file.name}: ${error.message}`;
                     conversionResult.classList.remove('alert-success');
                     conversionResult.classList.add('alert-danger');
                 }
@@ -175,34 +170,34 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onerror = function() {
                 console.error(`Error reading file ${file.name}`);
                 resultSection.classList.remove('d-none');
-                conversionResult.textContent = `Error saat membaca file ${file.name}.`;
+                conversionResult.textContent = `Error reading file ${file.name}.`;
                 conversionResult.classList.remove('alert-success');
                 conversionResult.classList.add('alert-danger');
             };
             
-            // Baca file sebagai teks
+            // Read file as text
             reader.readAsText(file);
         });
     }
 
-    // Fungsi untuk menambahkan baris di tabel hasil
+    // Function to add a row to the results table
     function addResultRow(fileName, entryCount) {
         const row = document.createElement('tr');
         
-        // Nama file
+        // File name
         const fileNameCell = document.createElement('td');
         fileNameCell.textContent = fileName;
         row.appendChild(fileNameCell);
         
-        // Jumlah entri
+        // Entry count
         const countCell = document.createElement('td');
         countCell.textContent = entryCount;
         row.appendChild(countCell);
         
-        // Tombol aksi
+        // Action buttons
         const actionCell = document.createElement('td');
         
-        // Tombol preview
+        // Preview button
         const previewBtn = document.createElement('button');
         previewBtn.className = 'btn btn-sm btn-info me-2';
         previewBtn.textContent = 'Preview';
@@ -211,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         actionCell.appendChild(previewBtn);
         
-        // Tombol download
+        // Download button
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'btn btn-sm btn-success';
         downloadBtn.textContent = 'Download';
@@ -222,18 +217,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         row.appendChild(actionCell);
         
-        // Tambahkan ke tabel
+        // Add to table
         resultTable.appendChild(row);
     }
 
-    // Fungsi untuk menampilkan preview JSON
+    // Function to display JSON preview
     function showJsonPreview(fileName) {
         const jsonData = convertedData[fileName];
         jsonPreview.textContent = JSON.stringify(jsonData, null, 2);
         previewCard.classList.remove('d-none');
     }
 
-    // Fungsi untuk mendownload JSON
+    // Function to download JSON
     function downloadJson(fileName) {
         const jsonData = convertedData[fileName];
         const outputFileName = fileName.replace('.txt', '.json');
@@ -252,9 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Ekstrak nama mesin dari nama file log
- * @param {string} filename - Nama file log
- * @returns {string} Nama mesin
+ * Extract machine name from log filename
+ * @param {string} filename - Log filename
+ * @returns {string} Machine name
  */
 function extractMachineNameFromFilename(filename) {
     const match = filename.match(/cps_log_(\d+)_/);
@@ -262,11 +257,11 @@ function extractMachineNameFromFilename(filename) {
 }
 
 /**
- * Konversi isi log menjadi format JSON
- * @param {string} logContent - Isi file log
- * @param {string} machineName - Nama mesin
- * @param {string} timezone - Zona waktu (format: +XX:XX)
- * @returns {Array} Array objek JSON
+ * Convert log content to JSON format
+ * @param {string} logContent - Log file content
+ * @param {string} machineName - Machine name
+ * @param {string} timezone - Timezone (format: +XX:XX)
+ * @returns {Array} Array of JSON objects
  */
 function convertLogToJson(logContent, machineName, timezone) {
     const lines = logContent.split('\n');
@@ -276,14 +271,14 @@ function convertLogToJson(logContent, machineName, timezone) {
         const trimmedLine = line.trim();
         if (!trimmedLine) continue;
         
-        // Parse baris log
+        // Parse log line
         const parsedLine = parseLogLine(trimmedLine, timezone);
         if (!parsedLine) continue;
         
-        // Ekstrak category, type, dan value
+        // Extract category, type, and value
         const { category, type, value } = getCategoryTypeValue(parsedLine.message);
         
-        // Buat entri JSON
+        // Create JSON entry
         const jsonEntry = {
             "MACHINE_NAME": machineName,
             "START_TIME": parsedLine.timestamp,
@@ -300,10 +295,10 @@ function convertLogToJson(logContent, machineName, timezone) {
 }
 
 /**
- * Parse baris log untuk mendapatkan timestamp dan data log
- * @param {string} line - Baris log yang akan di-parse
- * @param {string} timezone - Zona waktu yang diinginkan
- * @returns {Object|null} Objek dengan timestamp dan message atau null jika format tidak sesuai
+ * Parse log line to get timestamp and log data
+ * @param {string} line - Log line to parse
+ * @param {string} timezone - Desired timezone
+ * @returns {Object|null} Object with timestamp and message or null if format doesn't match
  */
 function parseLogLine(line, timezone) {
     // Format: 2025-04-02 3:55:00 PM - Parking Brake System OFF
@@ -312,7 +307,7 @@ function parseLogLine(line, timezone) {
     
     const [_, date, time, ampm, message] = match;
     
-    // Konversi waktu ke format 24 jam
+    // Convert time to 24-hour format
     let [hour, minute, second] = time.split(':').map(Number);
     if (ampm === 'PM' && hour < 12) {
         hour += 12;
@@ -320,7 +315,7 @@ function parseLogLine(line, timezone) {
         hour = 0;
     }
     
-    // Format timestamp dengan timezone yang dipilih
+    // Format timestamp with selected timezone
     const timestamp = `${date} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}.000 ${timezone}`;
     
     return {
@@ -330,9 +325,9 @@ function parseLogLine(line, timezone) {
 }
 
 /**
- * Tentukan category, type, dan value berdasarkan pesan log
- * @param {string} message - Pesan log
- * @returns {Object} Objek dengan category, type, dan value
+ * Determine category, type, and value based on log message
+ * @param {string} message - Log message
+ * @returns {Object} Object with category, type, and value
  */
 function getCategoryTypeValue(message) {
     let category = "";
