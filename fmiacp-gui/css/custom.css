@@ -15,10 +15,18 @@
     --dark-color: #343a40;
 }
 
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
 body {
     background-color: #f5f5f5;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 /* Navbar styling */
@@ -105,8 +113,12 @@ body {
     background-color: #fff;
     border-radius: 0.25rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
-    padding: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+}
+
+.dashboard-controls .card-body {
+    padding: 0.5rem;
 }
 
 /* Dashboard title in navbar */
@@ -291,13 +303,18 @@ body {
     font-size: 0.9rem;
 }
 
+/* Main content wrapper to push footer down */
+.container-fluid.my-4 {
+    flex: 1 0 auto;
+}
+
 /* Footer styling */
 .footer {
     background-color: #f0f0f0;
     color: #666;
     padding: 0.5rem 0;
-    margin-top: 1rem;
     border-top: 1px solid #ddd;
+    flex-shrink: 0;
 }
 
 .footer-version {
@@ -348,7 +365,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     background-color: #fff;
-    padding: 10px;
+    padding: 0.4rem;
     border-radius: 4px;
 }
 
@@ -358,6 +375,8 @@ body {
     margin-right: 5px;
     border-radius: 4px;
     font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.7rem;
 }
 
 .dashboard-nav .nav-link:hover {
