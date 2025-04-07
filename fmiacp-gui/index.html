@@ -5,31 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FMIACP Dashboard</title>
     
+    <!-- Favicon -->
+    <link rel="icon" href="img/acp-favicon.png" type="image/png">
+    
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="css/bootstrap-icons/bootstrap-icons.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
-    
-    <!-- Favicon (embedded base64) -->
-    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAA2FBMVEUAAAAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyAgHyD///9r5VNNAAAAR3RSTlMAAhMqP1BcZW54dXBmWUpBLhcDCjBbg6DAz9jf4OHi19C/n4JZLQkntePy+/z9/Pvy4rMlm9n3/uuxkGxKMBD55MWRVTQIFWjmoegAAAABYktHRFGUaXwqAAAAB3RJTUUH5AQPCQwghMP5UwAAAOVJREFUOMvt0sdSwzAQBdCnYtmWbbnHvdAChNCSkIJh//9/MgQYZgI5h132Zu/gzsxqpMj/lhDJXkqlhaHREoI13jQxOTU9Y5mQ1WVudn5hcWlZCLGyagdbXlldC7mH9Q0CVnezbQbcYGs73A4DO8QcBO5EnRwSKrXLvY1Oznd2xbHnw/0D6Yh9PASyjk8ip+cXl1chjHJNC3d3f/8gVHFo1x5lbfP0rNWer1A3L682eDNCvPOu3byvX4qg+2GAQAgvHv76AcUwMA7jbJ8f0IAQjUH4BNRAwLqvfQmm/oTdX6ZvXSHypX8A1K844ncuRa4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjAtMDQtMTVUMDk6MTI6MzIrMDA6MDDH0VGDAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIwLTA0LTE1VDA5OjEyOjMyKzAwOjAwto7pPwAAAFd6VFh0UmF3IHByb2ZpbGUgdHlwZSBpcHRjAAB4nOPyDAhxVigoyk/LzEnlUgADIwsuYwsTIxNLkxQDEyBEgDTDZAMjs1Qgy9jUyMTMxBzEB8uASKBKLgDqFxF08kI1lQAAAABJRU5ErkJggg==">
+    <link rel="stylesheet" href="css/custom.css">
 </head>
 <body>
     <!-- Navbar - Hanya logo dan judul di tengah -->
-    <nav class="navbar navbar-dark sticky-top text-center">
-        <div class="container">
-            <a class="navbar-brand mx-auto d-flex align-items-center justify-content-center" href="#">
-                <img src="data:image/webp;base64,UklGRhoFAABXRUJQVlA4WAoAAAAQAAAAxwAAIAAAQUxQSBcAAAABD/Dz/4iIQKRtszmf/POTiP5PgKz7BwBWUDgg3AQAAPAaAJ0BKsgAIQA+kUCbSKWkIqEqs7uwsBIJZQDUXXAOksyLnoB2bf1PwR8JHpeQJzHeg/0L/beU3ej7mMnX908IHYE8p7gHUC7Z+h3+cf6T0m70ygH/G/7H/2v8H+N3x3Z1PpX2Bv5b/autZ6Ev61ndRJmJOWbNwLm7gx4e9nDMwNbepwvPOKVI+sAAN28VSc9Mxicn8wp8QxC8P2DmIilZ3xPglHaGo24Lz3D71PFJjqHRzsBpIJM+zKt6POIqjtmdzmgM7tFlZFlNXz7cjCAvEFpH0LePL4LpGE0sW9wAAP74JIX+J3gP8qtGOyuCdHauaJO44ikrTxNn7qNGr0Ic/kW/id/PvnPxez9FHjNQObL/pXTwUcqd22ZhbfkONkuUYshDCcWxYDf3+oAAq7Te4VDT/fZMl2ydVqkfHr9CVV/Ja1pDlxDybQ0im1Qtw/+kZCe8IRgH4cz/M2wU//KAdGf1qlBw95t/skHuJ2w3scPYFdACR0fhEIY6rDLHbIAnP3G9QCZM4olyIPcbuJIpzLMs22oAgGRUcou8HjuV+bLUe2ltCO7Sp6/q//EI5gM0/zUm4BMDbkZf/vTdfAArxJWGFepacT0kxtXz0PaFB0qkpx9z+WQTF40yTEiGD5faWQsbzdl+ea5PTbBD1y1DWiJwd9faDkRCpe4wXHPz/8cX//kZxDxP+Uh59BOLIN1oNt7Ri/ajxYtg34C+TiVov0v0QAkd+7u1O4qWd/pIOPQkGDZAKIH4X2a7iP6mjgek//AM/+mrbOSDn2dec48yhQIT7gcPb1dtGqe1zgX4R2pyeNzYqY83t1+OV7nQJ+3aTIXRKHer6dXIXC3MiUZcH/6RgEMWPa+Xb24ernUNw8PH800HKpXVAh4gMzT2xZkQU4tWbZ0iLJ7WkHV7juSlXbs7qZv9ehOYzFf9NHHVlnDWPkcWahyWHmGN4IT6qJUcJ0GZUuTrvtRHwNcqfUTy8IV7f62X3QLQvVtRI0ZTP/KJEnBFH8E0pOrqcpYHgTijmgO91Fa/AYOow+1XMRJUnS7zxPoj08N9YPzCV1vd5Qv8ru8nqMFptOsU4/zOz5AoZXicZYDygSxNnOOLBZxQ7X5+XaEKEiq4QXszSxiJ0hruDFtOHRif8nM2xbWIdOQAO9PdZ3PJ1QY4BhjvKSf106T9gwqUpgeKSSxgpGtOxyLIKo3uKoQbi8LANmIIwRVUpZOO/DvIqfn7AY2cSJqhuEMRtWFJZyxmFR6QOJYn8FKpj5p2kynaKylKGM5N6LC4jW/I2i34pJ7C00S4MzUzDy04xDjQL+8614Eraqy3TH/BuWjLE9v0mJ6W8frUC34E7idqINIVKRxWbVOvwKqtqOjQXDO177j9SMyZxESdvUWPc6d0rM8AH/n2w/k4ySVv6MxwYUOPnhOaUl+6FPhRGT1tJgM7c5+7T2ymfBdk7vsZIxuYzpvOF2xc8AGfJ1bYSbYnbcD4LgEfXgB6KOsF5F17NelS+iqXoFSentvrrMpecJJ4cf9bfvRwYP+/tkVVbomIX5CZj67DnGZf3uxYNY9t1uh4l2pULN1pYt1GqmfiL7XbkKvm6k/qIJM7IWSC7Gf/GH02OQf80IS6KZaasq187/GGgGh8dGfIn5Dj4dojyIxAAAAAAAAA" alt="Freeport" class="me-2" style="height: 40px;">
-                <span class="title-text">FMIACP Dashboard</span>
-                <img src="data:image/webp;base64,UklGRjAEAABXRUJQVlA4WAoAAAAQAAAAYwAAMQAAQUxQSCEAAAABFyAQSFLbH2qNiAgHMmmbmpzJKt05dkX0P1nEPke0ZxEAVlA4IOgDAAAwFACdASpkADIAPpFAmUklpCKhJdzNiLASCWYAy9Rgevcj+PJ3KMBtgPMB+yXq8egDeOPQd6WL/BVvroEPOx+dh3wGshc+c94D+zegHbOca0XTz7/TPsFfq/1jDSfy3p4+ussnYbf9/CgOxQDtbNJLplUalwSnSaReoSW0sKsnBqA23c4amTE3UdDnJVfzRMTKsPCjYbrenLwD6KzW29XzI0u6UIuF/orkAAD+/sy+XN7JawCcx/aZIIzXkbUCPY7/8N9I6Hc1YfyArx5/eto0UbNcSb3gCy16i4EdM6I3hS38W/Lo4NwaHA3DvAFnn/T/mONiK/fIO0z8HyTirb/gLcPzhsfC0dfg1/+YnmxLQbxfi8afTikJwkXqk/EHkkz7RuFVC6v8XlKsJfXEbT66/bAnyuwAPYukHjuuCoVIaoSaX4xMQv+6TIGiBSArermlXeJvKH1MvKpnrY/F+B5wvag85h9Nz72xbhMnt2n1aTFlBNGzReDRaKc6UNqNa4wJAyaCA4qY9Z1WpwYh3dVZX37nkhK8Hg/7mE5P4PKYseLxY5e2ccVG+RNoH3X5G+oUGzLJmbyIZJDXeXHZ5QUrYFpEQjK4FS8T3MrI9JAJHOMKb5ZATfvQWJs3RIGdx90ovpEKfDdez16cBaxxMSSLsEikYoTatJOX9H2bNfNuy1LOzlpcM0Qa+hKAfi9Dx5DCwTC2kwPVBlOSdwnYAYrwK7OhYZLhAmjcv1hj1sQQVQHFVyPw0pe7gqdyMCSkzBccVGJcN4vuRpByAmHuoaps7XmlOf/tJhbPsJJU90JKbZxzQ2fAEjGTqYFUnFJ5LWc9tN+Zb5+4iLyYih4weTiAsJi0agqhCpDbz/fGHd4NZytmSmNZ0Rq9dCQi8PsUx57UZw0kHZKMPgoj0A/511rvpX7BPVPKvuKdQlD/Hi9+DVRdQbrvc4axiz8gnfrsyj7WdN1BUKCsfT7nltdsfkzlNj1zhHKfOsUce94GsDSSCvMNx3pPaqtw55JWwQHetncnmFYy+ynjFDhxHTJiXmOmbaAgFB4Q2JdRjQl+WxYxN2uPoMip2vpjGWbNrN4vOLiJbbYADT5Ua/eTITfB62FBvY+mwvSmut+hSiVdItEFSJaLTIT4zzch6/e9adUrmDOjMaOOapy93csJ+MdAoL5++NWpImkA3qigJDJAfFCzyzkb4wC0VneAiQf63qI8X+yHknE/wj93j+bcH0wo6TY2t58L4eVXm5h8NmsRxk66KXI0EP+hLMnNXBnV1/6/rmbC9TKrZWBG95HQcJq+2i1nMDf+7pzYTUBZFEVFnAgpTBe8SVAAAAAA" alt="Trakindo" class="ms-2" style="height: 40px;">
+    <nav class="navbar navbar-dark sticky-top">
+        <div class="container-fluid position-relative">
+            <!-- Logo Freeport di kiri -->
+            <a href="#">
+                <img src="img/logo-freeport.png" alt="Freeport" class="logo-freeport">
             </a>
             
-            <!-- Status connection and fullscreen di pojok kanan -->
-            <div class="position-absolute end-0 me-3">
-                <span id="login-status" class="status-disconnected me-2">Terputus</span>
-                <button id="fullscreen-btn" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-fullscreen"></i> Fullscreen
+            <!-- FMIACP Dashboard text di tengah dengan warna kuning -->
+            <h4 class="mb-0 dashboard-title">FMIACP Dashboard</h4>
+            
+            <!-- Connection status, fullscreen icon, dan Logo Trakindo di kanan -->
+            <div class="d-flex align-items-center">
+                <button id="fullscreen-btn" class="me-2">
+                    <i class="bi bi-fullscreen"></i>
                 </button>
+                <a href="#">
+                    <img src="img/logo-trakindo.png" alt="Trakindo" class="logo-trakindo">
+                </a>
             </div>
         </div>
     </nav>
@@ -46,16 +53,16 @@
                             <div class="col-md-8">
                                 <ul class="nav nav-pills dashboard-nav">
                                     <li class="nav-item">
-                                        <a class="nav-link active" data-bs-toggle="tab" href="#dashboard-tab">Dashboard</a>
+                                        <a class="nav-link active" data-bs-toggle="pill" href="#dashboard-tab">Dashboard</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#machine-tab">Machine Data</a>
+                                        <a class="nav-link" data-bs-toggle="pill" href="#machine-tab">Machine Data</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#table-tab">Data Tables</a>
+                                        <a class="nav-link" data-bs-toggle="pill" href="#table-tab">Data Tables</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#status-tab">App Status</a>
+                                        <a class="nav-link" data-bs-toggle="pill" href="#status-tab">App Status</a>
                                     </li>
                                     <li class="nav-item ms-2">
                                         <button id="download-data-btn" class="btn btn-success btn-sm">
@@ -71,12 +78,10 @@
                                     <div class="d-flex align-items-center">
                                         <label for="refresh-interval" class="me-2 mb-0">Update interval:</label>
                                         <select id="refresh-interval" class="form-select form-select-sm" style="width: auto;">
-                                            <option value="1000">1 detik</option>
+                                            <option value="1000" selected>1 detik</option>
                                             <option value="3000">3 detik</option>
-                                            <option value="5000" selected>5 detik</option>
+                                            <option value="5000">5 detik</option>
                                             <option value="10000">10 detik</option>
-                                            <option value="30000">30 detik</option>
-                                            <option value="60000">1 menit</option>
                                         </select>
                                         <div class="ms-3 text-muted small">
                                             Last update: <span id="last-update-time">-</span>
@@ -414,14 +419,14 @@
     </footer>
     
     <!-- jQuery JS -->
-    <script src="assets/js/jquery.min.js"></script>
+    <script src="js/jquery.min.js"></script>
     
     <!-- Bootstrap JS -->
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
     
     <!-- Application Scripts -->
-    <script src="assets/js/app.js"></script>
-    <script src="assets/js/ui-handlers.js"></script>
-    <script src="assets/js/data-handlers.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/ui-handlers.js"></script>
+    <script src="js/data-handlers.js"></script>
 </body>
 </html> 

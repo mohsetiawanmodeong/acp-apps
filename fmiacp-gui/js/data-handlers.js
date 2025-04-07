@@ -158,6 +158,7 @@ function updateAppStatus(status) {
 async function attemptConnection(port) {
     try {
         const tempUrl = `http://localhost:${port}`;
+        console.log(`Mencoba koneksi ke ${tempUrl}/api/getAppStatusFMIACP`);
         
         // Update notification if it exists
         if (window.connectionNotification) {
@@ -166,78 +167,36 @@ async function attemptConnection(port) {
         
         // Create a promise that will resolve when we get a response
         return new Promise((resolve) => {
-            // Metode 1: Coba dengan credentials omit (lebih mudah dengan CORS)
+            // Direct request to API endpoint for status
             fetch(`${tempUrl}/api/getAppStatusFMIACP`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Basic ${btoa('fmiacp:track1nd0')}`
-                },
-                credentials: 'omit' // Omit credentials to avoid CORS preflight
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log(`Server found on port ${port} and responded with status ${response.status}`);
-                    resolve(true);
-                } else {
-                    console.log(`Server found on port ${port} but responded with status ${response.status}`);
-                    // Even if we get a 401 error, the server exists
-                    if (response.status === 401) {
-                        resolve(true); // Authentication failed but server exists
-                    } else {
-                        // Try method 2 with no-cors
-                        tryNoCorsMethod();
-                    }
                 }
             })
+            .then(response => {
+                if (response.ok || response.status === 401) {
+                    console.log(`Server ditemukan di port ${port} via fetch (status: ${response.status})`);
+                    apiBaseUrl = tempUrl;
+                    resolve(true);
+                    return;
+                }
+                console.log(`Server merespon dengan status ${response.status} di port ${port}`);
+                resolve(false);
+            })
             .catch(() => {
-                // If first fetch fails, try with no-cors
-                console.log(`Connection attempt to ${port} failed with regular fetch, trying no-cors`);
-                tryNoCorsMethod();
+                console.log(`Fetch gagal di port ${port}, server mungkin tidak ada`);
+                resolve(false);
             });
             
-            // Metode 2: Coba dengan no-cors mode
-            function tryNoCorsMethod() {
-                fetch(`${tempUrl}/api/getAppStatusFMIACP`, {
-                    method: 'GET',
-                    mode: 'no-cors' // This allows checking server existence without CORS errors
-                })
-                .then(() => {
-                    // If fetch succeeds in no-cors mode, server exists
-                    console.log(`Server found on port ${port} via no-cors mode`);
-                    resolve(true);
-                })
-                .catch(() => {
-                    // If second fetch also fails, try image method
-                    console.log(`Connection attempt to ${port} failed with no-cors, trying image method`);
-                    tryImageMethod();
-                });
-            }
-            
-            // Metode 3: Coba dengan image
-            function tryImageMethod() {
-                const img = new Image();
-                img.onload = function() {
-                    // If image loads, server likely exists
-                    console.log(`Server found on port ${port} (via image)`);
-                    resolve(true);
-                };
-                img.onerror = function() {
-                    // Server might exist but doesn't serve images
-                    console.log(`Connection failed on port ${port} - all methods failed`);
-                    resolve(false);
-                };
-                // Try to load a favicon or other common file to see if server responds
-                img.src = `${tempUrl}/favicon.ico?${new Date().getTime()}`;
-                
-                // Set a timeout to resolve false if image loading takes too long
-                setTimeout(() => {
-                    console.log(`Connection timeout on port ${port}`);
-                    resolve(false);
-                }, 2000);
-            }
+            // Set timeout
+            setTimeout(() => {
+                console.log(`Timeout koneksi di port ${port}`);
+                resolve(false);
+            }, 3000);
         });
     } catch (error) {
-        console.error("Error checking port:", error);
+        console.error("Error memeriksa port:", error);
         return false;
     }
 }
@@ -421,5 +380,124 @@ function renderMachineData() {
         `);
         
         machineDataList.append(card);
+    });
+}
+
+// Function to update dashboard
+function updateDashboard() {
+    // Get machine counts
+    const allMachines = fmiacpCurrentData ? [...new Set(fmiacpCurrentData.map(item => item.MACHINE_NAME))].filter(Boolean) : [];
+    const totalMachines = allMachines.length;
+    
+    // Calculate active machines (updated in the last hour)
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 3600000);
+    const activeMachines = fmiacpCurrentData ? 
+        [...new Set(fmiacpCurrentData
+            .filter(item => item.LAST_UPDATE && new Date(item.LAST_UPDATE) > oneHourAgo)
+            .map(item => item.MACHINE_NAME))].filter(Boolean).length : 0;
+    
+    // Calculate count of data points
+    const totalDataPoints = fmiacpData ? fmiacpData.length : 0;
+    
+    // Update stats
+    $('#total-machines').text(totalMachines);
+    $('#active-machines').text(activeMachines);
+    $('#inactive-machines').text(totalMachines - activeMachines);
+    $('#total-data-points').text(totalDataPoints);
+    
+    // Update data overview
+    const dataOverview = $('#latest-data-overview');
+    
+    if (!fmiacpCurrentData || fmiacpCurrentData.length === 0) {
+        // Show message if no data available
+        dataOverview.html(`
+            <div class="alert alert-warning">
+                <h5>Tidak ada data tersedia.</h5>
+                <p>Pastikan server API berjalan dan terkoneksi ke database.</p>
+            </div>
+        `);
+        
+        // Set dashboard grid message
+        $('#dashboard-grid').html(`
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="alert alert-primary mb-0">
+                            <h5>Tidak Ada Data</h5>
+                            <p>Tidak ada data yang tersedia untuk ditampilkan pada dashboard.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+        
+        return;
+    }
+    
+    // Get recent machine data overview
+    const totalAktif = fmiacpCurrentData.filter(item => 
+        item.LAST_UPDATE && new Date(item.LAST_UPDATE) > oneHourAgo).length;
+        
+    // Get types of data
+    const dataTypes = [...new Set(fmiacpCurrentData.map(item => item.TYPE))].filter(Boolean).length;
+    
+    // Update data overview
+    dataOverview.html(`
+        <div class="row mb-2">
+            <div class="col-md-4">
+                <strong>Total Mesin:</strong> ${totalMachines}
+            </div>
+            <div class="col-md-4">
+                <strong>Kategori Aktif:</strong> ${dataTypes}
+            </div>
+            <div class="col-md-4">
+                <strong>Tipe Data:</strong> ${dataTypes}
+            </div>
+        </div>
+    `);
+    
+    // Update dashboard grid with machine cards
+    const dashboardGrid = $('#dashboard-grid');
+    dashboardGrid.empty();
+    
+    // Get most recent updates for each machine
+    const machineUpdates = {};
+    fmiacpCurrentData.forEach(item => {
+        if (!machineUpdates[item.MACHINE_NAME] || 
+            (item.LAST_UPDATE && new Date(item.LAST_UPDATE) > new Date(machineUpdates[item.MACHINE_NAME].LAST_UPDATE))) {
+            machineUpdates[item.MACHINE_NAME] = item;
+        }
+    });
+    
+    // Sort machines by name
+    const machineNames = Object.keys(machineUpdates).sort();
+    
+    // Create machine cards
+    machineNames.forEach(machineName => {
+        const machineData = machineUpdates[machineName];
+        const isActive = machineData.LAST_UPDATE && new Date(machineData.LAST_UPDATE) > oneHourAgo;
+        const updateTime = machineData.LAST_UPDATE ? new Date(machineData.LAST_UPDATE).toLocaleString() : 'Unknown';
+        
+        // Count data points for this machine
+        const dataCount = fmiacpData ? fmiacpData.filter(item => item.MACHINE_NAME === machineName).length : 0;
+        
+        // Create card
+        const card = $('<div>').addClass('col-md-4 mb-4').html(`
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">${machineName}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="status-badge ${isActive ? 'status-online' : 'status-offline'} mb-3">
+                        ${isActive ? 'Aktif' : 'Tidak Aktif'}
+                    </div>
+                    <p><strong>Update terakhir:</strong> ${updateTime}</p>
+                    <p><strong>Jumlah data:</strong> ${dataCount}</p>
+                </div>
+            </div>
+        `);
+        
+        dashboardGrid.append(card);
     });
 } 

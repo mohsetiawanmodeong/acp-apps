@@ -3,26 +3,114 @@
  * UI-related functions for FMIACP Dashboard
  */
 
-// Function to start or reset auto-refresh timer
+// Start automatic refresh for data
 function startAutoRefresh() {
-    // Clear existing timer if any
-    stopAutoRefresh();
-    
-    // Get selected interval
-    const interval = parseInt($('#refresh-interval').val());
-    
-    // Start new timer
-    refreshTimer = setInterval(fetchData, interval);
-    
-    console.log(`Auto-refresh enabled: ${interval}ms interval`);
-}
-
-// Function to stop auto-refresh
-function stopAutoRefresh() {
+    // Clear previous timer if exists
     if (refreshTimer) {
         clearInterval(refreshTimer);
-        refreshTimer = null;
-        console.log('Auto-refresh stopped');
+    }
+    
+    // Get refresh interval from select
+    const interval = parseInt($('#refresh-interval').val(), 10);
+    console.log(`Auto-refresh enabled: ${interval}ms interval`);
+    
+    // Set new timer to refresh data periodically
+    refreshTimer = setInterval(refreshDataSmoothly, interval);
+    
+    // Log to UI
+    if (interval >= 1000) {
+        showToast('Info', `Auto-refresh enabled: ${interval/1000} detik`);
+    }
+}
+
+// Function to refresh data smoothly without page flicker
+async function refreshDataSmoothly() {
+    try {
+        // Update last update time
+        $('#last-update-time').text(new Date().toLocaleTimeString());
+        
+        // Fetch data without showing loading overlay
+        console.log(`Refreshing data from API: ${apiBaseUrl}`);
+        
+        // Use Promise.all to fetch all data in parallel
+        const [fmiacpDataResponse, machineDataResponse, statusData] = await Promise.all([
+            makeApiRequest('/api/getFMIACP'),
+            makeApiRequest('/api/getFMIACPCurrent'),
+            makeApiRequest('/api/getAppStatusFMIACP')
+        ]);
+        
+        // Update global data
+        fmiacpData = fmiacpDataResponse;
+        fmiacpCurrentData = machineDataResponse;
+        
+        // Update UI elements smoothly with animation
+        updateUIElementsSmoothly(statusData);
+        
+        console.log("Data refreshed successfully");
+    } catch (error) {
+        console.error("Error refreshing data:", error);
+        
+        // Don't show error directly, just log it
+        // This prevents UI disruption during auto-refresh
+    }
+}
+
+// Update UI elements smoothly with animation
+function updateUIElementsSmoothly(statusData) {
+    // Update machine counts with animation
+    const allMachines = fmiacpCurrentData ? [...new Set(fmiacpCurrentData.map(item => item.MACHINE_NAME))].filter(Boolean) : [];
+    const totalMachines = allMachines.length;
+    
+    // Calculate active machines (updated in the last hour)
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 3600000);
+    const activeMachines = fmiacpCurrentData ? 
+        [...new Set(fmiacpCurrentData
+            .filter(item => item.LAST_UPDATE && new Date(item.LAST_UPDATE) > oneHourAgo)
+            .map(item => item.MACHINE_NAME))].filter(Boolean).length : 0;
+    
+    // Calculate count of data points
+    const totalDataPoints = fmiacpData ? fmiacpData.length : 0;
+    
+    // Animate count updates
+    animateCountUpdate('#total-machines', totalMachines);
+    animateCountUpdate('#active-machines', activeMachines);
+    animateCountUpdate('#inactive-machines', totalMachines - activeMachines);
+    animateCountUpdate('#total-data-points', totalDataPoints);
+    
+    // Only update content if we're on the relevant tab
+    const activeTabId = $('.tab-pane.active').attr('id');
+    
+    if (activeTabId === 'dashboard-tab') {
+        updateDashboard();
+    } else if (activeTabId === 'machine-tab') {
+        renderMachineData();
+    } else if (activeTabId === 'table-tab') {
+        renderDataTable();
+    } else if (activeTabId === 'status-tab') {
+        updateAppStatus(statusData);
+    }
+    
+    // Update connection status
+    updateLoginStatus(true);
+}
+
+// Animate count update
+function animateCountUpdate(selector, newValue) {
+    const element = $(selector);
+    const currentValue = parseInt(element.text(), 10) || 0;
+    
+    if (currentValue !== newValue) {
+        // Add highlight animation class
+        element.addClass('value-changed');
+        
+        // Update the value
+        element.text(newValue);
+        
+        // Remove highlight class after animation completes
+        setTimeout(() => {
+            element.removeClass('value-changed');
+        }, 1000);
     }
 }
 
@@ -84,9 +172,9 @@ function downloadData() {
 // Function to show/hide loading overlay
 function showLoading(show) {
     if (show) {
-        $('#loading-overlay').show();
+        $('#loading-overlay').fadeIn(300);
     } else {
-        $('#loading-overlay').hide();
+        $('#loading-overlay').fadeOut(300);
     }
 }
 

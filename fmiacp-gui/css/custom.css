@@ -2,36 +2,46 @@
  * FMIACP Dashboard Custom Styles
  */
 
+/* Dashboard theme */
 :root {
-    --fmiacp-primary: #0a2351;
-    --fmiacp-secondary: #ffd43b;
-    --fmiacp-success: #28a745;
-    --fmiacp-danger: #dc3545;
-    --fmiacp-warning: #ffc107;
-    --fmiacp-info: #17a2b8;
+    --primary-color: #003366;
+    --secondary-color: #0066cc;
+    --accent-color: #ffcc00;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
 }
 
 body {
+    background-color: #f5f5f5;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
     overflow-x: hidden;
 }
 
 /* Navbar styling */
 .navbar {
-    background-color: var(--fmiacp-primary);
+    background-color: var(--primary-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.navbar-brand {
-    color: var(--fmiacp-secondary) !important;
-    font-weight: bold;
-    font-size: 1.5rem;
+/* Logo styling */
+.logo-freeport {
+    height: 25px;
+    width: auto;
+    transition: transform 0.3s ease;
 }
 
-.navbar-brand img {
+.logo-trakindo {
     height: 40px;
     width: auto;
+    transition: transform 0.3s ease;
+}
+
+.logo-freeport:hover, .logo-trakindo:hover {
+    transform: scale(1.05);
 }
 
 /* Tab navigation */
@@ -46,30 +56,27 @@ body {
 }
 
 .nav-link.active {
-    color: var(--fmiacp-secondary) !important;
+    color: var(--secondary-color) !important;
     font-weight: bold;
-    border-bottom: 2px solid var(--fmiacp-secondary);
+    border-bottom: 2px solid var(--secondary-color);
 }
 
 /* Dashboard nav pills */
 .dashboard-nav .nav-link {
-    color: var(--fmiacp-primary) !important;
-    border-radius: 0.25rem;
-    margin-right: 0.5rem;
+    color: var(--dark-color);
+    border-radius: 4px;
     padding: 0.5rem 1rem;
+    margin-right: 0.25rem;
     transition: all 0.2s ease;
 }
 
 .dashboard-nav .nav-link:hover {
-    background-color: rgba(10, 35, 81, 0.1);
-    color: var(--fmiacp-primary) !important;
+    background-color: rgba(0, 51, 102, 0.05);
 }
 
 .dashboard-nav .nav-link.active {
-    background-color: var(--fmiacp-primary);
-    color: white !important;
-    border: none;
-    font-weight: 600;
+    background-color: var(--primary-color);
+    color: white;
 }
 
 /* Title text styling */
@@ -81,13 +88,16 @@ body {
 
 /* Fullscreen button */
 #fullscreen-btn {
-    border-color: rgba(255, 255, 255, 0.5);
+    border: none;
+    background: transparent;
+    color: white;
     transition: all 0.3s ease;
+    padding: 0.5rem;
 }
 
 #fullscreen-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-color: white;
+    transform: scale(1.1);
 }
 
 /* Dashboard header area */
@@ -95,44 +105,63 @@ body {
     background-color: #fff;
     border-radius: 0.25rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     padding: 1rem;
+}
+
+/* Dashboard title in navbar */
+.dashboard-title {
+    color: var(--accent-color);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: auto;
+}
+
+#connection-status {
+    color: #6AFF6A;
+    font-weight: bold;
 }
 
 /* Status indicators */
 .status-connected {
-    color: var(--fmiacp-success) !important;
+    color: var(--success-color) !important;
     font-weight: bold;
 }
 
 .status-disconnected {
-    color: var(--fmiacp-danger) !important;
+    color: var(--danger-color) !important;
 }
 
 .status-indicator {
     display: inline-block;
     padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.8rem;
-    font-weight: bold;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .status-active {
-    background-color: rgba(40, 167, 69, 0.1);
-    color: var(--fmiacp-success);
+    background-color: rgba(40, 167, 69, 0.15);
+    color: var(--success-color);
+    border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
 .status-inactive {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: var(--fmiacp-danger);
+    background-color: rgba(220, 53, 69, 0.15);
+    color: var(--danger-color);
+    border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
 .status-running {
-    color: var(--fmiacp-success);
+    color: var(--success-color);
 }
 
 .status-stopped {
-    color: var(--fmiacp-danger);
+    color: var(--danger-color);
 }
 
 #login-status {
@@ -150,7 +179,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(255, 255, 255, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -266,15 +295,21 @@ body {
 .footer {
     background-color: #f0f0f0;
     color: #666;
-    padding: 1rem 0;
-    margin-top: 2rem;
+    padding: 0.5rem 0;
+    margin-top: 1rem;
     border-top: 1px solid #ddd;
 }
 
 .footer-version {
     font-weight: bold;
-    color: #555;
+    color: #666;
     font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.footer .small {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
 }
 
 /* Error container */
@@ -300,21 +335,6 @@ body {
     display: block;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .stat-value {
-        font-size: 2rem;
-    }
-    
-    .navbar-brand {
-        font-size: 1.2rem;
-    }
-    
-    .navbar-brand img {
-        height: 30px;
-    }
-}
-
 /* Custom icons and indicators */
 .indicator {
     display: inline-block;
@@ -322,4 +342,49 @@ body {
     height: 12px;
     border-radius: 50%;
     margin-right: 8px;
+}
+
+/* Fix for navigation pills to ensure all tabs are visible */
+.dashboard-nav {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.dashboard-nav .nav-link {
+    color: var(--primary-color) !important;
+    background-color: rgba(0, 51, 102, 0.1);
+    margin-right: 5px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.dashboard-nav .nav-link:hover {
+    background-color: rgba(0, 51, 102, 0.2);
+}
+
+.dashboard-nav .nav-link.active {
+    color: white !important;
+    background-color: var(--primary-color);
+}
+
+/* Fixes for tab content display */
+.tab-content > .tab-pane {
+    display: none;
+}
+
+.tab-content > .active {
+    display: block;
+}
+
+/* Add animation for value changes */
+.value-changed {
+    animation: highlight-change 1s ease-in-out;
+}
+
+@keyframes highlight-change {
+    0% { background-color: rgba(255, 193, 7, 0.3); }
+    100% { background-color: transparent; }
 } 
