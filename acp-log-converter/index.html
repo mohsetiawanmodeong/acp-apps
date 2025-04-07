@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACP Log Converter</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">ACP Log Converter</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Informasi:</strong> Aplikasi ini mengubah file log ACP ADAM (.txt) menjadi format JSON.
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>Pilih File Log</h5>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="logFileInput" accept=".txt" multiple>
+                                <button class="btn btn-primary" id="convertBtn">Konversi</button>
+                            </div>
+                            <small class="text-muted">Anda dapat memilih beberapa file log sekaligus</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="customMachineNameCheck">
+                                <label class="form-check-label" for="customMachineNameCheck">
+                                    Gunakan Machine Name Kustom (jika tidak ditemukan di nama file)
+                                </label>
+                            </div>
+                            <div id="customMachineNameDiv" class="mt-2 d-none">
+                                <input type="text" class="form-control" id="customMachineName" placeholder="Masukkan Machine Name">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="timezoneSelect">Zona Waktu</label>
+                                    <select class="form-select" id="timezoneSelect">
+                                        <option value="+09:00" selected>WIT - Indonesia Timur (UTC+9)</option>
+                                        <option value="+08:00">WITA - Indonesia Tengah (UTC+8)</option>
+                                        <option value="+07:00">WIB - Indonesia Barat (UTC+7)</option>
+                                        <option value="+00:00">UTC</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-none" id="resultSection">
+                            <h5>Hasil Konversi</h5>
+                            <div class="alert alert-success" id="conversionResult"></div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama File</th>
+                                            <th>Jumlah Entri</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="card d-none mt-3" id="previewCard">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Preview JSON</h5>
+                                <div>
+                                    <button class="btn btn-sm btn-primary me-2" id="copyJsonBtn">Copy</button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="closePreviewBtn">Tutup</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <pre id="jsonPreview" class="pre-scrollable"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-4 py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">ACP Log Converter &copy; 2025 Technology Dept.</span>
+        </div>
+    </footer>
+
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/converter.js"></script>
+</body>
+</html> 

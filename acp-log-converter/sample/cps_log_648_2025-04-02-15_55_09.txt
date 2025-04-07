@@ -1,0 +1,14 @@
+2025-04-02 3:55:00 PM - Parking Brake System OFF
+2025-04-02 3:55:00 PM - WARNING Wall Collision FRONT OFF
+2025-04-02 3:54:58 PM - Parking Brake System ON
+2025-04-02 3:54:58 PM - WARNING Wall Collision FRONT ON
+2025-04-02 3:54:56 PM - Parking Brake System OFF
+2025-04-02 3:54:56 PM - WARNING Wall Collision FRONT OFF
+2025-04-02 3:54:51 PM - Parking Brake System ON
+2025-04-02 3:54:51 PM - WARNING Wall Collision FRONT ON
+2025-04-02 3:54:31 PM - Parking Brake System OFF
+2025-04-02 3:54:30 PM - Parking Brake System ON
+2025-04-02 3:54:28 PM - Parking Brake System OFF
+2025-04-02 3:54:28 PM - WARNING Wall Collision REAR OFF
+2025-04-02 3:54:27 PM - Parking Brake System ON
+2025-04-02 3:54:27 PM - WARNING Wall Collision REAR ON 
