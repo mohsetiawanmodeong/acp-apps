@@ -4,7 +4,7 @@
 
 /* Dashboard theme */
 :root {
-    --primary-color: #003366;
+    --primary-color: #0a2351;
     --secondary-color: #0066cc;
     --accent-color: #ffcc00;
     --success-color: #28a745;
@@ -304,11 +304,10 @@ body {
     font-weight: bold;
     color: #666;
     font-size: 0.9rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0rem;
 }
 
 .footer .small {
-    margin-top: 0;
     margin-bottom: 0.25rem;
 }
 
