@@ -7,7 +7,7 @@ Aplikasi ini membantu Anda mengonversi log ACP ADAM dari format teks (.txt) menj
 1. Buka file `index.html` di browser Anda
 2. Pilih satu atau beberapa file log (format .txt)
 3. Pilih zona waktu yang sesuai (default: WIT - UTC+9)
-4. Klik tombol "Konversi"
+4. Klik tombol "Convert"
 5. Lihat preview hasil konversi atau download file JSON
 
 ## Format Konversi

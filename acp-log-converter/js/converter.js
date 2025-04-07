@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
         copyToClipboard(jsonText);
     });
 
+    // Pastikan tombol tutup menggunakan class btn-secondary
+    if (closePreviewBtn && !closePreviewBtn.classList.contains('btn-secondary')) {
+        closePreviewBtn.classList.remove('btn-primary', 'btn-danger', 'btn-success', 'btn-info', 'btn-warning');
+        closePreviewBtn.classList.add('btn-secondary');
+    }
+
     // Fungsi untuk menyalin teks ke clipboard
     function copyToClipboard(text) {
         // Menggunakan Clipboard API jika tersedia (modern browsers)
@@ -150,6 +156,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Tampilkan ringkasan hasil konversi
                         resultSection.classList.remove('d-none');
                         conversionResult.textContent = `Berhasil mengonversi ${totalFiles} file log menjadi format JSON.`;
+                        
+                        // Tampilkan preview JSON dari file pertama jika ada
+                        if (Object.keys(convertedData).length > 0) {
+                            const firstFileName = Object.keys(convertedData)[0];
+                            showJsonPreview(firstFileName);
+                        }
                     }
                 } catch (error) {
                     console.error(`Error processing file ${file.name}:`, error);
