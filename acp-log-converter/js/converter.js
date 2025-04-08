@@ -202,7 +202,17 @@ document.addEventListener('DOMContentLoaded', function() {
         previewBtn.className = 'btn btn-sm btn-info me-2';
         previewBtn.textContent = 'Preview';
         previewBtn.addEventListener('click', function() {
+            // Change button color to provide feedback
+            const originalClass = previewBtn.className;
+            previewBtn.className = 'btn btn-sm btn-warning me-2';
+            
+            // Show preview
             showJsonPreview(fileName);
+            
+            // Restore original button color after a short delay
+            setTimeout(() => {
+                previewBtn.className = originalClass;
+            }, 500);
         });
         actionCell.appendChild(previewBtn);
         
