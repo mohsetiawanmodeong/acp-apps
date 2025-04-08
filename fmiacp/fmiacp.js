@@ -64,7 +64,7 @@ async function loadFMIACPData() {
         try {
             vFMIACPDataCurrent = new Map();
             var request = dbConn.request();
-            let result = await request.query("SELECT * FROM [gbc_mrcapps].[dbo].[FMIACP] WHERE LAST_UPDATE >= DATEADD(s, " + vLastUpdateFMIACPLog / 1000 + ", '1970-01-01 00:00:00') ORDER BY ID DESC;");
+            let result = await request.query("SELECT * FROM [gbc_mrcapps].[dbo].[FMIACP] WHERE LAST_UPDATE >= DATEADD(s, " + vLastUpdateFMIACPLog / 1000 + ", '1970-01-01 00:00:00') ORDER BY ID ASC;");
             if (result !== null) {
                 for (const recordset of result.recordsets) {
                     console.log("FMIACP:LOADFMIACPDATA:NEW SUM DATA SIZE[" + recordset.length + "].");
