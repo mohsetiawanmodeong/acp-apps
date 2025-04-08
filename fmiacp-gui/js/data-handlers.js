@@ -170,9 +170,10 @@ async function attemptConnection(port) {
             // Direct request to API endpoint for status
             fetch(`${tempUrl}/api/getAppStatusFMIACP`, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Basic ${btoa('fmiacp:track1nd0')}`
-                }
+                // Use browser's built-in auth to allow login popup
+                credentials: 'include',
+                mode: 'cors',
+                cache: 'no-cache'
             })
             .then(response => {
                 if (response.ok || response.status === 401) {
@@ -184,8 +185,8 @@ async function attemptConnection(port) {
                 console.log(`Server merespon dengan status ${response.status} di port ${port}`);
                 resolve(false);
             })
-            .catch(() => {
-                console.log(`Fetch gagal di port ${port}, server mungkin tidak ada`);
+            .catch((error) => {
+                console.log(`Fetch gagal di port ${port}, server mungkin tidak ada:`, error);
                 resolve(false);
             });
             
@@ -211,8 +212,6 @@ async function tryNextPort() {
         .addClass('toast-body')
         .text('Mencari port server API...');
     
-    showToast('Info', 'Mencari port server API yang aktif...');
-    
     // Try ports sequentially
     for (const port of commonPorts) {
         console.log(`Trying to connect to port ${port}...`);
@@ -228,8 +227,6 @@ async function tryNextPort() {
             apiBaseUrl = `http://localhost:${port}`;
             $('#api-url-input').val(apiBaseUrl);
             
-            // Show success notification
-            showToast('Success', `Terhubung ke server API pada port ${port}`);
             console.log(`Successfully connected to port ${port}`);
             
             // Try to fetch data with new URL
@@ -244,7 +241,6 @@ async function tryNextPort() {
     }
     
     // If all ports failed
-    showToast('Error', 'Tidak dapat menemukan server API pada port manapun. Periksa apakah server API berjalan.');
     console.error('Failed to connect to any port');
     return false;
 }

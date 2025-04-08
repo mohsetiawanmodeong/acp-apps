@@ -59,13 +59,6 @@ function setupEventListeners() {
     // Download data button
     $('#download-data-btn').on('click', downloadData);
     
-    // Logout button
-    $('#logout-btn').on('click', function() {
-        sessionStorage.removeItem('credentials');
-        updateLoginStatus(false);
-        showToast('Info', 'Berhasil logout dari sistem');
-    });
-    
     // Pagination controls
     $('#prev-page').on('click', function() {
         if (currentPage > 1) {
@@ -110,12 +103,19 @@ async function initialConnection() {
         
         // Show success notification
         showLoading(false);
-        showToast('Success', `Berhasil terhubung ke server API di ${apiBaseUrl}`);
         
         // Start auto-refresh immediately with smooth updates
         startAutoRefresh();
     } catch (error) {
         console.error("Initial connection failed:", error);
+        
+        // Handle authentication errors specifically
+        if (error.message.includes('Autentikasi diperlukan')) {
+            displayError("Autentikasi Diperlukan", 
+                "Silakan masukkan username dan password pada dialog browser yang muncul.");
+            showLoading(false);
+            return;
+        }
         
         // Try alternative ports
         console.log("Attempting to find server on alternative ports...");
@@ -124,8 +124,7 @@ async function initialConnection() {
         if (!portSuccess) {
             console.error("Could not find API on any port");
             displayError("Tidak dapat terhubung ke server API", 
-                "Sistem tidak dapat menemukan server pada port manapun. Pastikan server berjalan dan dapat diakses. " +
-                "Periksa apakah alamat API URL sudah benar dan kredensial login yang valid.");
+                "Sistem tidak dapat menemukan server pada port manapun. Pastikan server berjalan dan dapat diakses.");
             
             showLoading(false);
         } else {
@@ -159,13 +158,7 @@ function updateLoginStatus(isLoggedIn) {
 
 // Function to make API requests
 async function makeApiRequest(endpoint, method = 'GET', data = null) {
-    try {
-        // Gunakan kredensial yang benar untuk authentikasi API
-        const credentials = sessionStorage.getItem('credentials');
-        const authHeader = credentials ? 
-            `Basic ${credentials}` : 
-            `Basic ${btoa('fmiacp:track1nd0')}`;
-        
+    return new Promise((resolve, reject) => {
         // Construct proper URL without duplication
         let url = '';
         
@@ -175,71 +168,57 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
         // Make sure endpoint starts with slash
         const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
         
-        // Combine them
-        url = `${baseUrl}${formattedEndpoint}`;
+        // Combine them for target URL - now directly connecting to API without proxy
+        const targetUrl = `${baseUrl}${formattedEndpoint}`;
+        url = targetUrl;
         
         console.log(`Making API request to: ${url}`);
         
-        // Menggunakan fetch dengan konfigurasi sederhana untuk menghindari masalah CORS
-        const options = {
+        // Standard fetch with browser's built-in authentication
+        fetch(url, {
             method: method,
+            // This triggers the browser's authentication dialog when needed
+            credentials: 'include',
             headers: {
-                'Authorization': authHeader
-            }
-        };
-        
-        // Only add Content-Type for requests with body
-        if (data && (method === 'POST' || method === 'PUT')) {
-            options.headers['Content-Type'] = 'application/json';
-            options.body = JSON.stringify(data);
-        }
-        
-        // Direct fetch with proper configuration
-        const response = await fetch(url, options);
-        
-        // Log response details
-        console.log(`Response status: ${response.status} for ${url}`);
-        
-        // Check if login is required
-        if (response.status === 401) {
-            // Clear credentials and update login status
-            sessionStorage.removeItem('credentials');
-            updateLoginStatus(false);
-            console.log(`Authentication required for ${url}`);
+                'Content-Type': data ? 'application/json' : 'application/x-www-form-urlencoded'
+            },
+            body: data ? JSON.stringify(data) : null
+        })
+        .then(response => {
+            console.log(`Response status: ${response.status} for ${targetUrl}`);
             
-            // Prompt for login
-            const loginResult = await promptLogin();
-            if (loginResult) {
-                // Retry the original request with new credentials
-                console.log(`Retrying request to ${url} with new credentials`);
-                return makeApiRequest(endpoint, method, data);
+            if (response.ok) {
+                return response.json();
+            } else if (response.status === 401) {
+                // Update login status
+                updateLoginStatus(false);
+                
+                // Show message about authentication
+                console.log("Authentication required, browser should show login dialog");
+                reject(new Error(`Authentication required (401)`));
+                return;
             } else {
-                throw new Error('Authentication failed');
+                throw new Error(`API request failed with status: ${response.status}`);
             }
-        }
-        
-        // Check for other errors
-        if (!response.ok) {
-            throw new Error(`API request failed with status: ${response.status} for ${url}`);
-        }
-        
-        // Update login status to success
-        updateLoginStatus(true);
-        
-        // Check content type
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            const responseData = await response.json();
-            console.log(`Response data received from ${url}`);
-            return responseData;
-        } else {
-            console.log(`Non-JSON response received from ${url}`);
-            return { success: true, message: 'Received non-JSON response' };
-        }
-    } catch (error) {
-        console.error(`API request error for ${endpoint}:`, error);
-        throw error;
-    }
+        })
+        .then(responseData => {
+            console.log(`Response received from ${targetUrl}`);
+            updateLoginStatus(true);
+            resolve(responseData);
+        })
+        .catch(error => {
+            console.error(`API request error for ${endpoint}: ${error}`, error.status);
+            
+            // Check for CORS error (Safari, Firefox)
+            if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                console.warn("Possible CORS error detected");
+                reject(new Error(`CORS error: Cannot access API at ${targetUrl}`));
+                return;
+            }
+            
+            reject(new Error(`API request failed: ${error.message}`));
+        });
+    });
 }
 
 // Function to fetch data from API

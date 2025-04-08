@@ -17,10 +17,10 @@ function startAutoRefresh() {
     // Set new timer to refresh data periodically
     refreshTimer = setInterval(refreshDataSmoothly, interval);
     
-    // Log to UI
-    if (interval >= 1000) {
-        showToast('Info', `Auto-refresh enabled: ${interval/1000} detik`);
-    }
+    // Log to UI - removed auto-refresh notification
+    // if (interval >= 1000) {
+    //     showToast('Info', `Auto-refresh enabled: ${interval/1000} detik`);
+    // }
 }
 
 // Function to refresh data smoothly without page flicker
@@ -131,6 +131,7 @@ function toggleFullScreen() {
 function downloadData() {
     if (fmiacpData.length === 0) {
         showToast('Warning', 'Tidak ada data tersedia untuk diunduh');
+        console.warn('Tidak ada data tersedia untuk diunduh');
         return;
     }
     
@@ -181,7 +182,11 @@ function showLoading(show) {
 // Function to show toast notification
 function showToast(type, message) {
     const toastEl = $('#toast-notification');
-    const toast = new bootstrap.Toast(toastEl);
+    
+    // Configure toast to autohide after 3 seconds
+    const toast = new bootstrap.Toast(toastEl, {
+        delay: 3000 // Set toast to display for 3 seconds
+    });
     
     // Set toast content
     $('#toast-title').text(type);
@@ -207,66 +212,6 @@ function showToast(type, message) {
     
     // Show toast
     toast.show();
-}
-
-// Function to prompt login
-async function promptLogin() {
-    return new Promise((resolve) => {
-        // Show the login modal
-        const loginModal = new bootstrap.Modal(document.getElementById('login-modal'));
-        loginModal.show();
-        
-        // Clear previous error message
-        $('#login-error').text('');
-        
-        // Focus on username field
-        setTimeout(() => {
-            $('#username').focus();
-        }, 100);
-        
-        // Handle login button click
-        $('#login-submit').off('click').on('click', async function() {
-            const username = $('#username').val();
-            const password = $('#password').val();
-            
-            if (!username || !password) {
-                $('#login-error').text('Username dan password diperlukan');
-                return;
-            }
-            
-            try {
-                // Store credentials
-                const credentials = btoa(`${username}:${password}`);
-                sessionStorage.setItem('credentials', credentials);
-                
-                // Try a test request
-                await makeApiRequest('/api/getAppStatusFMIACP');
-                
-                // If we get here, login was successful
-                loginModal.hide();
-                updateLoginStatus(true);
-                resolve(true);
-            } catch (error) {
-                console.error("Login failed:", error);
-                $('#login-error').text('Login gagal. Periksa username dan password Anda.');
-                sessionStorage.removeItem('credentials');
-                updateLoginStatus(false);
-            }
-        });
-        
-        // Handle cancel button click
-        $('#login-cancel').off('click').on('click', function() {
-            loginModal.hide();
-            resolve(false);
-        });
-        
-        // Handle enter key press
-        $('#login-modal').off('keyup').on('keyup', function(event) {
-            if (event.key === 'Enter') {
-                $('#login-submit').click();
-            }
-        });
-    });
 }
 
 // Function to update dashboard display

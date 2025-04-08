@@ -689,16 +689,11 @@
                     return;
                 }
                 
-                // Make actual API request - Use fetch instead of XMLHttpRequest
-                const authString = btoa(`fmiacp:track1nd0`);
-                
+                // Make actual API request using fetch
                 fetch(url, {
                     method: 'GET',
-                    headers: {
-                        'Authorization': `Basic ${authString}`
-                    },
-                    // Don't include credentials to avoid CORS issues
-                    credentials: 'omit'
+                    // Use browser's built-in authentication
+                    credentials: 'include'
                 })
                 .then(response => {
                     if (response.ok) {
@@ -1478,11 +1473,8 @@
                     // We can't read the response in no-cors mode, but we can detect if the server exists
                     fetch(`${tempUrl}/api/getAppStatusFMIACP`, {
                         method: 'GET',
-                        headers: {
-                            'Authorization': `Basic ${btoa('fmiacp:track1nd0')}`
-                        },
                         mode: 'no-cors',  // This prevents CORS errors
-                        credentials: 'omit'  // Don't send cookies
+                        credentials: 'include'  // Use browser's built-in auth
                     })
                     .then(() => {
                         // If fetch succeeds in no-cors mode, server exists
