@@ -43,13 +43,31 @@ app.use((req, res, next) => {
     next();
 });
 
-// Authentication middleware
-app.use(function authentication(req, res, next) {
-    // Exclude OPTIONS preflight requests from authentication
-    if (req.method === 'OPTIONS') {
-        return next();
+// CORS middleware - must run BEFORE authentication
+app.use(function(req, res, next) {
+    // Set Access-Control-Allow-Origin to the request origin
+    const origin = req.headers.origin;
+    if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+    } else {
+        // Fallback for requests without origin (like curl)
+        res.header('Access-Control-Allow-Origin', '*');
     }
     
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    next();
+});
+
+// Authentication middleware - runs after CORS for non-OPTIONS requests
+app.use(function authentication(req, res, next) {
     var authheader = req.headers.authorization;
     if (!authheader) {
         var err = new Error('You are not authenticated!');
@@ -81,21 +99,6 @@ app.use(function authentication(req, res, next) {
         err.status = 401;
         return next(err);
     }
-});
-
-// Tambahkan middleware CORS untuk mengatasi masalah Cross-Origin
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Allow-Credentials", "true");
-    
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    next();
 });
 
 // Body parser middlewares
@@ -236,7 +239,6 @@ async function loadFMIACPData() {
     }
 }
 
-//[OID] [bigint] NOT NULL,[ACTIVE] [bit] NULL, [MACHINE_NAME] [nvarchar](64) NULL, [OREPASS_NAME] [nvarchar](64) NULL, [LOADING_POINT_NAME] [nvarchar](64) NULL, [TOTAL_CAPACITY_TONNES] [float] NULL, [MIDSENSOR_TONNES] [float] NULL, [CAPACITY_LIMIT_TONNES] [float] NULL, [INITIAL_LEVEL_TONNES] [float] NULL, [CURRENT_LEVEL_TONNES] [float] NULL, [TAKEN_AMOUNT_TONNES] [float] NULL, [DUMPED_AMOUNT_TONNES] [float] NULL
 //Stores the event source data into the SQL Datbase.
 async function storeFMIACP(vData) {
     try {
@@ -275,7 +277,7 @@ async function storeFMIACP(vData) {
             unique_const: vUniqueConst
         });
 
-        // Jalankan stored procedure
+        // Jalankan stored procedure dengan query seperti di production
         const result = await request
             .input("vmachine_name", sql.NVarChar(64), vData.MACHINE_NAME)
             .input("vstart_time", sql.DateTimeOffset(3), vStart)
@@ -284,9 +286,10 @@ async function storeFMIACP(vData) {
             .input("vmeasurement", sql.NVarChar(64), vData.MEASUREMENT)
             .input("vvalue", sql.NVarChar(64), vData.VALUE)
             .input("vUNIQUE_CONST", sql.NVarChar(128), vUniqueConst)
-            .execute('mrcFMIACPMerge');
+            .query("EXECUTE mrcFMIACPMerge @vmachine_name, @vstart_time, @vcategory, @vtype, @vmeasurement, @vvalue, @vUNIQUE_CONST");
         
-        if (result && result.rowsAffected && result.rowsAffected[0] > 0) {
+        // Validasi hasil seperti di production - cukup cek result !== null
+        if (result !== null) {
             console.log('FMIACP:STOREFMIACP:Data berhasil disimpan:', vData.MACHINE_NAME, result.rowsAffected);
             vDataStoreCount++;
             return true;
@@ -311,34 +314,73 @@ var vDataInputRequestCount = 0;
 var vDataOutputCount = 0;
 var vDataOutputRequestCount = 0;
 
-//Lets update a Zone Feature
+//Handle single data object or array of data objects - sesuai dengan production
 app.post('/api/createFMIACP', async (req, res) => {
-    var vFLTACPUpdate = req.body;
-    var vResult = 0;
-    console.log("FLTACP:createFLTACPUpdate Update Received[" + JSON.stringify(vFLTACPUpdate) + "]");
-    var vElement = {};
-    vElement.MACHINE_NAME = "" + vFLTACPUpdate.MACHINE_NAME;
-    vElement.START_TIME = new Date(vFLTACPUpdate.START_TIME);
-    vElement.CATEGORY = "" + vFLTACPUpdate.CATEGORY;
-    vElement.TYPE = "" + vFLTACPUpdate.TYPE;
-    vElement.MEASUREMENT = "" + vFLTACPUpdate.MEASUREMENT;
-    vElement.VALUE = "" + vFLTACPUpdate.VALUE;
-    
-    // Buat UNIQUE_CONST dengan format timestamp-machine-type
-    const vTimeStamp = Math.floor(Date.now() / 1000);
-    vElement.UNIQUE_CONST = `${vTimeStamp}-${vElement.MACHINE_NAME}-${vElement.TYPE}`;
-    
-    vResult = await storeFMIACP(vElement);
-    var vKey = vElement.MACHINE_NAME + "-" + vElement.TYPE;
-    if (vFMIACPDataCurrent.has(vKey)) {
-        if (vFMIACPDataCurrent.get(vKey).START_TIME < vElement.START_TIME) {
-            vFMIACPDataCurrent.set(vKey, vElement);
+    try {
+        vDataInputRequestCount++;
+        var vFLTACPUpdate = req.body;
+        console.log("FMIACP:createFMIACP:Update Received[" + JSON.stringify(vFLTACPUpdate) + "]");
+        
+        // Menggunakan pendekatan yang sama dengan production untuk array
+        var vFLTACPUpdates = [vFLTACPUpdate];
+        if (Array.isArray(vFLTACPUpdate)) {
+            vFLTACPUpdates = vFLTACPUpdate;
         }
-    } else {
-        vFMIACPDataCurrent.set(vKey, vElement);
+
+        var vCount = 0;
+        var vFailCount = 0;
+        
+        // Proses setiap item dalam array
+        for (const data of vFLTACPUpdates) {
+            var vElement = {};
+            vElement.MACHINE_NAME = "" + data.MACHINE_NAME;
+            vElement.START_TIME = new Date(data.START_TIME);
+            vElement.CATEGORY = "" + data.CATEGORY;
+            vElement.TYPE = "" + data.TYPE;
+            vElement.MEASUREMENT = "" + data.MEASUREMENT;
+            vElement.VALUE = "" + data.VALUE;
+            
+            // Buat UNIQUE_CONST dengan format timestamp-machine-type
+            const vTimeStamp = Math.floor(Date.now() / 1000);
+            vElement.UNIQUE_CONST = `${vTimeStamp}-${vElement.MACHINE_NAME}-${vElement.TYPE}`;
+            
+            // Simpan ke database
+            var vResult = await storeFMIACP(vElement);
+            
+            if (vResult) {
+                vCount++;
+                vDataInputCount++;
+                
+                // Update current data map
+                var vKey = vElement.MACHINE_NAME + "-" + vElement.TYPE;
+                if (vFMIACPDataCurrent.has(vKey)) {
+                    if (vFMIACPDataCurrent.get(vKey).START_TIME < vElement.START_TIME) {
+                        vFMIACPDataCurrent.set(vKey, vElement);
+                    }
+                } else {
+                    vFMIACPDataCurrent.set(vKey, vElement);
+                }
+            } else {
+                vFailCount++;
+            }
+        }
+        
+        // Format respons seperti di production
+        const response = {
+            successcount: vCount,
+            failcount: vFailCount
+        };
+        
+        console.log(`FMIACP:createFMIACP:Processed items, Success: ${vCount}, Failed: ${vFailCount}`);
+        return res.json(response);
+    } catch (error) {
+        console.error("FMIACP:createFMIACP:Error:", error);
+        return res.status(500).json({ 
+            success: false, 
+            error: "Internal server error", 
+            details: error.message 
+        });
     }
-    //vFMIZones.features.push(vNewZone);
-    res.json(vResult); //{ id: vNewZone.id});
 });
 
 app.get('/api/getFMIACP', async (req, res) => {
