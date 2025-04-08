@@ -261,12 +261,12 @@ async function storeFMIACP(vData) {
             vStart = new Date(vData.START_TIME);
         }
         
-        // Gunakan UNIQUE_CONST yang sudah ada atau buat baru jika tidak ada
-        let vUniqueConst = vData.UNIQUE_CONST;
-        if (!vUniqueConst) {
-            const vTimeStamp = Math.floor(Date.now() / 1000);
-            vUniqueConst = `${vTimeStamp}-${vData.MACHINE_NAME}-${vData.TYPE}`;
-        }
+        // Generate UNIQUE_CONST sesuai dengan definisi kolom di tabel FMIACP
+        // Format: UNIX_TIMESTAMP(start_time)-MACHINE_NAME-TYPE
+        // Menggunakan waktu dari START_TIME (bukan waktu saat ini)
+        // untuk memastikan keunikan yang tepat
+        const vStartTimestamp = Math.floor(vStart.getTime() / 1000);
+        const vUniqueConst = `${vStartTimestamp}-${vData.MACHINE_NAME}-${vData.TYPE}`;
         
         console.log('FMIACP:STOREFMIACP:Data untuk stored procedure:', {
             machine_name: vData.MACHINE_NAME,
@@ -278,7 +278,8 @@ async function storeFMIACP(vData) {
             unique_const: vUniqueConst
         });
 
-        // Jalankan stored procedure dengan query seperti di production
+        // Jalankan stored procedure dengan query seperti di production - versi Mark Chambers
+        // Bedanya, versi production tidak menggunakan @vUNIQUE_CONST pada VALUES saat insert
         const result = await request
             .input("vmachine_name", sql.NVarChar(64), vData.MACHINE_NAME)
             .input("vstart_time", sql.DateTimeOffset(3), vStart)
@@ -341,9 +342,8 @@ app.post('/api/createFMIACP', async (req, res) => {
             vElement.MEASUREMENT = "" + data.MEASUREMENT;
             vElement.VALUE = "" + data.VALUE;
             
-            // Buat UNIQUE_CONST dengan format timestamp-machine-type
-            const vTimeStamp = Math.floor(Date.now() / 1000);
-            vElement.UNIQUE_CONST = `${vTimeStamp}-${vElement.MACHINE_NAME}-${vElement.TYPE}`;
+            // UNIQUE_CONST dibuat di fungsi storeFMIACP berdasarkan START_TIME
+            // tidak perlu di-set di sini
             
             // Simpan ke database
             var vResult = await storeFMIACP(vElement);
