@@ -174,9 +174,10 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
         
         console.log(`Making API request to: ${url}`);
         
-        // Standard fetch with browser's built-in authentication
+        // Standard fetch with explicit cors mode and browser's built-in authentication
         fetch(url, {
             method: method,
+            mode: 'cors', // Explicitly request CORS mode
             // This triggers the browser's authentication dialog when needed
             credentials: 'include',
             headers: {
@@ -198,25 +199,41 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
                 reject(new Error(`Authentication required (401)`));
                 return;
             } else {
-                throw new Error(`API request failed with status: ${response.status}`);
-            }
-        })
-        .then(responseData => {
-            console.log(`Response received from ${targetUrl}`);
-            updateLoginStatus(true);
-            resolve(responseData);
-        })
-        .catch(error => {
-            console.error(`API request error for ${endpoint}: ${error}`, error.status);
-            
-            // Check for CORS error (Safari, Firefox)
-            if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-                console.warn("Possible CORS error detected");
-                reject(new Error(`CORS error: Cannot access API at ${targetUrl}`));
+                // Other error responses
+                console.error(`API error: ${response.status} - ${response.statusText}`);
+                reject(new Error(`API request failed: ${response.status} ${response.statusText}`));
                 return;
             }
+        })
+        .then(data => {
+            // Valid data received
+            console.log(`Response received from ${targetUrl}`);
             
-            reject(new Error(`API request failed: ${error.message}`));
+            // Update login status if we get here
+            updateLoginStatus(true);
+            
+            resolve(data);
+        })
+        .catch(error => {
+            console.error(`Error in API request to ${targetUrl}:`, error);
+            
+            // Specific handling for CORS errors
+            if (error.message.includes('Failed to fetch') || 
+                error.message.includes('NetworkError') || 
+                error.message.includes('CORS')) {
+                
+                console.warn("Possible CORS error detected", error);
+                
+                // Show error notification
+                displayError("CORS Error", 
+                    "Cannot access API at " + url + 
+                    "<br>CORS error: " + error.message, 
+                    "app.js:214");
+                
+                updateLoginStatus(false);
+            }
+            
+            reject(error);
         });
     });
 }
@@ -259,7 +276,7 @@ async function fetchData() {
 }
 
 // Function to display error message in dashboard
-function displayError(message, details = "") {
+function displayError(message, details = "", source = "") {
     const dashboardGrid = $('#dashboard-grid');
     dashboardGrid.html(`
         <div class="col-12">

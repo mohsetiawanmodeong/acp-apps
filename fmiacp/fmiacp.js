@@ -43,32 +43,33 @@ app.use((req, res, next) => {
     next();
 });
 
-// CORS middleware - must run BEFORE authentication
-app.use(function(req, res, next) {
-    // Set Access-Control-Allow-Origin to the request origin
-    const origin = req.headers.origin;
-    if (origin) {
-        res.header('Access-Control-Allow-Origin', origin);
+// CORS middleware - lebih mirip production tetapi mengatasi masalah CORS
+app.use((req, res, next) => {
+    // Jika ada credentials, tetapkan origin yang spesifik
+    // Jika tidak, gunakan pola yang lebih mirip production
+    if (req.headers.origin) {
+        // Untuk permintaan dengan credentials, kita harus menentukan origin yang tepat
+        res.header('Access-Control-Allow-Origin', req.headers.origin);
         res.header('Access-Control-Allow-Credentials', 'true');
-    } else {
-        // Fallback for requests without origin (like curl)
-        res.header('Access-Control-Allow-Origin', '*');
     }
     
+    // Header lainnya, mirip dengan production
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
-    // Handle preflight requests
+    // Tambahan penting: handle preflight request
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        res.status(200).end();
+        return;
     }
     
     next();
 });
 
-// Authentication middleware - runs after CORS for non-OPTIONS requests
-app.use(function authentication(req, res, next) {
+// Autentikasi sesuai dengan production
+function authentication(req, res, next) {
     var authheader = req.headers.authorization;
+
     if (!authheader) {
         var err = new Error('You are not authenticated!');
         res.setHeader('WWW-Authenticate', 'Basic');
@@ -99,9 +100,9 @@ app.use(function authentication(req, res, next) {
         err.status = 401;
         return next(err);
     }
-});
+}
 
-// Body parser middlewares
+app.use(authentication);
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({
     extended: true
