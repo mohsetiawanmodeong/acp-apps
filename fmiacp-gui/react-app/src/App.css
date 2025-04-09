@@ -214,16 +214,21 @@ code {
 
 /* Card styling */
 .card {
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .card-header {
   background-color: #f8f9fa;
   font-weight: bold;
+  padding: 0.5rem 1rem;
+}
+
+.card-body {
+  padding: 0.75rem;
 }
 
 /* Status cards */
@@ -314,7 +319,7 @@ code {
 /* Bottom navigation container */
 .bottom-nav-container {
   padding: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Main tabs container style */
@@ -354,12 +359,6 @@ code {
 /* Space between nav menu and content below */
 .main-content {
   margin-top: 1rem;
-}
-
-/* Realtime indicator animation */
-.realtime-indicator {
-  display: inline-block;
-  animation: spin 2s linear infinite;
 }
 
 @keyframes spin {

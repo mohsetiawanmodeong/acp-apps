@@ -34,9 +34,9 @@ const AppStatus = ({ data }) => {
 
   return (
     <div>
-      <div className="row mb-3">
-        <div className="col-md-4 mb-3 mb-md-0">
-          <div className="card h-100">
+      <div className="row mb-2">
+        <div className="col-md-4">
+          <div className="card">
             <div className="card-body">
               <h6 className="card-subtitle mb-2 text-muted">App Name</h6>
               <p className="h4" id="app-name">{data.Name || 'FMIACP'}</p>
@@ -44,8 +44,8 @@ const AppStatus = ({ data }) => {
           </div>
         </div>
         
-        <div className="col-md-4 mb-3 mb-md-0">
-          <div className="card h-100">
+        <div className="col-md-4">
+          <div className="card">
             <div className="card-body">
               <h6 className="card-subtitle mb-2 text-muted">Version</h6>
               <p className="h4" id="app-version">{data.Version || '2.0'}</p>
@@ -54,7 +54,7 @@ const AppStatus = ({ data }) => {
         </div>
         
         <div className="col-md-4">
-          <div className="card h-100">
+          <div className="card">
             <div className="card-body">
               <h6 className="card-subtitle mb-2 text-muted">Database Connection</h6>
               <p className="h4" id="db-connection">

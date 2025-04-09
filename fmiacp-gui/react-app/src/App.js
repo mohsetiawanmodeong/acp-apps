@@ -310,7 +310,7 @@ function App() {
         setActiveTab={setActiveTab}
       />
       <div className="content-wrapper">
-        <div className="container-fluid pt-1 main-content">
+        <div className="container-fluid pt-0 main-content">
           {renderContent()}
         </div>
       </div>
