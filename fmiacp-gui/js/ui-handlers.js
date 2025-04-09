@@ -46,9 +46,19 @@ async function refreshDataSmoothly() {
             console.log('Background refresh successful - API is connected');
             updateLoginStatus(true);
             
-            // Update global data
-            fmiacpData = fmiacpDataResponse;
-            fmiacpCurrentData = machineDataResponse;
+            // Store last successful status for future reference
+            if (statusData) {
+                window.lastSuccessfulStatus = statusData;
+            }
+            
+            // Update global data only if we have valid data
+            if (Array.isArray(fmiacpDataResponse)) {
+                fmiacpData = fmiacpDataResponse;
+            }
+            
+            if (Array.isArray(machineDataResponse)) {
+                fmiacpCurrentData = machineDataResponse;
+            }
             
             // Update UI elements smoothly without disruption
             updateUIElementsSmoothly(statusData);
@@ -59,7 +69,13 @@ async function refreshDataSmoothly() {
             // If connection failed, update status but don't disrupt UI
             console.warn('Auto refresh failed - API is disconnected:', error.message);
             updateLoginStatus(false);
-            updateAppStatus(null);
+            
+            // Use last successful status if available
+            if (window.lastSuccessfulStatus) {
+                updateAppStatus(window.lastSuccessfulStatus);
+            } else {
+                updateAppStatus(null);
+            }
         }
     } catch (error) {
         // Don't show error directly, just log it

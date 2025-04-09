@@ -6,9 +6,10 @@
 // Global variables
 let fmiacpData = [];
 let fmiacpCurrentData = [];
+let tableData = []; // Global tableData variable
 let refreshTimer = null;
 let currentPage = 1;
-const rowsPerPage = 15;
+let rowsPerPage = 25; // Default value, will be updated by entries-select
 let apiBaseUrl = 'http://localhost:4990'; // Global API base URL that can be updated
 
 // Document ready function
@@ -47,6 +48,36 @@ function createLoginStatusDisplay() {
 
 // Set up event listeners for UI controls
 function setupEventListeners() {
+    // Refresh button
+    $('#refresh-btn').on('click', function() {
+        console.log('Manual refresh requested');
+        
+        // Add spinning animation to the refresh icon
+        const $icon = $(this).find('i');
+        $icon.addClass('refresh-spin');
+        
+        // Show loading indicator
+        showLoading(true);
+        
+        // Fetch data and handle completion
+        fetchData()
+            .then(() => {
+                console.log('Manual refresh completed successfully');
+            })
+            .catch(error => {
+                console.error('Manual refresh failed:', error);
+            })
+            .finally(() => {
+                // Stop spinning animation
+                setTimeout(() => {
+                    $icon.removeClass('refresh-spin');
+                }, 500);
+                
+                // Hide loading indicator
+                showLoading(false);
+            });
+    });
+    
     // Fullscreen button
     $('#fullscreen-btn').on('click', function() {
         toggleFullScreen();
@@ -73,37 +104,12 @@ function setupEventListeners() {
         }
     });
     
-    // Table filter event
-    $('#table-filter').on('change', function() {
-        renderDataTable();
-    });
+    // Table filter events - these are now handled in data-handlers.js
+    // since they require re-rendering the DataTable
     
-    // Table search event
-    $('#table-search').on('input', function() {
-        renderDataTable();
-    });
-    
-    // Machine filter event
+    // Machine filter event for the machine data tab
     $('#machine-filter').on('change', function() {
         renderMachineData();
-    });
-    
-    // Pagination buttons
-    $('#prev-page').on('click', function() {
-        if (currentPage > 1) {
-            currentPage--;
-            renderDataTable();
-        }
-    });
-    
-    $('#next-page').on('click', function() {
-        const totalRows = filteredTableData ? filteredTableData.length : 0;
-        const totalPages = Math.ceil(totalRows / rowsPerPage);
-        
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderDataTable();
-        }
     });
 }
 
@@ -184,7 +190,7 @@ function updateLoginStatus(isLoggedIn) {
 
 // Function to make API requests
 async function makeApiRequest(endpoint, method = 'GET', data = null) {
-    return new Promise((resolve, reject) => {
+    try {
         // Construct proper URL without duplication
         let url = '';
         
@@ -194,90 +200,67 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
         // Make sure endpoint starts with slash
         const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
         
-        // Combine them for target URL - now directly connecting to API without proxy
+        // Combine them for target URL
         const targetUrl = `${baseUrl}${formattedEndpoint}`;
         url = targetUrl;
         
         console.log(`Making API request to: ${url}`);
         
-        // Set up timeout for fetch
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
-        // Standard fetch with explicit cors mode and browser's built-in authentication
-        fetch(url, {
+        // Prepare fetch options - no credentials in the frontend
+        const fetchOptions = {
             method: method,
-            mode: 'cors', // Explicitly request CORS mode
-            // This triggers the browser's authentication dialog when needed
-            credentials: 'include',
-            headers: {
-                'Content-Type': data ? 'application/json' : 'application/x-www-form-urlencoded'
-            },
-            body: data ? JSON.stringify(data) : null,
-            signal: controller.signal // Add signal for timeout
-        })
-        .then(response => {
-            clearTimeout(timeoutId); // Clear timeout on success
-            console.log(`Response status: ${response.status} for ${targetUrl}`);
-            
-            if (response.ok) {
-                return response.json();
-            } else if (response.status === 401) {
-                // Update login status
-                updateLoginStatus(false);
-                
-                // Show message about authentication
-                console.log("Authentication required, browser should show login dialog");
-                reject(new Error(`Authentication required (401)`));
-                return;
-            } else {
-                // Other error responses
-                console.error(`API error: ${response.status} - ${response.statusText}`);
-                reject(new Error(`API request failed: ${response.status} ${response.statusText}`));
-                return;
-            }
-        })
-        .then(data => {
-            // Valid data received
-            console.log(`Response received from ${targetUrl}`);
-            
-            // Update login status if we get here
-            updateLoginStatus(true);
-            
-            resolve(data);
-        })
-        .catch(error => {
-            clearTimeout(timeoutId); // Clear timeout on error
-            console.error(`Error in API request to ${targetUrl}:`, error);
-            
-            // Update app status with connection failure
-            updateAppStatus(null);
-                
-            // Update connection status to failure
-            updateLoginStatus(false);
-            
-            // Check for timeout or connection refused errors
-            if (error.name === 'AbortError') {
-                console.error("Request timeout detected");
-                reject(new Error("Connection timeout - server might be down"));
-            } else if (error.message.includes('Failed to fetch') || 
-                       error.message.includes('NetworkError') || 
-                       error.message.includes('CORS')) {
-                
-                console.warn("Connection error detected", error);
-                
-                // Show error notification
-                displayError("Connection Error", 
-                    "Cannot access API at " + url + 
-                    "<br>Server might be down or unreachable", 
-                    "app.js:214");
-                
-                updateLoginStatus(false);
-            }
-            
-            reject(error);
-        });
+            // Use credentials: 'include' to send cookies if the server uses session auth
+            credentials: 'include'
+        };
+        
+        // Add body for POST requests
+        if (method === 'POST' && data) {
+            fetchOptions.headers = {
+                'Content-Type': 'application/json'
+            };
+            fetchOptions.body = JSON.stringify(data);
+        }
+        
+        // Make fetch request
+        const response = await fetch(url, fetchOptions);
+        
+        // Log response status
+        console.log(`Response status: ${response.status} for ${url}`);
+        
+        // Check if response is OK
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+        
+        // Parse JSON response
+        const responseData = await response.json();
+        console.log(`Response received from ${url}`);
+        
+        return responseData;
+    } catch (error) {
+        console.error('API request failed:', error);
+        throw error;
+    }
+}
+
+// Function to initialize all Bootstrap tabs
+function initBootstrapTabs() {
+    console.log("Bootstrap tabs initialization started");
+    
+    // Use jQuery approach for Bootstrap tabs which is more compatible
+    $('.nav-link[data-bs-toggle="pill"]').on('click', function(e) {
+        e.preventDefault();
+        $(this).tab('show');
+        console.log(`Tab switched to: ${$(this).attr('href')}`);
     });
+    
+    // Ensure a tab is active when the page loads
+    if ($('.nav-link.active').length === 0) {
+        // Set the default tab as active
+        $('.nav-link[href="#dashboard-tab"]').tab('show');
+    }
+    
+    console.log("Bootstrap tabs initialized");
 }
 
 // Function to fetch data from API
@@ -292,6 +275,11 @@ async function fetchData() {
         const statusData = await makeApiRequest('/api/getAppStatusFMIACP');
         console.log('App status data:', statusData);
         
+        // Store last successful status
+        if (statusData) {
+            window.lastSuccessfulStatus = statusData;
+        }
+        
         // Update app status display
         updateAppStatus(statusData);
         
@@ -305,10 +293,29 @@ async function fetchData() {
         fmiacpData = fmiacpDataResponse;
         fmiacpCurrentData = machineDataResponse;
         
+        // Process data for the table
+        if (Array.isArray(fmiacpDataResponse)) {
+            // Transform the data for the table format
+            tableData = processDataForTable(fmiacpDataResponse);
+        }
+        
+        // Update filters for table
+        if (typeof updateTableFilters === 'function') {
+            updateTableFilters();
+        }
+        
         // Update UI for other tabs
-        updateDashboard();
-        renderMachineData();
-        renderDataTable();
+        if (typeof updateDashboard === 'function') {
+            updateDashboard();
+        }
+        
+        if (typeof renderMachineData === 'function') {
+            renderMachineData();
+        }
+        
+        if (typeof renderDataTable === 'function') {
+            renderDataTable();
+        }
         
         // Update connection status to success
         updateLoginStatus(true);
@@ -316,7 +323,6 @@ async function fetchData() {
         console.log("All data fetched successfully");
     } catch (error) {
         console.error("Error fetching data:", error);
-        displayError("Error fetching data", error.message);
         
         // Update app status with connection failure
         updateAppStatus(null);
@@ -328,49 +334,97 @@ async function fetchData() {
     }
 }
 
-// Function to display error message in dashboard
-function displayError(message, details = "", source = "") {
-    const dashboardGrid = $('#dashboard-grid');
-    dashboardGrid.html(`
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="alert alert-danger mb-0">
-                        <h5 class="alert-heading">${message}</h5>
-                        <p>${details}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `);
-}
-
-// Function to initialize all Bootstrap tabs
-function initBootstrapTabs() {
-    // Ensure all tab links show their content when clicked
-    $('.nav-link[data-bs-toggle="pill"]').on('click', function (e) {
-        e.preventDefault();
-        const target = $(this).attr('href');
+// Process API data into table format
+function processDataForTable(apiData) {
+    if (!Array.isArray(apiData)) return [];
+    
+    // Group data by machine name to create a single row per machine
+    const machineGroups = {};
+    
+    apiData.forEach(item => {
+        const machineName = item.MACHINE_NAME;
+        if (!machineName) return;
         
-        // Hide all tab panes
-        $('.tab-pane').removeClass('show active');
+        if (!machineGroups[machineName]) {
+            machineGroups[machineName] = {
+                MachineName: machineName,
+                MachineAddress: item.MACHINE_ADDRESS || 'N/A',
+                ConnectionStatus: 'Unknown',
+                TimeStamp: item.LAST_UPDATE || null,
+                HasErrors: false,
+                TrackCount: 0
+            };
+        }
         
-        // Show selected tab pane
-        $(target).addClass('show active');
+        // Update machine status
+        if (item.MEASUREMENT === 'ONLINE' && item.VALUE === '1') {
+            machineGroups[machineName].ConnectionStatus = 'Online';
+        } else if (item.MEASUREMENT === 'ONLINE' && item.VALUE === '0') {
+            machineGroups[machineName].ConnectionStatus = 'Offline';
+        }
         
-        // Update active class on tab links
-        $('.nav-link').removeClass('active');
-        $(this).addClass('active');
+        // Track count (can be customized based on your data)
+        if (item.CATEGORY === 'TRACK') {
+            machineGroups[machineName].TrackCount++;
+        }
         
-        console.log(`Tab switched to: ${target}`);
+        // Update timestamp with most recent update
+        if (item.LAST_UPDATE) {
+            const itemDate = new Date(item.LAST_UPDATE);
+            const currentDate = machineGroups[machineName].TimeStamp ? 
+                new Date(machineGroups[machineName].TimeStamp) : null;
+                
+            if (!currentDate || itemDate > currentDate) {
+                machineGroups[machineName].TimeStamp = item.LAST_UPDATE;
+            }
+        }
+        
+        // Check for errors
+        if (item.CATEGORY === 'ERROR' || item.TYPE === 'ERROR') {
+            machineGroups[machineName].HasErrors = true;
+        }
     });
     
-    // Make sure at least one tab is active when the page loads
-    if ($('.nav-link.active').length === 0) {
-        $('.nav-link[href="#dashboard-tab"]').click();
+    // Convert grouped data to array
+    return Object.values(machineGroups);
+}
+
+// Function to display loading indicator
+function showLoading(show) {
+    if (show) {
+        // Show loading indicator
+        if (!$('#loading-overlay').length) {
+            const overlay = $('<div id="loading-overlay" class="loading-overlay"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            $('body').append(overlay);
+        }
+        $('#loading-overlay').show();
+    } else {
+        // Hide loading indicator
+        $('#loading-overlay').hide();
+    }
+}
+
+// Function to start auto-refresh
+function startAutoRefresh() {
+    // Clear any existing timer
+    if (window.refreshTimer) {
+        clearInterval(window.refreshTimer);
+        window.refreshTimer = null;
     }
     
-    console.log("Bootstrap tabs initialized");
+    // Fixed 1-second interval
+    const interval = 1000;
+    console.log(`Setting up auto refresh with interval: ${interval}ms`);
+    
+    // Set up background refresh
+    window.refreshTimer = setInterval(function() {
+        // Use refreshDataSmoothly if available, otherwise use fetchData
+        if (typeof refreshDataSmoothly === 'function') {
+            refreshDataSmoothly();
+        } else {
+            fetchData();
+        }
+    }, interval);
 }
 
 // Function to periodically check connection status
@@ -383,12 +437,9 @@ function startConnectionChecker() {
     // Set up a new connection checker that runs every 10 seconds
     window.connectionCheckerTimer = setInterval(async function() {
         try {
-            // Simple ping to API - using same approach as makeApiRequest for consistency
+            // Simple ping to API without hardcoded credentials
             const response = await fetch(`${apiBaseUrl}/api/getAppStatusFMIACP`, {
-                method: 'GET',
-                mode: 'cors',
                 credentials: 'include'
-                // No extra headers that could trigger CORS preflight
             });
             
             // If we get a response, connection is OK
@@ -443,4 +494,104 @@ function startConnectionChecker() {
     console.log("Connection checker started");
 }
 
-// More functions will be added in additional files 
+// Function to toggle fullscreen
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(e => {
+            console.error(`Error attempting to enable fullscreen: ${e.message}`);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+// Function to update app status display if not found in data-handlers.js
+function updateAppStatus(status) {
+    // If the function is already defined in data-handlers.js, don't redefine it
+    if (window.updateAppStatusDefined) return;
+    
+    // Format bytes to human readable format
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Format microseconds to readable format
+    function formatMicroseconds(microseconds) {
+        return (microseconds / 1000).toFixed(2) + ' ms';
+    }
+    
+    // Check if status is valid
+    const isConnected = status !== null && typeof status === 'object';
+    
+    // Update basic app info
+    $('#app-name').text(isConnected ? (status.Name || '-') : '-');
+    $('#app-version').text(isConnected ? (status.Version || '-') : '-');
+    
+    // Update database connection status
+    const dbConnection = isConnected ? 'Connected' : 'Disconnected';
+    $('#db-connection')
+        .removeClass('text-success text-danger')
+        .addClass(isConnected ? 'text-success' : 'text-danger')
+        .find('.connection-text')
+        .text(dbConnection);
+    
+    // If not connected, clear all data displays
+    if (!isConnected) {
+        $('#data-store-size').text('-');
+        $('#data-store-count').text('-');
+        $('#data-store-fail-count').text('-');
+        $('#data-input-count').text('-');
+        $('#data-input-request-count').text('-');
+        $('#data-output-count').text('-');
+        $('#data-output-request-count').text('-');
+        
+        // Clear memory usage
+        $('#memory-rss').text('-');
+        $('#memory-heapTotal').text('-');
+        $('#memory-heapUsed').text('-');
+        $('#memory-external').text('-');
+        $('#memory-arrayBuffers').text('-');
+        
+        // Clear CPU usage
+        $('#cpu-user').text('-');
+        $('#cpu-system').text('-');
+        $('#cpu-total').text('-');
+        
+        return;
+    }
+    
+    // Update data statistics
+    $('#data-store-size').text(status.DataStoreSize || 0);
+    $('#data-store-count').text(status.DataStoreCount || 0);
+    $('#data-store-fail-count').text(status.DataStoreFailCount || 0);
+    $('#data-input-count').text(status.DataInputCount || 0);
+    $('#data-input-request-count').text(status.DataInputRequestCount || 0);
+    $('#data-output-count').text(status.DataOutputCount || 0);
+    $('#data-output-request-count').text(status.DataOutputRequestCount || 0);
+    
+    // Update memory usage
+    if (status.UsageMemory) {
+        $('#memory-rss').text(formatBytes(status.UsageMemory.rss || 0));
+        $('#memory-heapTotal').text(formatBytes(status.UsageMemory.heapTotal || 0));
+        $('#memory-heapUsed').text(formatBytes(status.UsageMemory.heapUsed || 0));
+        $('#memory-external').text(formatBytes(status.UsageMemory.external || 0));
+        $('#memory-arrayBuffers').text(formatBytes(status.UsageMemory.arrayBuffers || 0));
+    }
+    
+    // Update CPU usage
+    if (status.UsageCPU) {
+        $('#cpu-user').text(formatMicroseconds(status.UsageCPU.user || 0));
+        $('#cpu-system').text(formatMicroseconds(status.UsageCPU.system || 0));
+    }
+    
+    // Update total CPU percentage
+    $('#cpu-total').text(status.CPU ? status.CPU + '%' : '0%');
+}
+
+// ... rest of the original file content ...

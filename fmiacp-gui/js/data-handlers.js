@@ -3,129 +3,157 @@
  * Data handling functions for FMIACP Dashboard
  */
 
+// Use the rowsPerPage from app.js to avoid duplicate declaration
+
 // Function to render data table
 function renderDataTable() {
-    const tableBody = $('#fmiacp-table-body');
+    const tableBody = $('#data-table tbody');
+    
+    // Destroy existing DataTable if it exists
+    if ($.fn.DataTable.isDataTable('#data-table')) {
+        $('#data-table').DataTable().destroy();
+    }
+    
+    // Clear the table
     tableBody.empty();
     
-    // If no data is available, show a message
+    // Check if we have FMIACP data
     if (!fmiacpData || fmiacpData.length === 0) {
-        tableBody.html(`
-            <tr>
-                <td colspan="8" class="text-center p-4">
-                    <div class="alert alert-primary d-inline-block text-start">
-                        <h5>Tidak Ada Data</h5>
-                        <p>Tidak ada data FMIACP yang tersedia.</p>
-                        <p>Periksa koneksi ke server API atau database mungkin kosong.</p>
-                    </div>
-                </td>
-            </tr>
-        `);
-        
-        // Update page info
-        $('#page-info').text('Page 0 of 0');
-        
-        // Disable pagination buttons
-        $('#prev-page').prop('disabled', true);
-        $('#next-page').prop('disabled', true);
-        
+        tableBody.append('<tr><td colspan="9" class="text-center">No data available</td></tr>');
         return;
     }
     
-    // Get filter and search values
-    const filterValue = $('#table-filter').val();
-    const searchValue = $('#table-search').val().toLowerCase();
+    // Get filter values
+    const machineFilter = $('#machine-name-filter').val();
+    const typeFilter = $('#type-filter').val();
+    const valueFilter = $('#value-filter').val();
     
-    // Update category filter if needed
-    const categoryFilter = $('#table-filter');
-    if (categoryFilter.find('option').length <= 1) {
-        const categories = [...new Set(fmiacpData.map(item => item.CATEGORY))];
-        categories.forEach(category => {
-            if (category) {
-                categoryFilter.append(new Option(category, category));
+    // Apply filters to the data
+    let filteredData = fmiacpData;
+    
+    if (machineFilter) {
+        filteredData = filteredData.filter(item => item.MACHINE_NAME === machineFilter);
+    }
+    
+    if (typeFilter) {
+        filteredData = filteredData.filter(item => item.TYPE === typeFilter);
+    }
+    
+    if (valueFilter) {
+        filteredData = filteredData.filter(item => item.VALUE === valueFilter);
+    }
+    
+    // Handle no matching data
+    if (filteredData.length === 0) {
+        tableBody.append('<tr><td colspan="9" class="text-center">No data matches the selected filters</td></tr>');
+        return;
+    }
+    
+    // Populate the table with the filtered data
+    filteredData.forEach(item => {
+        // Format the value with appropriate styling and badge
+        let valueBadge = '';
+        if (item.VALUE === '1') {
+            valueBadge = '<span class="badge bg-success">ON</span>';
+        } else if (item.VALUE === '0') {
+            valueBadge = '<span class="badge bg-danger">OFF</span>';
+        } else {
+            valueBadge = item.VALUE || 'N/A';
+        }
+        
+        const rowHtml = `<tr>
+            <td>${item.ID || 'N/A'}</td>
+            <td>${item.MACHINE_NAME || 'N/A'}</td>
+            <td>${item.START_TIME ? new Date(item.START_TIME).toLocaleString() : 'N/A'}</td>
+            <td>${item.CATEGORY || 'N/A'}</td>
+            <td>${item.TYPE || 'N/A'}</td>
+            <td>${item.MEASUREMENT || 'N/A'}</td>
+            <td>${valueBadge}</td>
+            <td>${item.LAST_UPDATE ? new Date(item.LAST_UPDATE).toLocaleString() : 'N/A'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary view-details" data-machine="${item.MACHINE_NAME}">
+                    <i class="bi bi-eye"></i> View
+                </button>
+            </td>
+        </tr>`;
+        tableBody.append(rowHtml);
+    });
+    
+    // Initialize DataTable with improved configuration
+    $('#data-table').DataTable({
+        "paging": true,
+        "ordering": true,
+        "info": true,
+        "searching": true,
+        "lengthChange": true,
+        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        "pageLength": rowsPerPage, // Use the global rowsPerPage variable
+        "language": {
+            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "infoEmpty": "Showing 0 to 0 of 0 entries",
+            "search": "Search:",
+            "lengthMenu": "Show _MENU_ entries",
+            "paginate": {
+                "first": "First",
+                "last": "Last",
+                "next": "Next",
+                "previous": "Previous"
             }
+        },
+        "responsive": true,
+        "autoWidth": false,
+        "stateSave": true,
+        "order": [[0, "asc"]], // Sort by ID column by default
+        "drawCallback": function() {
+            // Add event handlers for detail buttons after each draw
+            $('#data-table tbody').on('click', '.view-details', function() {
+                const machineName = $(this).data('machine');
+                showMachineDetails(machineName);
+            });
+        }
+    });
+}
+
+// Function to update table filters when data is loaded
+function updateTableFilters() {
+    // Skip if no data
+    if (!fmiacpData || fmiacpData.length === 0) return;
+    
+    // Update machine name filter
+    const machineSelect = $('#machine-name-filter');
+    if (machineSelect.find('option').length <= 1) {
+        machineSelect.empty().append('<option value="">All Machines</option>');
+        const machineNames = [...new Set(fmiacpData.map(item => item.MACHINE_NAME))].filter(Boolean).sort();
+        machineNames.forEach(name => {
+            machineSelect.append(`<option value="${name}">${name}</option>`);
         });
     }
     
-    // Filter data
-    let filteredData = [...fmiacpData];
-    
-    if (filterValue !== 'all') {
-        filteredData = filteredData.filter(item => item.CATEGORY === filterValue);
+    // Update type filter
+    const typeSelect = $('#type-filter');
+    if (typeSelect.find('option').length <= 1) {
+        typeSelect.empty().append('<option value="">All Types</option>');
+        const types = [...new Set(fmiacpData.map(item => item.TYPE))].filter(Boolean).sort();
+        types.forEach(type => {
+            typeSelect.append(`<option value="${type}">${type}</option>`);
+        });
     }
     
-    if (searchValue) {
-        filteredData = filteredData.filter(item => 
-            (item.MACHINE_NAME && item.MACHINE_NAME.toLowerCase().includes(searchValue)) ||
-            (item.CATEGORY && item.CATEGORY.toLowerCase().includes(searchValue)) ||
-            (item.TYPE && item.TYPE.toLowerCase().includes(searchValue)) ||
-            (item.MEASUREMENT && item.MEASUREMENT.toLowerCase().includes(searchValue)) ||
-            (item.VALUE && item.VALUE.toLowerCase().includes(searchValue))
-        );
+    // Set up custom filter handlers for DataTables
+    if ($.fn.DataTable.isDataTable('#data-table')) {
+        // Apply filters when they change
+        $('#machine-name-filter, #type-filter, #value-filter').off('change').on('change', function() {
+            // Just re-render the table with the new filters
+            renderDataTable();
+        });
     }
-    
-    // If no filtered data, show a message
-    if (filteredData.length === 0) {
-        tableBody.html(`
-            <tr>
-                <td colspan="8" class="text-center p-4">
-                    <div class="alert alert-warning d-inline-block text-start">
-                        <h5>Tidak Ada Data yang Sesuai</h5>
-                        <p>Tidak ada data yang cocok dengan filter atau pencarian Anda.</p>
-                        <p>Coba ubah kriteria pencarian atau hapus filter.</p>
-                    </div>
-                </td>
-            </tr>
-        `);
-        
-        // Update page info
-        $('#page-info').text('Page 0 of 0');
-        
-        // Disable pagination buttons
-        $('#prev-page').prop('disabled', true);
-        $('#next-page').prop('disabled', true);
-        
-        return;
-    }
-    
-    // Sort by ID descending (newest first)
-    filteredData.sort((a, b) => b.ID - a.ID);
-    
-    // Pagination
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const pagedData = filteredData.slice(startIndex, endIndex);
-    
-    // Update page info
-    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-    $('#page-info').text(`Page ${currentPage} of ${totalPages || 1}`);
-    
-    // Disable/enable pagination buttons
-    $('#prev-page').prop('disabled', currentPage === 1);
-    $('#next-page').prop('disabled', currentPage >= totalPages);
-    
-    // Render table rows
-    pagedData.forEach(item => {
-        const startTime = item.START_TIME ? new Date(item.START_TIME).toLocaleString() : '-';
-        const lastUpdate = item.LAST_UPDATE ? new Date(item.LAST_UPDATE).toLocaleString() : '-';
-        
-        const row = $('<tr>').html(`
-            <td>${item.ID}</td>
-            <td>${item.MACHINE_NAME || '-'}</td>
-            <td>${startTime}</td>
-            <td>${item.CATEGORY || '-'}</td>
-            <td>${item.TYPE || '-'}</td>
-            <td>${item.MEASUREMENT || '-'}</td>
-            <td>${item.VALUE || '-'}</td>
-            <td>${lastUpdate}</td>
-        `);
-        
-        tableBody.append(row);
-    });
 }
 
 // Function to update app status display
 function updateAppStatus(status) {
+    // Set flag to indicate this function is defined
+    window.updateAppStatusDefined = true;
+    
     // Format bytes to human readable format
     function formatBytes(bytes) {
         if (bytes === 0) return '0 B';
@@ -435,119 +463,789 @@ function renderMachineData() {
 
 // Function to update dashboard
 function updateDashboard() {
-    // Get machine counts
-    const allMachines = fmiacpCurrentData ? [...new Set(fmiacpCurrentData.map(item => item.MACHINE_NAME))].filter(Boolean) : [];
-    const totalMachines = allMachines.length;
-    
-    // Calculate active machines (updated in the last hour)
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 3600000);
-    const activeMachines = fmiacpCurrentData ? 
-        [...new Set(fmiacpCurrentData
-            .filter(item => item.LAST_UPDATE && new Date(item.LAST_UPDATE) > oneHourAgo)
-            .map(item => item.MACHINE_NAME))].filter(Boolean).length : 0;
-    
-    // Calculate count of data points
-    const totalDataPoints = fmiacpData ? fmiacpData.length : 0;
-    
-    // Update stats
-    $('#total-machines').text(totalMachines);
-    $('#active-machines').text(activeMachines);
-    $('#inactive-machines').text(totalMachines - activeMachines);
-    $('#total-data-points').text(totalDataPoints);
-    
-    // Update data overview
-    const dataOverview = $('#latest-data-overview');
-    
     if (!fmiacpCurrentData || fmiacpCurrentData.length === 0) {
-        // Show message if no data available
-        dataOverview.html(`
-            <div class="alert alert-warning">
-                <h5>Tidak ada data tersedia.</h5>
-                <p>Pastikan server API berjalan dan terkoneksi ke database.</p>
-            </div>
-        `);
-        
-        // Set dashboard grid message
-        $('#dashboard-grid').html(`
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="alert alert-primary mb-0">
-                            <h5>Tidak Ada Data</h5>
-                            <p>Tidak ada data yang tersedia untuk ditampilkan pada dashboard.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `);
-        
+        $('#dashboard-grid').html('<div class="col-12"><div class="card"><div class="card-body text-center"><p>No machine data available</p></div></div></div>');
         return;
     }
     
-    // Get recent machine data overview
-    const totalAktif = fmiacpCurrentData.filter(item => 
-        item.LAST_UPDATE && new Date(item.LAST_UPDATE) > oneHourAgo).length;
-        
-    // Get types of data
-    const dataTypes = [...new Set(fmiacpCurrentData.map(item => item.TYPE))].filter(Boolean).length;
+    // Generate summary metrics
+    const summaryData = generateSummaryData();
     
-    // Update data overview
-    dataOverview.html(`
-        <div class="row mb-2">
-            <div class="col-md-4">
-                <strong>Total Mesin:</strong> ${totalMachines}
-            </div>
-            <div class="col-md-4">
-                <strong>Kategori Aktif:</strong> ${dataTypes}
-            </div>
-            <div class="col-md-4">
-                <strong>Tipe Data:</strong> ${dataTypes}
-            </div>
-        </div>
-    `);
+    // Update the data overview section with summary charts
+    updateDataOverview(summaryData);
     
-    // Update dashboard grid with machine cards
-    const dashboardGrid = $('#dashboard-grid');
-    dashboardGrid.empty();
+    // Get unique machine names
+    const machineNames = [...new Set(fmiacpCurrentData.map(item => item.MACHINE_NAME))].filter(Boolean);
     
-    // Get most recent updates for each machine
-    const machineUpdates = {};
-    fmiacpCurrentData.forEach(item => {
-        if (!machineUpdates[item.MACHINE_NAME] || 
-            (item.LAST_UPDATE && new Date(item.LAST_UPDATE) > new Date(machineUpdates[item.MACHINE_NAME].LAST_UPDATE))) {
-            machineUpdates[item.MACHINE_NAME] = item;
-        }
-    });
+    // Clear existing grid
+    $('#dashboard-grid').empty();
     
-    // Sort machines by name
-    const machineNames = Object.keys(machineUpdates).sort();
+    // Add title for machine cards section
+    $('#dashboard-grid').append('<div class="col-12 mb-3"><h5>Machine Status Cards</h5></div>');
     
-    // Create machine cards
+    // Add machine cards
     machineNames.forEach(machineName => {
-        const machineData = machineUpdates[machineName];
-        const isActive = machineData.LAST_UPDATE && new Date(machineData.LAST_UPDATE) > oneHourAgo;
-        const updateTime = machineData.LAST_UPDATE ? new Date(machineData.LAST_UPDATE).toLocaleString() : 'Unknown';
+        // Get data for this machine
+        const machineData = fmiacpCurrentData.filter(item => item.MACHINE_NAME === machineName);
         
-        // Count data points for this machine
-        const dataCount = fmiacpData ? fmiacpData.filter(item => item.MACHINE_NAME === machineName).length : 0;
+        // Calculate online status
+        const onlineStatus = machineData.some(item => 
+            item.MEASUREMENT === 'ONLINE' && item.VALUE === '1');
         
-        // Create card
-        const card = $('<div>').addClass('col-md-4 mb-4').html(`
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">${machineName}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="status-badge ${isActive ? 'status-online' : 'status-offline'} mb-3">
-                        ${isActive ? 'Aktif' : 'Tidak Aktif'}
+        // Get latest update time
+        const updateTimes = machineData
+            .map(item => item.LAST_UPDATE ? new Date(item.LAST_UPDATE) : null)
+            .filter(Boolean);
+        
+        const latestUpdate = updateTimes.length > 0 ? 
+            new Date(Math.max(...updateTimes.map(d => d.getTime()))) : null;
+        
+        // Create machine card with improved styling
+        const card = $(`
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 ${onlineStatus ? 'border-success' : 'border-danger'}">
+                    <div class="card-header ${onlineStatus ? 'bg-success text-white' : 'bg-danger text-white'}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">${machineName}</h5>
+                            <span class="badge bg-light text-dark rounded-pill">
+                                ${machineData.length} signals
+                            </span>
+                        </div>
                     </div>
-                    <p><strong>Update terakhir:</strong> ${updateTime}</p>
-                    <p><strong>Jumlah data:</strong> ${dataCount}</p>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Status:</span>
+                                <span class="fw-bold ${onlineStatus ? 'text-success' : 'text-danger'}">
+                                    ${onlineStatus ? 'ONLINE' : 'OFFLINE'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Last Update:</span>
+                                <span>${latestUpdate ? latestUpdate.toLocaleString() : 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="signal-summary">
+                            <h6 class="border-top pt-2">Signal Summary</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Measurement</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${generateSignalTableRows(machineData)}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-sm btn-primary view-details-btn" 
+                            data-machine="${machineName}">
+                            View Details
+                        </button>
+                    </div>
                 </div>
             </div>
         `);
         
+        // Add event listener to the "View Details" button
+        card.find('.view-details-btn').on('click', function() {
+            const machineName = $(this).data('machine');
+            // Switch to machine tab and filter by this machine
+            $('a[data-bs-toggle="pill"][href="#machine-tab"]').tab('show');
+            $('#machine-filter').val(machineName).trigger('change');
+        });
+        
         dashboardGrid.append(card);
     });
+    
+    // Add click handlers for the machine cards
+    setupMachineCardHandlers();
+}
+
+// Generate HTML for signal table rows
+function generateSignalTableRows(machineData) {
+    let rows = '';
+    
+    // Get unique signal types
+    const uniqueSignals = [...new Set(machineData.map(item => 
+        `${item.TYPE}|${item.MEASUREMENT}`))];
+    
+    // Display at most 5 signals in the card
+    const displaySignals = uniqueSignals.slice(0, 5);
+    
+    displaySignals.forEach(signalKey => {
+        const [type, measurement] = signalKey.split('|');
+        // Find the latest data for this signal
+        const signalData = machineData
+            .filter(item => item.TYPE === type && item.MEASUREMENT === measurement)
+            .sort((a, b) => {
+                const dateA = a.LAST_UPDATE ? new Date(a.LAST_UPDATE) : new Date(0);
+                const dateB = b.LAST_UPDATE ? new Date(b.LAST_UPDATE) : new Date(0);
+                return dateB - dateA;
+            });
+        
+        if (signalData.length > 0) {
+            const latestSignal = signalData[0];
+            
+            // Determine the status class based on value
+            let valueClass = '';
+            if (latestSignal.VALUE === '1') {
+                valueClass = 'text-success';
+            } else if (latestSignal.VALUE === '0') {
+                valueClass = 'text-danger';
+            }
+            
+            rows += `
+                <tr>
+                    <td>${type}</td>
+                    <td>${measurement}</td>
+                    <td class="${valueClass} fw-bold">${latestSignal.VALUE}</td>
+                </tr>
+            `;
+        }
+    });
+    
+    // If there are more signals than we're displaying
+    if (uniqueSignals.length > 5) {
+        rows += `
+            <tr>
+                <td colspan="3" class="text-center">
+                    <span class="text-muted">+ ${uniqueSignals.length - 5} more signals</span>
+                </td>
+            </tr>
+        `;
+    }
+    
+    return rows || '<tr><td colspan="3" class="text-center">No signal data</td></tr>';
+}
+
+// Generate summary data for dashboard overview
+function generateSummaryData() {
+    const summaryData = {
+        totalMachines: 0,
+        activeMachines: 0,
+        signalsByType: {},
+        valueDistribution: {
+            '0': 0,
+            '1': 0,
+            'other': 0
+        },
+        timeSeriesData: [],
+        categoryDistribution: {}
+    };
+    
+    if (!fmiacpData || fmiacpData.length === 0) {
+        return summaryData;
+    }
+    
+    // Get unique machine names
+    const machineNames = [...new Set(fmiacpCurrentData.map(item => item.MACHINE_NAME))].filter(Boolean);
+    summaryData.totalMachines = machineNames.length;
+    
+    // Calculate active machines (with at least one signal value of 1)
+    summaryData.activeMachines = machineNames.filter(machineName => {
+        return fmiacpCurrentData.some(item => 
+            item.MACHINE_NAME === machineName && 
+            item.MEASUREMENT === 'ONLINE' && 
+            item.VALUE === '1');
+    }).length;
+    
+    // Count signals by type
+    fmiacpData.forEach(item => {
+        // Count by type
+        if (!summaryData.signalsByType[item.TYPE]) {
+            summaryData.signalsByType[item.TYPE] = 0;
+        }
+        summaryData.signalsByType[item.TYPE]++;
+        
+        // Count value distribution
+        if (item.VALUE === '0') {
+            summaryData.valueDistribution['0']++;
+        } else if (item.VALUE === '1') {
+            summaryData.valueDistribution['1']++;
+        } else {
+            summaryData.valueDistribution['other']++;
+        }
+        
+        // Count by category
+        if (!summaryData.categoryDistribution[item.CATEGORY]) {
+            summaryData.categoryDistribution[item.CATEGORY] = 0;
+        }
+        summaryData.categoryDistribution[item.CATEGORY]++;
+    });
+    
+    // Process time series data (group by day)
+    const timeData = {};
+    fmiacpData.forEach(item => {
+        if (item.START_TIME) {
+            const date = new Date(item.START_TIME);
+            const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            if (!timeData[dateKey]) {
+                timeData[dateKey] = {
+                    date: dateKey,
+                    count: 0,
+                    valueOne: 0
+                };
+            }
+            
+            timeData[dateKey].count++;
+            
+            if (item.VALUE === '1') {
+                timeData[dateKey].valueOne++;
+            }
+        }
+    });
+    
+    // Convert time data to array and sort by date
+    summaryData.timeSeriesData = Object.values(timeData).sort((a, b) => {
+        return new Date(a.date) - new Date(b.date);
+    });
+    
+    return summaryData;
+}
+
+// Store chart instances globally to update instead of recreate
+let valueDistributionChart = null;
+let categoryDistributionChart = null;
+let signalTypesChart = null;
+let timeSeriesChart = null;
+
+// Update the dashboard overview section with summary charts
+function updateDataOverview(summaryData) {
+    const overviewSection = $('#latest-data-overview');
+    
+    // If first time, create the container for the charts
+    if (!document.getElementById('value-distribution-chart')) {
+        const content = `
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h6 class="border-bottom pb-2">Value Distribution</h6>
+                    <canvas id="value-distribution-chart" height="200"></canvas>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="border-bottom pb-2">Category Distribution</h6>
+                    <canvas id="category-distribution-chart" height="200"></canvas>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="border-bottom pb-2">Signal Types</h6>
+                    <canvas id="signal-types-chart" height="200"></canvas>
+                </div>
+                    </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="border-bottom pb-2">Data Trend Over Time</h6>
+                    <canvas id="time-series-chart" height="150"></canvas>
+                </div>
+            </div>
+        `;
+        
+        overviewSection.html(content);
+    }
+    
+    // Draw or update charts if the Chart.js library is loaded
+    if (typeof Chart !== 'undefined') {
+        // Value distribution chart
+        updateValueDistributionChart(summaryData);
+        
+        // Category distribution chart
+        updateCategoryDistributionChart(summaryData);
+        
+        // Signal types chart
+        updateSignalTypesChart(summaryData);
+        
+        // Time series chart
+        updateTimeSeriesChart(summaryData);
+    } else {
+        // If Chart.js is not loaded, display a text summary instead
+        overviewSection.html(`
+            <div class="alert alert-info">
+                <p>Chart.js library is not loaded. Add it to enable data visualization.</p>
+                <p>Summary: ${summaryData.totalMachines} machines, ${summaryData.activeMachines} active.</p>
+                <p>Values: ${summaryData.valueDistribution['1']} ON signals, ${summaryData.valueDistribution['0']} OFF signals.</p>
+            </div>
+        `);
+    }
+}
+
+// Update value distribution chart
+function updateValueDistributionChart(summaryData) {
+    const valueCtx = document.getElementById('value-distribution-chart').getContext('2d');
+    
+    if (valueDistributionChart) {
+        // Update existing chart
+        valueDistributionChart.data.datasets[0].data = [
+            summaryData.valueDistribution['0'],
+            summaryData.valueDistribution['1'],
+            summaryData.valueDistribution['other']
+        ];
+        valueDistributionChart.update('none'); // Use 'none' mode for smoother updates
+    } else {
+        // Create new chart
+        valueDistributionChart = new Chart(valueCtx, {
+            type: 'pie',
+            data: {
+                labels: ['OFF (0)', 'ON (1)', 'Other'],
+                datasets: [{
+                    data: [
+                        summaryData.valueDistribution['0'],
+                        summaryData.valueDistribution['1'],
+                        summaryData.valueDistribution['other']
+                    ],
+                    backgroundColor: ['#dc3545', '#198754', '#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 500 // Shorter animation for updates
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update category distribution chart
+function updateCategoryDistributionChart(summaryData) {
+    const categoryCtx = document.getElementById('category-distribution-chart').getContext('2d');
+    const categories = Object.keys(summaryData.categoryDistribution);
+    const categoryValues = Object.values(summaryData.categoryDistribution);
+    
+    if (categoryDistributionChart) {
+        // Check if labels are the same
+        const labelsMatch = arraysEqual(categoryDistributionChart.data.labels, categories);
+        
+        if (labelsMatch) {
+            // Just update the data
+            categoryDistributionChart.data.datasets[0].data = categoryValues;
+            categoryDistributionChart.update('none');
+        } else {
+            // Destroy and recreate if categories changed
+            categoryDistributionChart.destroy();
+            categoryDistributionChart = null;
+            
+            // Create new chart
+            categoryDistributionChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: 'Signals',
+                        data: categoryValues,
+                        backgroundColor: '#0d6efd'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    } else {
+        // Create new chart
+        categoryDistributionChart = new Chart(categoryCtx, {
+            type: 'bar',
+            data: {
+                labels: categories,
+                datasets: [{
+                    label: 'Signals',
+                    data: categoryValues,
+                    backgroundColor: '#0d6efd'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 500
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update signal types chart
+function updateSignalTypesChart(summaryData) {
+    const typeCtx = document.getElementById('signal-types-chart').getContext('2d');
+    const signalTypes = Object.keys(summaryData.signalsByType);
+    const signalValues = Object.values(summaryData.signalsByType);
+    
+    if (signalTypesChart) {
+        // Check if labels are the same
+        const labelsMatch = arraysEqual(signalTypesChart.data.labels, signalTypes);
+        
+        if (labelsMatch) {
+            // Just update the data
+            signalTypesChart.data.datasets[0].data = signalValues;
+            signalTypesChart.update('none');
+        } else {
+            // Destroy and recreate if types changed
+            signalTypesChart.destroy();
+            signalTypesChart = null;
+            
+            // Create new chart
+            signalTypesChart = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: signalTypes,
+                    datasets: [{
+                        data: signalValues,
+                        backgroundColor: [
+                            '#0d6efd', '#6610f2', '#6f42c1', '#d63384', 
+                            '#dc3545', '#fd7e14', '#ffc107', '#198754'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            display: true
+                        }
+                    }
+                }
+            });
+        }
+    } else {
+        // Create new chart
+        signalTypesChart = new Chart(typeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: signalTypes,
+                datasets: [{
+                    data: signalValues,
+                    backgroundColor: [
+                        '#0d6efd', '#6610f2', '#6f42c1', '#d63384', 
+                        '#dc3545', '#fd7e14', '#ffc107', '#198754'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 500
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        display: true
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update time series chart
+function updateTimeSeriesChart(summaryData) {
+    const timeCtx = document.getElementById('time-series-chart').getContext('2d');
+    const timeLabels = summaryData.timeSeriesData.map(d => d.date);
+    const countData = summaryData.timeSeriesData.map(d => d.count);
+    const valueOneData = summaryData.timeSeriesData.map(d => d.valueOne);
+    
+    if (timeSeriesChart) {
+        // Check if labels are the same
+        const labelsMatch = arraysEqual(timeSeriesChart.data.labels, timeLabels);
+        
+        if (labelsMatch) {
+            // Just update the data
+            timeSeriesChart.data.datasets[0].data = countData;
+            timeSeriesChart.data.datasets[1].data = valueOneData;
+            timeSeriesChart.update('none');
+        } else {
+            // Destroy and recreate if time range changed
+            timeSeriesChart.destroy();
+            timeSeriesChart = null;
+            
+            // Create new chart
+            timeSeriesChart = new Chart(timeCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: 'Total Signals',
+                            data: countData,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderWidth: 2,
+                            fill: true
+                        },
+                        {
+                            label: 'Value = 1 (ON)',
+                            data: valueOneData,
+                            borderColor: '#198754',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    } else {
+        // Create new chart
+        timeSeriesChart = new Chart(timeCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Total Signals',
+                        data: countData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Value = 1 (ON)',
+                        data: valueOneData,
+                        borderColor: '#198754',
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 500
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Helper function to compare arrays
+function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+    
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+// Set up event handlers for machine cards
+function setupMachineCardHandlers() {
+    $('.view-details-btn').off('click').on('click', function() {
+        const machineName = $(this).data('machine');
+        // Switch to machine tab and filter by this machine
+        $('a[data-bs-toggle="pill"][href="#machine-tab"]').tab('show');
+        $('#machine-filter').val(machineName).trigger('change');
+    });
+}
+
+// Function to show machine details when view button is clicked
+function showMachineDetails(machineName) {
+    if (!machineName || !fmiacpCurrentData) return;
+    
+    // Filter data for the selected machine
+    const machineData = fmiacpCurrentData.filter(item => item.MACHINE_NAME === machineName);
+    
+    if (machineData.length === 0) {
+        showToast('Error', `No data found for machine ${machineName}`, 'error');
+        return;
+    }
+    
+    // Create modal if it doesn't exist
+    if (!$('#machine-details-modal').length) {
+        const modal = `
+        <div class="modal fade" id="machine-details-modal" tabindex="-1" aria-labelledby="machine-details-title" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="machine-details-title">Machine Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="machine-details-content">
+                            <!-- Content will be dynamically inserted here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        $('body').append(modal);
+    }
+    
+    // Update modal title
+    $('#machine-details-title').text(`Machine Details: ${machineName}`);
+    
+    // Get the latest update time
+    const updateTimes = machineData
+        .map(item => item.LAST_UPDATE ? new Date(item.LAST_UPDATE) : null)
+        .filter(Boolean);
+    
+    const latestUpdate = updateTimes.length > 0 ? 
+        new Date(Math.max(...updateTimes.map(d => d.getTime()))) : null;
+    
+    // Determine online status
+    const onlineStatus = machineData.some(item => 
+        item.MEASUREMENT === 'ONLINE' && item.VALUE === '1');
+    
+    // Group data by category
+    const categories = {};
+    machineData.forEach(item => {
+        if (!categories[item.CATEGORY]) {
+            categories[item.CATEGORY] = [];
+        }
+        categories[item.CATEGORY].push(item);
+    });
+    
+    // Generate content for modal
+    let content = `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <span>Status:</span>
+                <span class="fw-bold ${onlineStatus ? 'text-success' : 'text-danger'}">
+                    ${onlineStatus ? 'ONLINE' : 'OFFLINE'}
+                </span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Last Update:</span>
+                <span>${latestUpdate ? latestUpdate.toLocaleString() : 'N/A'}</span>
+            </div>
+        </div>
+    `;
+    
+    // Add tabs for each category
+    if (Object.keys(categories).length > 0) {
+        content += `
+            <ul class="nav nav-tabs" id="machineDetailsTabs" role="tablist">
+                ${Object.keys(categories).map((category, index) => `
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link ${index === 0 ? 'active' : ''}" 
+                            id="tab-${category.toLowerCase()}" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#content-${category.toLowerCase()}" 
+                            type="button" 
+                            role="tab" 
+                            aria-controls="content-${category.toLowerCase()}" 
+                            aria-selected="${index === 0}">
+                            ${category}
+                        </button>
+                    </li>
+                `).join('')}
+            </ul>
+            <div class="tab-content mt-3" id="machineTabContent">
+                ${Object.keys(categories).map((category, index) => `
+                    <div class="tab-pane fade ${index === 0 ? 'show active' : ''}" 
+                        id="content-${category.toLowerCase()}" 
+                        role="tabpanel" 
+                        aria-labelledby="tab-${category.toLowerCase()}">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Measurement</th>
+                                    <th>Value</th>
+                                    <th>Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${categories[category].map(item => `
+                                    <tr>
+                                        <td>${item.TYPE || '-'}</td>
+                                        <td>${item.MEASUREMENT || '-'}</td>
+                                        <td class="${item.VALUE === '1' ? 'text-success' : (item.VALUE === '0' ? 'text-danger' : '')}">
+                                            ${item.VALUE || '-'}
+                                        </td>
+                                        <td>${item.LAST_UPDATE ? new Date(item.LAST_UPDATE).toLocaleString() : '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } else {
+        content += '<div class="alert alert-info">No detailed data available for this machine.</div>';
+    }
+    
+    // Update modal content
+    $('#machine-details-content').html(content);
+    
+    // Show the modal
+    const modalElement = document.getElementById('machine-details-modal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
 } 
