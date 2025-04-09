@@ -136,9 +136,18 @@ const ApiService = {
   // Get all machine data
   getData: async () => {
     return callApiWithRetry(async () => {
+      console.log('Fetching historical data from /api/getFMIACP');
+      const response = await apiClient.get('/api/getFMIACP');
+      console.log('Successfully fetched data from /api/getFMIACP', response.data);
+      return response.data;
+    });
+  },
+  
+  // Get current data only
+  getCurrentData: async () => {
+    return callApiWithRetry(async () => {
       try {
         console.log('Attempting to fetch current data from /api/getFMIACPCurrent');
-        // Try to get current data first
         const response = await apiClient.get('/api/getFMIACPCurrent');
         console.log('Successfully fetched data from /api/getFMIACPCurrent', response.data);
         return response.data;

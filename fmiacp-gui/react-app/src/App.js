@@ -303,7 +303,7 @@ function App() {
         return (
           <div className="card shadow-sm">
             <div className="card-header">
-              <h5 className="mb-0">FMIACP App Status</h5>
+              <h5 className="mb-0">App Status</h5>
             </div>
             <div className="card-body">
               {loading ? (
