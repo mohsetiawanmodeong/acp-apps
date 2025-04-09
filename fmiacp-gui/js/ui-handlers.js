@@ -11,8 +11,8 @@ function startAutoRefresh() {
         window.refreshTimer = null;
     }
     
-    // Fixed 1-second interval
-    const interval = 1000;
+    // Use a 3-second interval for smoother user experience
+    const interval = 3000;
     console.log(`Setting up auto refresh with interval: ${interval}ms`);
     
     // Set up background refresh that doesn't disrupt UI
@@ -114,7 +114,14 @@ function updateUIElementsSmoothly(statusData) {
     } else if (activeTabId === 'machine-tab') {
         renderMachineData();
     } else if (activeTabId === 'table-tab') {
-        renderDataTable();
+        // Don't refresh the data table if search field or any filter is focused
+        const searchFieldFocused = $('.dataTables_filter input').is(':focus');
+        const filterFocused = $('#machine-name-filter, #type-filter, #value-filter').is(':focus');
+        
+        // Don't update table if user is actively interacting with search or filters
+        if (!searchFieldFocused && !filterFocused) {
+            renderDataTable();
+        }
     } else if (activeTabId === 'status-tab') {
         updateAppStatus(statusData);
     }

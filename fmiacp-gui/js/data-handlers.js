@@ -110,6 +110,50 @@ function renderDataTable() {
                 const machineName = $(this).data('machine');
                 showMachineDetails(machineName);
             });
+            
+            // Add event handlers to manage auto-refresh during search
+            setupSearchInteractionHandlers();
+        }
+    });
+}
+
+// Function to manage auto-refresh during search and filter interactions
+function setupSearchInteractionHandlers() {
+    // Variable to store the original auto-refresh timer
+    if (typeof window.originalRefreshTimer === 'undefined') {
+        window.originalRefreshTimer = null;
+    }
+    
+    // Pause auto-refresh when search field or filters are focused
+    $('.dataTables_filter input, #machine-name-filter, #type-filter, #value-filter').on('focus', function() {
+        // Store current timer and pause auto-refresh
+        if (window.refreshTimer && !window.originalRefreshTimer) {
+            window.originalRefreshTimer = window.refreshTimer;
+            clearInterval(window.refreshTimer);
+            window.refreshTimer = null;
+            console.log('Auto-refresh paused due to user interaction with search/filters');
+        }
+    });
+    
+    // Resume auto-refresh when search or filter interaction is complete
+    $('.dataTables_filter input, #machine-name-filter, #type-filter, #value-filter').on('blur', function() {
+        // Wait a moment to ensure the user is done typing
+        setTimeout(function() {
+            // If no search fields are focused and we have a stored timer
+            if (!$('.dataTables_filter input, #machine-name-filter, #type-filter, #value-filter').is(':focus') && 
+                window.originalRefreshTimer && !window.refreshTimer) {
+                // Restart auto-refresh
+                startAutoRefresh();
+                window.originalRefreshTimer = null;
+                console.log('Auto-refresh resumed after user interaction with search/filters');
+            }
+        }, 500);
+    });
+    
+    // Also handle keyup events to detect when user presses Enter or Escape
+    $('.dataTables_filter input').on('keyup', function(e) {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+            $(this).blur(); // This will trigger the blur event handler
         }
     });
 }
