@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BiRefresh, BiFullscreen, BiDownload } from 'react-icons/bi';
 
 /**
