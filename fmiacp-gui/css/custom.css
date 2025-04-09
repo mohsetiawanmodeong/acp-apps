@@ -138,21 +138,39 @@ body {
 }
 
 /* Status indicators */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
 .status-connected {
-    color: var(--success-color) !important;
-    font-weight: bold;
+    background-color: #28a745; /* Green */
+    box-shadow: 0 0 5px #28a745;
 }
 
 .status-disconnected {
-    color: var(--danger-color) !important;
+    background-color: #dc3545; /* Red */
+    box-shadow: 0 0 5px #dc3545;
 }
 
-.status-indicator {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
+/* Pulse animation for active status */
+.status-connected {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 .status-active {
@@ -404,4 +422,21 @@ body {
 @keyframes highlight-change {
     0% { background-color: rgba(255, 193, 7, 0.3); }
     100% { background-color: transparent; }
+}
+
+/* Database Connection Icons */
+.connection-icon-success {
+    display: none;
+}
+
+.connection-icon-danger {
+    display: none;
+}
+
+#db-connection.text-success .connection-icon-success {
+    display: inline-block;
+}
+
+#db-connection.text-danger .connection-icon-danger {
+    display: inline-block;
 } 

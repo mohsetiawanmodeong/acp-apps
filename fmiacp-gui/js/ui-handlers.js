@@ -5,53 +5,65 @@
 
 // Start automatic refresh for data
 function startAutoRefresh() {
-    // Clear previous timer if exists
-    if (refreshTimer) {
-        clearInterval(refreshTimer);
+    // Clear any existing timer
+    if (window.refreshTimer) {
+        clearInterval(window.refreshTimer);
+        window.refreshTimer = null;
     }
     
-    // Get refresh interval from select
-    const interval = parseInt($('#refresh-interval').val(), 10);
-    console.log(`Auto-refresh enabled: ${interval}ms interval`);
+    // Fixed 1-second interval
+    const interval = 1000;
+    console.log(`Setting up auto refresh with interval: ${interval}ms`);
     
-    // Set new timer to refresh data periodically
-    refreshTimer = setInterval(refreshDataSmoothly, interval);
-    
-    // Log to UI - removed auto-refresh notification
-    // if (interval >= 1000) {
-    //     showToast('Info', `Auto-refresh enabled: ${interval/1000} detik`);
-    // }
+    // Set up background refresh that doesn't disrupt UI
+    window.refreshTimer = setInterval(function() {
+        // Call refreshDataSmoothly instead of fetchData to avoid UI disruption
+        refreshDataSmoothly();
+        
+        // Log for debugging
+        console.log('Auto refreshing data in background');
+    }, interval);
 }
 
 // Function to refresh data smoothly without page flicker
 async function refreshDataSmoothly() {
     try {
-        // Update last update time
+        // Update last refresh time silently
         $('#last-update-time').text(new Date().toLocaleTimeString());
         
-        // Fetch data without showing loading overlay
+        // Fetch data in background without showing loading overlay
         console.log(`Refreshing data from API: ${apiBaseUrl}`);
         
-        // Use Promise.all to fetch all data in parallel
-        const [fmiacpDataResponse, machineDataResponse, statusData] = await Promise.all([
-            makeApiRequest('/api/getFMIACP'),
-            makeApiRequest('/api/getFMIACPCurrent'),
-            makeApiRequest('/api/getAppStatusFMIACP')
-        ]);
-        
-        // Update global data
-        fmiacpData = fmiacpDataResponse;
-        fmiacpCurrentData = machineDataResponse;
-        
-        // Update UI elements smoothly with animation
-        updateUIElementsSmoothly(statusData);
-        
-        console.log("Data refreshed successfully");
+        try {
+            // Use Promise.all to fetch all data in parallel
+            const [fmiacpDataResponse, machineDataResponse, statusData] = await Promise.all([
+                makeApiRequest('/api/getFMIACP'),
+                makeApiRequest('/api/getFMIACPCurrent'),
+                makeApiRequest('/api/getAppStatusFMIACP')
+            ]);
+            
+            // If connection was successful, update status
+            console.log('Background refresh successful - API is connected');
+            updateLoginStatus(true);
+            
+            // Update global data
+            fmiacpData = fmiacpDataResponse;
+            fmiacpCurrentData = machineDataResponse;
+            
+            // Update UI elements smoothly without disruption
+            updateUIElementsSmoothly(statusData);
+            
+            // Log success
+            console.log("Auto refresh successful");
+        } catch (error) {
+            // If connection failed, update status but don't disrupt UI
+            console.warn('Auto refresh failed - API is disconnected:', error.message);
+            updateLoginStatus(false);
+            updateAppStatus(null);
+        }
     } catch (error) {
-        console.error("Error refreshing data:", error);
-        
         // Don't show error directly, just log it
-        // This prevents UI disruption during auto-refresh
+        console.error("Error in background refresh:", error);
     }
 }
 
@@ -173,45 +185,46 @@ function downloadData() {
 // Function to show/hide loading overlay
 function showLoading(show) {
     if (show) {
-        $('#loading-overlay').fadeIn(300);
+        $('#loading-overlay').fadeIn(200);
     } else {
-        $('#loading-overlay').fadeOut(300);
+        $('#loading-overlay').fadeOut(200);
     }
 }
 
 // Function to show toast notification
-function showToast(type, message) {
-    const toastEl = $('#toast-notification');
+function showToast(title, message, type = 'info', duration = 3000) {
+    const toast = $('#toast-notification');
+    const toastTitle = $('#toast-title');
+    const toastBody = $('#toast-message');
     
-    // Configure toast to autohide after 3 seconds
-    const toast = new bootstrap.Toast(toastEl, {
-        delay: 3000 // Set toast to display for 3 seconds
-    });
+    // Set content
+    toastTitle.text(title);
+    toastBody.html(message); // Allow HTML in message
     
-    // Set toast content
-    $('#toast-title').text(type);
-    $('#toast-message').text(message);
-    
-    // Set toast class based on type
-    toastEl.removeClass('bg-success bg-danger bg-warning bg-info');
-    switch(type.toLowerCase()) {
+    // Set type styling
+    toast.removeClass('bg-success bg-danger bg-warning bg-info');
+    switch(type) {
         case 'success':
-            toastEl.addClass('bg-success');
+            toast.addClass('bg-success text-white');
             break;
         case 'error':
-            toastEl.addClass('bg-danger');
+            toast.addClass('bg-danger text-white');
             break;
         case 'warning':
-            toastEl.addClass('bg-warning');
-            $('#toast-title').addClass('text-dark');
-            $('#toast-message').addClass('text-dark');
+            toast.addClass('bg-warning');
             break;
+        case 'info':
         default:
-            toastEl.addClass('bg-info');
+            toast.addClass('bg-info text-white');
+            break;
     }
     
     // Show toast
-    toast.show();
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: duration
+    });
+    bsToast.show();
 }
 
 // Function to update dashboard display

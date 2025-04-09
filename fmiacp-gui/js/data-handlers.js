@@ -126,14 +126,59 @@ function renderDataTable() {
 
 // Function to update app status display
 function updateAppStatus(status) {
-    // Update basic app info
-    $('#app-name').text(status.Name || '-');
-    $('#app-version').text(status.Version || '-');
+    // Format bytes to human readable format
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
     
-    const dbConnection = status.DatabaseConnection || '-';
-    $('#db-connection').text(dbConnection)
+    // Format microseconds to readable format
+    function formatMicroseconds(microseconds) {
+        return (microseconds / 1000).toFixed(2) + ' ms';
+    }
+    
+    // Check if status is valid
+    const isConnected = status !== null && typeof status === 'object';
+    
+    // Update basic app info
+    $('#app-name').text(isConnected ? (status.Name || '-') : '-');
+    $('#app-version').text(isConnected ? (status.Version || '-') : '-');
+    
+    // Update database connection status
+    const dbConnection = isConnected ? 'Connected' : 'Disconnected';
+    $('#db-connection')
         .removeClass('text-success text-danger')
-        .addClass(dbConnection === 'Connected' ? 'text-success' : 'text-danger');
+        .addClass(isConnected ? 'text-success' : 'text-danger')
+        .find('.connection-text')
+        .text(dbConnection);
+    
+    // If not connected, clear all data displays
+    if (!isConnected) {
+        $('#data-store-size').text('-');
+        $('#data-store-count').text('-');
+        $('#data-store-fail-count').text('-');
+        $('#data-input-count').text('-');
+        $('#data-input-request-count').text('-');
+        $('#data-output-count').text('-');
+        $('#data-output-request-count').text('-');
+        
+        // Clear memory usage
+        $('#memory-rss').text('-');
+        $('#memory-heapTotal').text('-');
+        $('#memory-heapUsed').text('-');
+        $('#memory-external').text('-');
+        $('#memory-arrayBuffers').text('-');
+        
+        // Clear CPU usage
+        $('#cpu-user').text('-');
+        $('#cpu-system').text('-');
+        $('#cpu-total').text('-');
+        
+        return;
+    }
     
     // Update data statistics
     $('#data-store-size').text(status.DataStoreSize || 0);
@@ -144,14 +189,23 @@ function updateAppStatus(status) {
     $('#data-output-count').text(status.DataOutputCount || 0);
     $('#data-output-request-count').text(status.DataOutputRequestCount || 0);
     
-    // Update system usage
-    $('#cpu-usage').text(`${status.CPU || 0}%`);
-    
+    // Update memory usage
     if (status.UsageMemory) {
-        const heapTotal = (status.UsageMemory.heapTotal / (1024 * 1024)).toFixed(2);
-        const heapUsed = (status.UsageMemory.heapUsed / (1024 * 1024)).toFixed(2);
-        $('#memory-usage').text(`Heap: ${heapUsed} MB / ${heapTotal} MB`);
+        $('#memory-rss').text(formatBytes(status.UsageMemory.rss || 0));
+        $('#memory-heapTotal').text(formatBytes(status.UsageMemory.heapTotal || 0));
+        $('#memory-heapUsed').text(formatBytes(status.UsageMemory.heapUsed || 0));
+        $('#memory-external').text(formatBytes(status.UsageMemory.external || 0));
+        $('#memory-arrayBuffers').text(formatBytes(status.UsageMemory.arrayBuffers || 0));
     }
+    
+    // Update CPU usage
+    if (status.UsageCPU) {
+        $('#cpu-user').text(formatMicroseconds(status.UsageCPU.user || 0));
+        $('#cpu-system').text(formatMicroseconds(status.UsageCPU.system || 0));
+    }
+    
+    // Update total CPU percentage
+    $('#cpu-total').text(status.CPU ? status.CPU + '%' : '0%');
 }
 
 // Function to attempt connection to a specific port

@@ -76,15 +76,8 @@
                             <div class="col-md-4">
                                 <div class="d-flex justify-content-end align-items-center">
                                     <div class="d-flex align-items-center">
-                                        <select id="refresh-interval" class="form-select form-select-sm" style="width: auto;">
-                                            <option value="1000" selected>1 detik</option>
-                                            <option value="3000">3 detik</option>
-                                            <option value="5000">5 detik</option>
-                                            <option value="10000">10 detik</option>
-                                        </select>
-                                        <div class="ms-3 text-muted small">
-                                            Last update: <span id="last-update-time">-</span>
-                                        </div>
+                                        <span class="me-2 text-muted small">Last update: <span id="last-update-time">-</span></span>
+                                        <span id="refresh-status" class="status-dot ms-2 status-disconnected" title="API Status"></span>
                                     </div>
                                 </div>
                             </div>
@@ -286,7 +279,11 @@
                                 <div class="card h-100">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">Database Connection</h6>
-                                        <p class="h4" id="db-connection">-</p>
+                                        <p class="h4" id="db-connection">
+                                            <i class="bi bi-database-check text-success me-2 connection-icon-success"></i>
+                                            <i class="bi bi-database-x text-danger me-2 connection-icon-danger"></i>
+                                            <span class="connection-text">-</span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -299,35 +296,35 @@
                                         <h6 class="mb-0">Data Statistics</h6>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm table-striped">
                                             <tbody>
                                                 <tr>
-                                                    <td>Data Store Size:</td>
-                                                    <td id="data-store-size">-</td>
+                                                    <td><i class="bi bi-database"></i> Data Store Size:</td>
+                                                    <td id="data-store-size" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Data Store Count:</td>
-                                                    <td id="data-store-count">-</td>
+                                                    <td><i class="bi bi-check-circle"></i> Data Store Count:</td>
+                                                    <td id="data-store-count" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Data Store Fail Count:</td>
-                                                    <td id="data-store-fail-count">-</td>
+                                                    <td><i class="bi bi-exclamation-triangle"></i> Data Store Fail Count:</td>
+                                                    <td id="data-store-fail-count" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Data Input Count:</td>
-                                                    <td id="data-input-count">-</td>
+                                                    <td><i class="bi bi-arrow-down-circle"></i> Data Input Count:</td>
+                                                    <td id="data-input-count" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Data Input Request Count:</td>
-                                                    <td id="data-input-request-count">-</td>
+                                                    <td><i class="bi bi-arrow-down"></i> Data Input Request Count:</td>
+                                                    <td id="data-input-request-count" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Data Output Count:</td>
-                                                    <td id="data-output-count">-</td>
+                                                    <td><i class="bi bi-arrow-up-circle"></i> Data Output Count:</td>
+                                                    <td id="data-output-count" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Data Output Request Count:</td>
-                                                    <td id="data-output-request-count">-</td>
+                                                    <td><i class="bi bi-arrow-up"></i> Data Output Request Count:</td>
+                                                    <td id="data-output-request-count" class="text-end">-</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -341,15 +338,48 @@
                                         <h6 class="mb-0">System Usage</h6>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-sm">
+                                        <!-- Memory Section -->
+                                        <h6 class="border-bottom pb-2 text-info">Memory Usage</h6>
+                                        <table class="table table-sm table-striped mb-4">
                                             <tbody>
                                                 <tr>
-                                                    <td>CPU Usage:</td>
-                                                    <td id="cpu-usage">-</td>
+                                                    <td><i class="bi bi-hdd-rack"></i> RSS:</td>
+                                                    <td id="memory-rss" class="text-end">-</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Memory Usage:</td>
-                                                    <td id="memory-usage">-</td>
+                                                    <td><i class="bi bi-hdd"></i> Heap Total:</td>
+                                                    <td id="memory-heapTotal" class="text-end">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><i class="bi bi-hdd-fill"></i> Heap Used:</td>
+                                                    <td id="memory-heapUsed" class="text-end">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><i class="bi bi-device-hdd"></i> External:</td>
+                                                    <td id="memory-external" class="text-end">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><i class="bi bi-collection"></i> Array Buffers:</td>
+                                                    <td id="memory-arrayBuffers" class="text-end">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        
+                                        <!-- CPU Section -->
+                                        <h6 class="border-bottom pb-2 text-success">CPU Usage</h6>
+                                        <table class="table table-sm table-striped">
+                                            <tbody>
+                                                <tr>
+                                                    <td><i class="bi bi-person"></i> User CPU:</td>
+                                                    <td id="cpu-user" class="text-end">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><i class="bi bi-gear"></i> System CPU:</td>
+                                                    <td id="cpu-system" class="text-end">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><i class="bi bi-percent"></i> Total CPU:</td>
+                                                    <td id="cpu-total" class="text-end">-</td>
                                                 </tr>
                                             </tbody>
                                         </table>

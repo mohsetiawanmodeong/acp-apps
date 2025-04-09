@@ -26,6 +26,9 @@ $(document).ready(function() {
     
     // Initial connection attempt
     initialConnection();
+    
+    // Start the connection checker
+    startConnectionChecker();
 });
 
 // Function to create login status display in navbar
@@ -44,22 +47,48 @@ function createLoginStatusDisplay() {
 
 // Set up event listeners for UI controls
 function setupEventListeners() {
-    // Tab navigation - gunakan aktivasi tab Bootstrap 5 yang benar
-    $('.nav-link').on('click', function(e) {
-        // Tab event handling dikelola oleh Bootstrap, tidak perlu override
-        console.log(`Tab clicked: ${$(this).attr('href')}`);
+    // Fullscreen button
+    $('#fullscreen-btn').on('click', function() {
+        toggleFullScreen();
     });
     
-    // Refresh interval change
-    $('#refresh-interval').on('change', startAutoRefresh);
-    
-    // Fullscreen toggle
-    $('#fullscreen-btn').on('click', toggleFullScreen);
-    
     // Download data button
-    $('#download-data-btn').on('click', downloadData);
+    $('#download-data-btn').on('click', function() {
+        downloadData();
+    });
     
-    // Pagination controls
+    // Tab change event
+    $('a[data-bs-toggle="pill"]').on('shown.bs.tab', function(e) {
+        // Reload the content based on the tab that was activated
+        const tabId = $(e.target).attr('href');
+        
+        if (tabId === '#dashboard-tab') {
+            updateDashboard();
+        } else if (tabId === '#machine-tab') {
+            renderMachineData();
+        } else if (tabId === '#table-tab') {
+            renderDataTable();
+        } else if (tabId === '#status-tab') {
+            updateAppStatus(window.lastSuccessfulStatus);
+        }
+    });
+    
+    // Table filter event
+    $('#table-filter').on('change', function() {
+        renderDataTable();
+    });
+    
+    // Table search event
+    $('#table-search').on('input', function() {
+        renderDataTable();
+    });
+    
+    // Machine filter event
+    $('#machine-filter').on('change', function() {
+        renderMachineData();
+    });
+    
+    // Pagination buttons
     $('#prev-page').on('click', function() {
         if (currentPage > 1) {
             currentPage--;
@@ -68,73 +97,51 @@ function setupEventListeners() {
     });
     
     $('#next-page').on('click', function() {
-        const totalPages = Math.ceil(fmiacpData.length / rowsPerPage);
+        const totalRows = filteredTableData ? filteredTableData.length : 0;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        
         if (currentPage < totalPages) {
             currentPage++;
             renderDataTable();
         }
     });
-    
-    // Search and filter
-    $('#table-search').on('input', function() {
-        currentPage = 1;
-        renderDataTable();
-    });
-    
-    $('#table-filter').on('change', function() {
-        currentPage = 1;
-        renderDataTable();
-    });
-    
-    $('#machine-filter').on('change', renderMachineData);
 }
 
-// Initial connection attempt
+// Initialize connection to API
 async function initialConnection() {
+    console.log('Initializing connection to API...');
     try {
+        // Show loading indicator
         showLoading(true);
         
-        // Log API base URL
-        console.log(`Trying to connect to API at: ${apiBaseUrl}`);
+        // Try to connect and get status
+        const statusData = await makeApiRequest('/api/getAppStatusFMIACP');
+        
+        // Update UI with connection status and app info
+        updateLoginStatus(true);
+        updateAppStatus(statusData);
         
         // Initial data fetch
         await fetchData();
-        console.log("Successfully connected to API");
         
-        // Show success notification
-        showLoading(false);
-        
-        // Start auto-refresh immediately with smooth updates
+        // Start auto refresh with 1-second interval
         startAutoRefresh();
+        
+        console.log('Connection initialized successfully');
     } catch (error) {
-        console.error("Initial connection failed:", error);
+        // Handle connection error
+        console.error('Connection initialization failed:', error);
         
-        // Handle authentication errors specifically
-        if (error.message.includes('Autentikasi diperlukan')) {
-            displayError("Autentikasi Diperlukan", 
-                "Silakan masukkan username dan password pada dialog browser yang muncul.");
-            showLoading(false);
-            return;
-        }
-        
-        // Try alternative ports
-        console.log("Attempting to find server on alternative ports...");
-        const portSuccess = await tryNextPort();
-        
-        if (!portSuccess) {
-            console.error("Could not find API on any port");
-            displayError("Tidak dapat terhubung ke server API", 
-                "Sistem tidak dapat menemukan server pada port manapun. Pastikan server berjalan dan dapat diakses.");
-            
-            showLoading(false);
-        } else {
-            // If port detection successful, start auto-refresh
-            startAutoRefresh();
-        }
+        // Update UI with connection status
+        updateLoginStatus(false);
+        updateAppStatus(null);
+    } finally {
+        // Hide loading indicator regardless of result
+        showLoading(false);
     }
 }
 
-// Function to update login status display
+// Update login status and connection indicators
 function updateLoginStatus(isLoggedIn) {
     // Extract port from API URL
     const portMatch = apiBaseUrl.match(/:(\d+)/);
@@ -150,6 +157,25 @@ function updateLoginStatus(isLoggedIn) {
         // Update class for styling
         connectionStatus.removeClass('text-success text-danger')
             .addClass(isLoggedIn ? 'text-success' : 'text-danger');
+    }
+    
+    // Update refresh indicator with a simple dot showing connected/disconnected
+    const refreshStatus = $('#refresh-status');
+    if (refreshStatus.length) {
+        refreshStatus
+            .removeClass('status-connected status-disconnected')
+            .addClass(isLoggedIn ? 'status-connected' : 'status-disconnected')
+            .attr('title', isLoggedIn ? 'API Connected' : 'API Disconnected');
+    }
+    
+    // Update database connection status if exists
+    const dbConnection = $('#db-connection');
+    if (dbConnection.length) {
+        dbConnection
+            .removeClass('text-success text-danger')
+            .addClass(isLoggedIn ? 'text-success' : 'text-danger')
+            .find('.connection-text')
+            .text(isLoggedIn ? 'Connected' : 'Disconnected');
     }
     
     // Log status change
@@ -174,6 +200,10 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
         
         console.log(`Making API request to: ${url}`);
         
+        // Set up timeout for fetch
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         // Standard fetch with explicit cors mode and browser's built-in authentication
         fetch(url, {
             method: method,
@@ -183,9 +213,11 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
             headers: {
                 'Content-Type': data ? 'application/json' : 'application/x-www-form-urlencoded'
             },
-            body: data ? JSON.stringify(data) : null
+            body: data ? JSON.stringify(data) : null,
+            signal: controller.signal // Add signal for timeout
         })
         .then(response => {
+            clearTimeout(timeoutId); // Clear timeout on success
             console.log(`Response status: ${response.status} for ${targetUrl}`);
             
             if (response.ok) {
@@ -215,19 +247,29 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
             resolve(data);
         })
         .catch(error => {
+            clearTimeout(timeoutId); // Clear timeout on error
             console.error(`Error in API request to ${targetUrl}:`, error);
             
-            // Specific handling for CORS errors
-            if (error.message.includes('Failed to fetch') || 
-                error.message.includes('NetworkError') || 
-                error.message.includes('CORS')) {
+            // Update app status with connection failure
+            updateAppStatus(null);
                 
-                console.warn("Possible CORS error detected", error);
+            // Update connection status to failure
+            updateLoginStatus(false);
+            
+            // Check for timeout or connection refused errors
+            if (error.name === 'AbortError') {
+                console.error("Request timeout detected");
+                reject(new Error("Connection timeout - server might be down"));
+            } else if (error.message.includes('Failed to fetch') || 
+                       error.message.includes('NetworkError') || 
+                       error.message.includes('CORS')) {
+                
+                console.warn("Connection error detected", error);
                 
                 // Show error notification
-                displayError("CORS Error", 
+                displayError("Connection Error", 
                     "Cannot access API at " + url + 
-                    "<br>CORS error: " + error.message, 
+                    "<br>Server might be down or unreachable", 
                     "app.js:214");
                 
                 updateLoginStatus(false);
@@ -246,22 +288,27 @@ async function fetchData() {
     try {
         console.log(`Fetching data from API: ${apiBaseUrl}`);
         
-        // Parallel requests for all endpoints
-        const [fmiacpDataResponse, machineDataResponse, statusData] = await Promise.all([
+        // Fetch application status first
+        const statusData = await makeApiRequest('/api/getAppStatusFMIACP');
+        console.log('App status data:', statusData);
+        
+        // Update app status display
+        updateAppStatus(statusData);
+        
+        // Fetch other data as needed
+        const [fmiacpDataResponse, machineDataResponse] = await Promise.all([
             makeApiRequest('/api/getFMIACP'),
-            makeApiRequest('/api/getFMIACPCurrent'),
-            makeApiRequest('/api/getAppStatusFMIACP')
+            makeApiRequest('/api/getFMIACPCurrent')
         ]);
         
         // Update global data
         fmiacpData = fmiacpDataResponse;
         fmiacpCurrentData = machineDataResponse;
         
-        // Update UI
+        // Update UI for other tabs
         updateDashboard();
         renderMachineData();
         renderDataTable();
-        updateAppStatus(statusData);
         
         // Update connection status to success
         updateLoginStatus(true);
@@ -270,6 +317,12 @@ async function fetchData() {
     } catch (error) {
         console.error("Error fetching data:", error);
         displayError("Error fetching data", error.message);
+        
+        // Update app status with connection failure
+        updateAppStatus(null);
+        
+        // Update connection status to failure
+        updateLoginStatus(false);
     } finally {
         showLoading(false);
     }
@@ -318,6 +371,76 @@ function initBootstrapTabs() {
     }
     
     console.log("Bootstrap tabs initialized");
+}
+
+// Function to periodically check connection status
+function startConnectionChecker() {
+    // Clear any existing checkers
+    if (window.connectionCheckerTimer) {
+        clearInterval(window.connectionCheckerTimer);
+    }
+    
+    // Set up a new connection checker that runs every 10 seconds
+    window.connectionCheckerTimer = setInterval(async function() {
+        try {
+            // Simple ping to API - using same approach as makeApiRequest for consistency
+            const response = await fetch(`${apiBaseUrl}/api/getAppStatusFMIACP`, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'include'
+                // No extra headers that could trigger CORS preflight
+            });
+            
+            // If we get a response, connection is OK
+            if (response.ok) {
+                // Only update UI if connection status changed from disconnected to connected
+                const wasDisconnected = !$('#db-connection').hasClass('text-success');
+                
+                if (wasDisconnected) {
+                    console.log('Connection restored after being disconnected');
+                    
+                    // Update login status to success
+                    updateLoginStatus(true);
+                }
+                
+                // Try to parse response if possible
+                try {
+                    const data = await response.json();
+                    // Only update UI if we have a valid response
+                    if (data && typeof data === 'object') {
+                        updateAppStatus(data);
+                    }
+                } catch (e) {
+                    console.warn("Could not parse API response:", e);
+                }
+            } else {
+                // Server responded but with an error
+                console.error(`Connection check failed with status: ${response.status}`);
+                
+                // Check if this is a new disconnection
+                const wasConnected = $('#db-connection').hasClass('text-success');
+                
+                if (wasConnected) {
+                    updateLoginStatus(false);
+                    updateAppStatus(null);
+                }
+            }
+        } catch (error) {
+            // Network error, server is likely down
+            console.error("Connection check failed:", error);
+            
+            // Check if this is a new disconnection
+            const wasConnected = $('#db-connection').hasClass('text-success');
+            
+            if (wasConnected) {
+                // Update UI for disconnection
+                updateLoginStatus(false);
+                updateAppStatus(null);
+            }
+        }
+    }, 10000); // Check every 10 seconds
+    
+    console.log("Connection checker started");
 }
 
 // More functions will be added in additional files 
