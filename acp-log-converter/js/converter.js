@@ -216,6 +216,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         actionCell.appendChild(previewBtn);
         
+        // Create copy button
+        const copyButton = document.createElement('button');
+        copyButton.className = 'btn btn-sm btn-primary me-2';
+        copyButton.textContent = 'Copy';
+        copyButton.addEventListener('click', function() {
+            const jsonData = convertedData[fileName];
+            navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2))
+                .then(() => {
+                    const originalClass = copyButton.className;
+                    copyButton.className = 'btn btn-sm btn-success me-2';
+                    
+                    setTimeout(() => {
+                        copyButton.className = originalClass;
+                    }, 500);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy to clipboard');
+                });
+        });
+        actionCell.appendChild(copyButton);
+        
         // Download button
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'btn btn-sm btn-success';
