@@ -115,17 +115,20 @@ code {
 /* Status indicator */
 .status-indicator {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  margin-left: 5px;
 }
 
 .status-indicator.connected {
   background-color: #28a745;
+  box-shadow: 0 0 5px #28a745;
 }
 
 .status-indicator.disconnected {
   background-color: #dc3545;
+  box-shadow: 0 0 5px #dc3545;
 }
 
 /* Content section */
@@ -344,4 +347,86 @@ code {
   .dashboard-title {
     font-size: 1.2rem;
   }
+}
+
+/* Menu styling - remove unused styles */
+.menu-container,
+.menu-btn,
+.dashboard-controls-container {
+  display: none; /* Hiding unused styles */
+}
+
+/* Dashboard tabs container */
+.dashboard-tabs-container {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin: 15px 15px 20px 15px;
+}
+
+/* Perbaikan tab styling */
+.dashboard-tabs-container .nav-tabs {
+  border-bottom: none !important;
+}
+
+.dashboard-tabs-container .nav-tabs .nav-item .nav-link {
+  background-color: transparent;
+  color: #495057;
+  border: none !important;
+  border-radius: 4px;
+  padding: 8px 15px;
+  margin-right: 5px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dashboard-tabs-container .nav-tabs .nav-item .nav-link:hover {
+  background-color: #f8f9fa;
+  color: #0d6efd;
+}
+
+.dashboard-tabs-container .nav-tabs .nav-item .nav-link.active {
+  background-color: #0a2351 !important;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Download button */
+.download-data-btn {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px !important;
+  font-size: 0.85rem !important;
+  border-radius: 4px;
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.download-data-btn:hover {
+  background-color: #157347;
+  border-color: #157347;
+}
+
+/* Last update info */
+.last-update-info {
+  display: flex;
+  align-items: center;
+}
+
+/* Status indicator */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+
+.status-indicator.connected {
+  background-color: #28a745;
+  box-shadow: 0 0 5px #28a745;
+}
+
+.status-indicator.disconnected {
+  background-color: #dc3545;
+  box-shadow: 0 0 5px #dc3545;
 } 

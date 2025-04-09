@@ -18,6 +18,14 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
     }
   };
 
+  // Add debug log for activeTab
+  console.log("Current activeTab:", activeTab);
+
+  const handleTabClick = (tabName) => {
+    console.log("Setting active tab to:", tabName);
+    setActiveTab(tabName);
+  };
+
   return (
     <>
       {/* Navbar - Logo dan judul di tengah */}
@@ -28,7 +36,7 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
             <img 
               src={process.env.PUBLIC_URL + "/img/logo-freeport.png"} 
               alt="Freeport" 
-              className="logo-freeport" 
+              className="logo-freeport me-4" 
             />
           </div>
           
@@ -66,71 +74,60 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
         </div>
       </nav>
 
-      {/* Menu & Dashboard Controls */}
-      <div className="container-fluid dashboard-controls-container">
-        <div className="row mb-2">
+      {/* Menu & Last Update Info */}
+      <div className="container-fluid p-0">
+        <div className="row gx-0">
           <div className="col-12">
-            <div className="card dashboard-controls">
-              <div className="card-body">
-                <div className="row align-items-center">
-                  {/* Menu Tabs */}
-                  <div className="col-md-8">
-                    <ul className="nav nav-pills dashboard-nav">
-                      <li className="nav-item">
-                        <button 
-                          className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`} 
-                          onClick={() => setActiveTab('dashboard')}
-                          type="button"
-                        >
-                          Dashboard
-                        </button>
-                      </li>
-                      <li className="nav-item">
-                        <button 
-                          className={`nav-link ${activeTab === 'machine-data' ? 'active' : ''}`} 
-                          onClick={() => setActiveTab('machine-data')}
-                          type="button"
-                        >
-                          Machine Data
-                        </button>
-                      </li>
-                      <li className="nav-item">
-                        <button 
-                          className={`nav-link ${activeTab === 'data-tables' ? 'active' : ''}`} 
-                          onClick={() => setActiveTab('data-tables')}
-                          type="button"
-                        >
-                          Data Tables
-                        </button>
-                      </li>
-                      <li className="nav-item">
-                        <button 
-                          className={`nav-link ${activeTab === 'app-status' ? 'active' : ''}`} 
-                          onClick={() => setActiveTab('app-status')}
-                          type="button"
-                        >
-                          App Status
-                        </button>
-                      </li>
-                      <li className="nav-item">
-                        <button 
-                          className="nav-link download-btn"
-                          type="button"
-                        >
-                          <BiDownload className="me-1" size={14} /> Download Data
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  {/* Update interval & last update */}
-                  <div className="col-md-4">
-                    <div className="d-flex justify-content-end align-items-center">
-                      <div className="d-flex align-items-center">
-                        <span className="me-2 text-muted small">Last update: {lastUpdate}</span>
-                        <span className={`status-indicator ${apiStatus ? 'connected' : 'disconnected'}`} title="API Status"></span>
-                      </div>
-                    </div>
+            <div className="dashboard-tabs-container bg-white py-2 px-3">
+              <div className="d-flex justify-content-between align-items-center">
+                {/* Tab Navigation */}
+                <ul className="nav nav-tabs border-0">
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('dashboard')}
+                      type="button"
+                    >
+                      Dashboard
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'machine-data' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('machine-data')}
+                      type="button"
+                    >
+                      Machine Data
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'data-tables' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('data-tables')}
+                      type="button"
+                    >
+                      Data Tables
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'app-status' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('app-status')}
+                      type="button"
+                    >
+                      App Status
+                    </button>
+                  </li>
+                </ul>
+
+                {/* Download & Last Update */}
+                <div className="d-flex align-items-center">
+                  <button className="btn btn-success download-data-btn">
+                    <BiDownload size={18} className="me-1" /> Download Data
+                  </button>
+                  <div className="ms-3 last-update-info">
+                    <span className="text-muted small">Last update: {lastUpdate}</span>
+                    <span className={`status-indicator ${apiStatus ? 'connected' : 'disconnected'}`} title="API Status"></span>
                   </div>
                 </div>
               </div>

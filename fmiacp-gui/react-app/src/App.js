@@ -22,6 +22,11 @@ function App() {
     return () => clearInterval(refreshInterval);
   }, []);
 
+  // Add effect to log activeTab changes
+  useEffect(() => {
+    console.log("App.js - activeTab changed to:", activeTab);
+  }, [activeTab]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
