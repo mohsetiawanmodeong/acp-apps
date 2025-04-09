@@ -524,4 +524,94 @@ code {
   margin-right: 5px;
   color: #00ff00 !important;
   text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+/* Border-left utilities */
+.border-left-primary {
+  border-left: 0.25rem solid var(--primary-color) !important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+  border-left: 0.25rem solid #e74a3b !important;
+}
+
+/* Text utilities */
+.text-xs {
+  font-size: 0.7rem;
+}
+
+.text-gray-300 {
+  color: #dddfeb !important;
+}
+
+/* Dashboard specific styles */
+.dashboard-container .card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.dashboard-container .card {
+  margin-bottom: 24px;
+}
+
+.dashboard-container .progress {
+  height: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-container .progress-bar {
+  background-color: white;
+}
+
+.dashboard-container .card-footer {
+  background-color: #f8f9fc;
+  border-top: 1px solid #e3e6f0;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8rem;
+}
+
+/* Responsive font sizes */
+@media (max-width: 768px) {
+  .dashboard-container .h3 {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-container .text-xs {
+    font-size: 0.65rem;
+  }
+}
+
+/* Icons in dashboard cards */
+.dashboard-container .card-body .bi {
+  font-size: 2.5rem !important;
+  opacity: 0.8;
+  color: #4e73df;
+}
+
+.dashboard-container .border-left-primary .bi {
+  color: var(--primary-color);
+}
+
+.dashboard-container .border-left-success .bi {
+  color: #1cc88a;
+}
+
+.dashboard-container .border-left-warning .bi {
+  color: #f6c23e;
+}
+
+.dashboard-container .border-left-info .bi {
+  color: #36b9cc;
 } 
