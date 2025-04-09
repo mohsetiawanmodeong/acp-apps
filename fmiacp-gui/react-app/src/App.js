@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavbarHeader from './components/NavbarHeader';
@@ -16,68 +16,8 @@ function App() {
   const [apiConnected, setApiConnected] = useState(false);
   const [useMockData, setUseMockData] = useState(false);
 
-  useEffect(() => {
-    // Initial data fetch and API connectivity check
-    checkApiConnectivity();
-    
-    // Set up auto refresh every 60 seconds
-    const refreshInterval = setInterval(() => {
-      checkApiConnectivity();
-      fetchData();
-      if (activeTab === 'app-status') {
-        fetchAppStatus();
-      }
-    }, 60000);
-    
-    // Clean up on unmount
-    return () => clearInterval(refreshInterval);
-  }, []);
-
-  // Add effect to log activeTab changes
-  useEffect(() => {
-    console.log("App.js - activeTab changed to:", activeTab);
-    
-    // If app-status tab is selected, fetch status data
-    if (activeTab === 'app-status') {
-      fetchAppStatus();
-    } else if (activeTab === 'machine-data' || activeTab === 'dashboard') {
-      fetchData();
-    }
-  }, [activeTab]);
-
-  // Check API connectivity
-  const checkApiConnectivity = async () => {
-    try {
-      const pingResult = await ApiService.pingApi();
-      setApiConnected(pingResult.success);
-      
-      if (pingResult.success) {
-        console.log('API is connected. Fetching data...');
-        setUseMockData(false);
-        fetchData();
-      } else {
-        console.warn('API is not connected. Using mock data.');
-        setUseMockData(true);
-        loadFallbackData();
-      }
-    } catch (error) {
-      console.error('Failed to check API connectivity:', error);
-      setApiConnected(false);
-      setUseMockData(true);
-      loadFallbackData();
-    }
-  };
-
-  // Use mock data when API is unavailable
-  const loadFallbackData = () => {
-    setData(ApiService.getMockData());
-    setAppStatusData(ApiService.getMockAppStatus());
-    setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
-    setLoading(false);
-    setError('Using mock data - API server unavailable');
-  };
-
-  const fetchData = async () => {
+  // Wrap fetch functions in useCallback to prevent recreation on each render
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       // Try to get data from API
@@ -102,9 +42,9 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [useMockData]);
 
-  const fetchAppStatus = async () => {
+  const fetchAppStatus = useCallback(async () => {
     try {
       setLoading(true);
       const statusData = await ApiService.getStatus();
@@ -125,7 +65,70 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [useMockData]);
+
+  // Check API connectivity
+  const checkApiConnectivity = useCallback(async () => {
+    try {
+      const pingResult = await ApiService.pingApi();
+      setApiConnected(pingResult.success);
+      
+      if (pingResult.success) {
+        console.log('API is connected. Fetching data...');
+        setUseMockData(false);
+        fetchData();
+      } else {
+        console.warn('API is not connected. Using mock data.');
+        setUseMockData(true);
+        // Use inline code for mock data loading
+        setData(ApiService.getMockData());
+        setAppStatusData(ApiService.getMockAppStatus());
+        setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
+        setLoading(false);
+        setError('Using mock data - API server unavailable');
+      }
+    } catch (error) {
+      console.error('Failed to check API connectivity:', error);
+      setApiConnected(false);
+      setUseMockData(true);
+      // Use inline code for mock data loading
+      setData(ApiService.getMockData());
+      setAppStatusData(ApiService.getMockAppStatus());
+      setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
+      setLoading(false);
+      setError('Using mock data - API server unavailable');
+    }
+  }, [fetchData]);
+
+  // Initial setup and auto-refresh
+  useEffect(() => {
+    // Initial data fetch and API connectivity check
+    checkApiConnectivity();
+    
+    // Set up auto refresh every 60 seconds
+    const refreshInterval = setInterval(() => {
+      checkApiConnectivity();
+      fetchData();
+      if (activeTab === 'app-status') {
+        fetchAppStatus();
+      }
+    }, 60000);
+    
+    // Clean up on unmount
+    return () => clearInterval(refreshInterval);
+  }, [checkApiConnectivity, fetchData, fetchAppStatus, activeTab]);
+
+  // Handle activeTab changes
+  useEffect(() => {
+    console.log("App.js - activeTab changed to:", activeTab);
+    
+    // If app-status tab is selected, fetch status data
+    if (activeTab === 'app-status') {
+      fetchAppStatus();
+    } else if (activeTab === 'machine-data' || activeTab === 'dashboard') {
+      fetchData();
+    }
+  }, [activeTab, fetchAppStatus, fetchData]);
 
   const handleRefresh = () => {
     checkApiConnectivity();
