@@ -30,9 +30,6 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
     }
   };
 
-  // Add debug log for activeTab
-  console.log("Current activeTab:", activeTab);
-
   const handleTabClick = (tabName) => {
     console.log("Setting active tab to:", tabName);
     setActiveTab(tabName);
@@ -46,7 +43,7 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
           {/* Logo Freeport di kiri */}
           <div className="navbar-brand d-flex align-items-center">
             <img 
-              src={process.env.PUBLIC_URL + "/img/logo-freeport.png"} 
+              src="/img/logo-freeport.png" 
               alt="Freeport" 
               className="logo-freeport me-4" 
             />
@@ -77,7 +74,7 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
             
             <div className="navbar-brand d-flex align-items-center">
               <img 
-                src={process.env.PUBLIC_URL + "/img/logo-trakindo.png"} 
+                src="/img/logo-trakindo.png" 
                 alt="Trakindo" 
                 className="logo-trakindo" 
               />
@@ -151,4 +148,4 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
   );
 };
 
-export default NavbarHeader; 
+export default NavbarHeader;

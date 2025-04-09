@@ -3,20 +3,31 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavbarHeader from './components/NavbarHeader';
 import DataTable from './components/DataTable';
+import AppStatus from './components/AppStatus';
 import ApiService from './services/api';
 
 function App() {
   const [data, setData] = useState([]);
+  const [appStatusData, setAppStatusData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState('-');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [apiConnected, setApiConnected] = useState(false);
+  const [useMockData, setUseMockData] = useState(false);
 
   useEffect(() => {
-    fetchData();
-
+    // Initial data fetch and API connectivity check
+    checkApiConnectivity();
+    
     // Set up auto refresh every 60 seconds
-    const refreshInterval = setInterval(fetchData, 60000);
+    const refreshInterval = setInterval(() => {
+      checkApiConnectivity();
+      fetchData();
+      if (activeTab === 'app-status') {
+        fetchAppStatus();
+      }
+    }, 60000);
     
     // Clean up on unmount
     return () => clearInterval(refreshInterval);
@@ -25,7 +36,46 @@ function App() {
   // Add effect to log activeTab changes
   useEffect(() => {
     console.log("App.js - activeTab changed to:", activeTab);
+    
+    // If app-status tab is selected, fetch status data
+    if (activeTab === 'app-status') {
+      fetchAppStatus();
+    } else if (activeTab === 'machine-data' || activeTab === 'dashboard') {
+      fetchData();
+    }
   }, [activeTab]);
+
+  // Check API connectivity
+  const checkApiConnectivity = async () => {
+    try {
+      const pingResult = await ApiService.pingApi();
+      setApiConnected(pingResult.success);
+      
+      if (pingResult.success) {
+        console.log('API is connected. Fetching data...');
+        setUseMockData(false);
+        fetchData();
+      } else {
+        console.warn('API is not connected. Using mock data.');
+        setUseMockData(true);
+        loadFallbackData();
+      }
+    } catch (error) {
+      console.error('Failed to check API connectivity:', error);
+      setApiConnected(false);
+      setUseMockData(true);
+      loadFallbackData();
+    }
+  };
+
+  // Use mock data when API is unavailable
+  const loadFallbackData = () => {
+    setData(ApiService.getMockData());
+    setAppStatusData(ApiService.getMockAppStatus());
+    setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
+    setLoading(false);
+    setError('Using mock data - API server unavailable');
+  };
 
   const fetchData = async () => {
     try {
@@ -35,15 +85,42 @@ function App() {
       setData(result);
       setError(null);
       setLastUpdate(new Date().toLocaleTimeString());
+      setApiConnected(true);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setError("Failed to load data. Please check your connection.");
+      setApiConnected(false);
       
-      // If in development, fall back to mock data
-      if (process.env.NODE_ENV === 'development') {
-        const mockData = await ApiService.getMockData();
+      if (useMockData || process.env.NODE_ENV === 'development') {
+        // Fall back to mock data
+        const mockData = ApiService.getMockData();
         setData(mockData);
-        setLastUpdate(new Date().toLocaleTimeString() + ' (Mock Data)');
+        setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
+        setError("Using mock data - API server unavailable");
+      } else {
+        setError("Failed to load data. Please check your connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAppStatus = async () => {
+    try {
+      setLoading(true);
+      const statusData = await ApiService.getStatus();
+      setAppStatusData(statusData);
+      setError(null);
+      console.log("Fetched app status:", statusData);
+    } catch (error) {
+      console.error("Error fetching app status:", error);
+      
+      if (useMockData || process.env.NODE_ENV === 'development') {
+        // Use mock status data
+        setAppStatusData(ApiService.getMockAppStatus());
+        setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
+        setError("Using mock data - API server unavailable");
+      } else {
+        setError("Failed to load application status. Please check your connection.");
       }
     } finally {
       setLoading(false);
@@ -51,14 +128,17 @@ function App() {
   };
 
   const handleRefresh = () => {
-    fetchData();
+    checkApiConnectivity();
   };
 
-  // Compute dashboard stats
+  // Compute dashboard stats from actual or mock data
   const totalMachines = data.length || 0;
-  const activeMachines = data.filter(item => item.value && item.value.toLowerCase() === 'normal').length || 0;
+  const activeMachines = data.filter(item => 
+    (item.VALUE || item.value) && 
+    (item.VALUE || item.value).toLowerCase() === 'on'
+  ).length || 0;
   const inactiveMachines = totalMachines - activeMachines;
-  const dataPoints = 4171; // Example value, replace with actual calculation if available
+  const dataPoints = data.reduce((sum, item) => sum + (item.MEASUREMENT ? 1 : 0), 0) || 4171;
 
   // Render different content based on active tab
   const renderContent = () => {
@@ -66,6 +146,14 @@ function App() {
       case 'dashboard':
         return (
           <>
+            {/* API Status Alert for Disconnected API */}
+            {!apiConnected && (
+              <div className="alert alert-warning mb-4" role="alert">
+                <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                API server is not responding. Showing mock data for demonstration purposes.
+              </div>
+            )}
+            
             {/* Stats Cards Row */}
             <div className="row mb-4">
               <div className="col-md-3">
@@ -111,10 +199,10 @@ function App() {
                     <p className="mb-0">Total Mesin: {totalMachines}</p>
                   </div>
                   <div className="col-md-4">
-                    <p className="mb-0">Kategori Aktif: {data.filter(item => item.type).length || 3}</p>
+                    <p className="mb-0">Kategori Aktif: {data.filter(item => item.TYPE || item.type).length || 3}</p>
                   </div>
                   <div className="col-md-4">
-                    <p className="mb-0">Tipe Data: {data.filter(item => item.type).length || 3}</p>
+                    <p className="mb-0">Tipe Data: {data.filter(item => item.TYPE || item.type).length || 3}</p>
                   </div>
                 </div>
               </div>
@@ -146,7 +234,8 @@ function App() {
             </div>
             <div className="card-body">
               {error && (
-                <div className="alert alert-danger" role="alert">
+                <div className="alert alert-warning" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
                   {error}
                 </div>
               )}
@@ -161,6 +250,12 @@ function App() {
               <h5 className="mb-0">Data Tables</h5>
             </div>
             <div className="card-body">
+              {error && (
+                <div className="alert alert-warning" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  {error}
+                </div>
+              )}
               <p>Data tables content goes here</p>
             </div>
           </div>
@@ -169,10 +264,19 @@ function App() {
         return (
           <div className="card shadow-sm">
             <div className="card-header">
-              <h5 className="mb-0">App Status</h5>
+              <h5 className="mb-0">FMIACP App Status</h5>
             </div>
             <div className="card-body">
-              <p>Application status information goes here</p>
+              {loading ? (
+                <p>Loading application status...</p>
+              ) : error ? (
+                <div className="alert alert-warning" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                  {error}
+                </div>
+              ) : (
+                <AppStatus data={appStatusData} lastUpdate={lastUpdate} />
+              )}
             </div>
           </div>
         );
@@ -186,7 +290,7 @@ function App() {
       <NavbarHeader 
         onRefresh={handleRefresh} 
         lastUpdate={lastUpdate} 
-        apiStatus={!error} 
+        apiStatus={apiConnected} 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />

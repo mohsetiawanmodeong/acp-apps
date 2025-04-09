@@ -56,10 +56,10 @@ code {
 
 /* Navbar with dark background */
 .navbar {
-  background-color: #0a2351;
-  height: 60px;
-  display: flex;
-  align-items: center;
+  background-color: #0a2351 !important;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 70px;
 }
 
 .navbar .container-fluid {
@@ -70,40 +70,55 @@ code {
 
 /* Logo styling */
 .logo-freeport {
-  height: 27px;
-  width: auto;
-  margin-left: 10px;
+  height: 29px;
 }
 .logo-trakindo {
-  height: 25px;
-  width: auto;
-  margin-right: -10px;
+  height: 27px;
 }
 
 /* Dashboard title styling */
 .navbar-title-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
 }
 
 .dashboard-title {
   color: #ffc107;
   font-weight: bold;
   margin: 0;
-  text-align: center;
+  font-size: 1.4rem;
+  pointer-events: none;
 }
 
 /* Navbar buttons */
 .refresh-btn, .fullscreen-btn {
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 0.25rem;
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
 }
 
 .refresh-btn:hover, .fullscreen-btn:hover {
-  color: #f7c345;
+  transform: scale(1.1);
+  color: #ffc107;
+}
+
+.refresh-btn.spinning i {
+  animation: spin 1s linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Dashboard controls section */
@@ -391,63 +406,50 @@ code {
 
 /* Dashboard tabs container */
 .dashboard-tabs-container {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  margin: 15px 15px 20px 15px;
+  border-bottom: 1px solid #e5e5e5;
 }
 
-/* Perbaikan tab styling */
-.dashboard-tabs-container .nav-tabs {
-  border-bottom: none !important;
+.nav-tabs {
+  border-bottom: none;
 }
 
-.dashboard-tabs-container .nav-tabs .nav-item .nav-link {
-  background-color: transparent;
-  color: #495057;
-  border: none !important;
-  border-radius: 4px;
-  padding: 8px 15px;
-  margin-right: 5px;
+.nav-tabs .nav-link {
+  color: #6c757d;
+  border: none;
+  position: relative;
+  padding: 0.5rem 1rem;
   font-weight: 500;
-  transition: all 0.2s ease;
 }
 
-.dashboard-tabs-container .nav-tabs .nav-item .nav-link:hover {
-  background-color: #f8f9fa;
+.nav-tabs .nav-link.active {
   color: #0d6efd;
+  background-color: transparent;
+  border-color: transparent;
 }
 
-.dashboard-tabs-container .nav-tabs .nav-item .nav-link.active {
-  background-color: #0a2351 !important;
-  color: white !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+.nav-tabs .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #0d6efd;
 }
 
-/* Download button */
 .download-data-btn {
   display: flex;
   align-items: center;
-  padding: 4px 12px !important;
-  font-size: 0.85rem !important;
-  border-radius: 4px;
-  background-color: #198754;
-  border-color: #198754;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.85rem;
 }
 
-.download-data-btn:hover {
-  background-color: #157347;
-  border-color: #157347;
-}
-
-/* Last update info */
 .last-update-info {
   display: flex;
   align-items: center;
 }
 
-/* Status indicator */
 .status-indicator {
-  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -456,12 +458,10 @@ code {
 
 .status-indicator.connected {
   background-color: #28a745;
-  box-shadow: 0 0 5px #28a745;
 }
 
 .status-indicator.disconnected {
   background-color: #dc3545;
-  box-shadow: 0 0 5px #dc3545;
 }
 
 /* Custom Animation for fullscreen-btn */
@@ -476,4 +476,100 @@ code {
 .main-content {
   flex: 1 0 auto;
   padding-bottom: 1rem;
+}
+
+/* Login Page Styles */
+.login-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-container {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.login-card .card-header {
+  padding: 1rem;
+}
+
+.login-card .card-body {
+  padding: 2rem;
+}
+
+.login-card .card-footer {
+  padding: 1rem;
+  background-color: #f8f9fa;
+}
+
+/* App Status Styles */
+.app-status-container h3 {
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.app-info-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #344767;
+  margin: 0;
+}
+
+.database-status {
+  display: flex;
+  align-items: center;
+}
+
+.data-stats-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.data-stat-row, .system-stat-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.data-stat-icon, .system-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #f1f5fe;
+  border-radius: 8px;
+  color: #3b82f6;
+}
+
+.data-stat-label, .system-stat-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.data-stat-value, .system-stat-value {
+  text-align: right;
+  font-weight: 600;
+  color: #344767;
+}
+
+/* User info in navbar */
+.user-info {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
 } 
