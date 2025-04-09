@@ -31,7 +31,6 @@ code {
 /* Navbar with dark background */
 .navbar {
   background-color: #0a2351;
-  padding: 0.5rem 1rem;
   height: 60px;
   display: flex;
   align-items: center;
@@ -44,9 +43,15 @@ code {
 }
 
 /* Logo styling */
-.logo-freeport, .logo-trakindo {
+.logo-freeport {
+  height: 27px;
+  width: auto;
+  margin-left: 10px;
+}
+.logo-trakindo {
   height: 25px;
-  object-fit: contain;
+  width: auto;
+  margin-right: -10px;
 }
 
 /* Dashboard title styling */
@@ -196,16 +201,12 @@ code {
 .navbar-brand {
   display: flex;
   align-items: center;
-  margin: 0;
-  padding: 0;
   height: 100%;
 }
 
 /* Buttons styling */
 .navbar .btn-link {
   color: white;
-  margin: 0 5px;
-  padding: 5px;
   border-radius: 4px;
   display: flex;
   align-items: center;
