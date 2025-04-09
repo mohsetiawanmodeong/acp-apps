@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavbarHeader from './components/NavbarHeader';
-import DataTable from './components/DataTable';
 import DataTables from './components/DataTables';
+import MachineData from './components/MachineData';
 import AppStatus from './components/AppStatus';
 import ApiService from './services/api';
 
@@ -269,7 +269,10 @@ function App() {
         return (
           <div className="card shadow-sm">
             <div className="card-header">
-              <h5 className="mb-0">Machine Data</h5>
+              <h5 className="mb-0">
+                <i className="bi bi-truck me-2"></i>
+                Machine Data
+              </h5>
             </div>
             <div className="card-body">
               {error && (
@@ -278,7 +281,7 @@ function App() {
                   {error}
                 </div>
               )}
-              <DataTable data={data} loading={loading} />
+              <MachineData data={data} loading={loading} />
             </div>
           </div>
         );
@@ -286,7 +289,10 @@ function App() {
         return (
           <div className="card shadow-sm">
             <div className="card-header">
-              <h5 className="mb-0">Data Tables</h5>
+              <h5 className="mb-0">
+                <i className="bi bi-table me-2"></i>
+                Data Tables
+              </h5>
             </div>
             <div className="card-body">
               {error && (
@@ -303,7 +309,10 @@ function App() {
         return (
           <div className="card shadow-sm">
             <div className="card-header">
-              <h5 className="mb-0">App Status</h5>
+              <h5 className="mb-0">
+                <i className="bi bi-cpu me-2"></i>
+                App Status
+              </h5>
             </div>
             <div className="card-body">
               {loading ? (

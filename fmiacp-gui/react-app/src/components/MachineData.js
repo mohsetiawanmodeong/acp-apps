@@ -1,411 +1,316 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Row, Col, Spinner } from 'react-bootstrap';
-import { Line } from 'react-chartjs-2';
+import { Card, Form } from 'react-bootstrap';
 
-const MachineData = ({ data = [] }) => {
+const MachineData = ({ data = [], loading }) => {
   const [selectedMachine, setSelectedMachine] = useState('');
   const [machines, setMachines] = useState([]);
-  const [machineData, setMachineData] = useState({
-    activityData: {},
-    statusData: {}
-  });
-  const [timeRange, setTimeRange] = useState('24h');
-  const [loading, setLoading] = useState(true);
+  const [machineData, setMachineData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     // Extract machine list from actual data
     if (data && data.length > 0) {
-      const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))];
+      const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))].sort();
       
-      // Format for the dropdown
-      const machineOptions = uniqueMachines.map(name => ({
-        id: name,
-        name: name
-      }));
+      setMachines(uniqueMachines);
       
-      setMachines(machineOptions);
-      
-      // Auto-select first machine
-      if (machineOptions.length > 0 && !selectedMachine) {
-        setSelectedMachine(machineOptions[0].name);
+      // Auto-select first machine if none selected
+      if (uniqueMachines.length > 0 && !selectedMachine) {
+        setSelectedMachine(uniqueMachines[0]);
       }
       
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [data]);
+  }, [data, selectedMachine]);
 
   useEffect(() => {
-    // Process machine data when machine is selected
-    if (selectedMachine && data && data.length > 0) {
-      processAndSetMachineData(selectedMachine, timeRange);
-    }
-  }, [selectedMachine, timeRange, data]);
-
-  const processAndSetMachineData = (machineName, range) => {
-    setLoading(true);
-    
     // Filter data for selected machine
-    const machineSpecificData = data.filter(item => item.MACHINE_NAME === machineName);
-    
-    if (machineSpecificData.length === 0) {
-      setLoading(false);
-      return;
+    if (selectedMachine && data && data.length > 0) {
+      const filteredData = data.filter(item => item.MACHINE_NAME === selectedMachine);
+      setMachineData(filteredData);
+      setCurrentPage(1); // Reset to first page when changing machine
     }
-    
-    // Generate time labels based on range
-    const getTimeLabels = () => {
-      const now = new Date();
-      const labels = [];
-      
-      switch (range) {
-        case '24h':
-          for (let i = 0; i < 24; i++) {
-            labels.push(`${i}:00`);
-          }
-          break;
-        case '7d':
-          for (let i = 6; i >= 0; i--) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            labels.push(date.toLocaleDateString());
-          }
-          break;
-        case '30d':
-          for (let i = 29; i >= 0; i--) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            labels.push(date.toLocaleDateString());
-          }
-          break;
-        default:
-          for (let i = 0; i < 24; i++) {
-            labels.push(`${i}:00`);
-          }
-      }
-      
-      return labels;
-    };
-    
-    const timeLabels = getTimeLabels();
-    
-    // Prepare data for charts
-    // Group data by type
-    const dataByType = {};
-    
-    machineSpecificData.forEach(item => {
-      if (!dataByType[item.TYPE]) {
-        dataByType[item.TYPE] = [];
-      }
-      dataByType[item.TYPE].push(item);
-    });
-    
-    // Process activity data (ON/OFF status)
-    const activityTypes = Object.keys(dataByType).filter(type => 
-      dataByType[type].some(item => item.VALUE === 'ON' || item.VALUE === 'OFF')
-    );
-    
-    const activityDatasets = activityTypes.map((type, index) => {
-      const typeData = dataByType[type];
-      const colorIndex = index % 5;
-      const colors = [
-        { border: '#0d6efd', background: 'rgba(13, 110, 253, 0.2)' },
-        { border: '#dc3545', background: 'rgba(220, 53, 69, 0.2)' },
-        { border: '#198754', background: 'rgba(25, 135, 84, 0.2)' },
-        { border: '#ffc107', background: 'rgba(255, 193, 7, 0.2)' },
-        { border: '#6c757d', background: 'rgba(108, 117, 125, 0.2)' }
-      ];
-      
-      // Convert data to 0/1 for ON/OFF
-      const values = timeLabels.map(() => null); // Initialize with null
-      
-      typeData.forEach(item => {
-        const date = new Date(item.START_TIME);
-        let index;
-        
-        switch (range) {
-          case '24h':
-            index = date.getHours();
-            break;
-          case '7d': {
-            const dayDiff = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
-            if (dayDiff < 7) index = 6 - dayDiff;
-            break;
-          }
-          case '30d': {
-            const dayDiff = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
-            if (dayDiff < 30) index = 29 - dayDiff;
-            break;
-          }
-          default:
-            index = date.getHours();
-        }
-        
-        if (index >= 0 && index < values.length) {
-          values[index] = item.VALUE === 'ON' ? 1 : 0;
-        }
-      });
-      
-      return {
-        label: `${type} Status`,
-        data: values,
-        borderColor: colors[colorIndex].border,
-        backgroundColor: colors[colorIndex].background,
-        tension: 0.4,
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: colors[colorIndex].border,
-        stepped: true
-      };
-    });
-    
-    // Process numeric data
-    const numericTypes = Object.keys(dataByType).filter(type => 
-      dataByType[type].some(item => !isNaN(parseFloat(item.VALUE)))
-    );
-    
-    const numericDatasets = numericTypes.map((type, index) => {
-      const typeData = dataByType[type];
-      const colorIndex = index % 5;
-      const colors = [
-        { border: '#0d6efd', background: 'rgba(13, 110, 253, 0.1)' },
-        { border: '#dc3545', background: 'rgba(220, 53, 69, 0.1)' },
-        { border: '#198754', background: 'rgba(25, 135, 84, 0.1)' },
-        { border: '#ffc107', background: 'rgba(255, 193, 7, 0.1)' },
-        { border: '#6c757d', background: 'rgba(108, 117, 125, 0.1)' }
-      ];
-      
-      // Extract numeric values
-      const values = timeLabels.map(() => null); // Initialize with null
-      
-      typeData.forEach(item => {
-        const numericValue = parseFloat(item.VALUE);
-        if (!isNaN(numericValue)) {
-          const date = new Date(item.START_TIME);
-          let index;
-          
-          switch (range) {
-            case '24h':
-              index = date.getHours();
-              break;
-            case '7d': {
-              const dayDiff = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
-              if (dayDiff < 7) index = 6 - dayDiff;
-              break;
-            }
-            case '30d': {
-              const dayDiff = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
-              if (dayDiff < 30) index = 29 - dayDiff;
-              break;
-            }
-            default:
-              index = date.getHours();
-          }
-          
-          if (index >= 0 && index < values.length) {
-            values[index] = numericValue;
-          }
-        }
-      });
-      
-      return {
-        label: `${type} ${typeData[0].MEASUREMENT || ''}`,
-        data: values,
-        borderColor: colors[colorIndex].border,
-        backgroundColor: colors[colorIndex].background,
-        tension: 0.4,
-        yAxisID: `y${index > 0 ? index : ''}`
-      };
-    });
-    
-    // Set chart data
-    setMachineData({
-      activityData: {
-        labels: timeLabels,
-        datasets: activityDatasets
-      },
-      sensorData: {
-        labels: timeLabels,
-        datasets: numericDatasets
-      }
-    });
-    
-    setLoading(false);
+  }, [selectedMachine, data]);
+
+  const handleMachineChange = (e) => {
+    setSelectedMachine(e.target.value);
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-      }
-    },
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Time'
-        }
-      },
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Status'
-        },
-        min: 0,
-        max: 1,
-        ticks: {
-          stepSize: 1,
-          callback: function(value) {
-            return value === 0 ? 'OFF' : value === 1 ? 'ON' : '';
-          }
-        }
-      }
-    }
+  // Handle download data as CSV
+  const handleDownloadCSV = () => {
+    if (machineData.length === 0) return;
+    
+    // Create CSV headers
+    const headers = ['NO', 'MACHINE NAME', 'TYPE', 'CATEGORY', 'MEASUREMENT', 'VALUE', 'TIMESTAMP'];
+    
+    // Format data rows
+    const rows = machineData.map((item, index) => [
+      index + 1,
+      item.MACHINE_NAME || '',
+      item.TYPE || '',
+      item.CATEGORY || '',
+      item.MEASUREMENT || '',
+      item.VALUE !== undefined ? item.VALUE : '',
+      formatTimestamp(item.START_TIME || item.TIMESTAMP)
+    ]);
+    
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${selectedMachine}_data.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-  
-  // Dynamic options for sensor charts
-  const getSensorChartOptions = () => {
-    if (!machineData.sensorData || !machineData.sensorData.datasets) {
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'top',
-          }
-        }
-      };
-    }
-    
-    const scales = {
-      x: {
-        title: {
-          display: true,
-          text: 'Time'
-        }
-      }
-    };
-    
-    // Add a scale for each dataset
-    machineData.sensorData.datasets.forEach((dataset, index) => {
-      const yAxisID = `y${index > 0 ? index : ''}`;
-      scales[yAxisID] = {
-        type: 'linear',
-        display: true,
-        position: index === 0 ? 'left' : 'right',
-        title: {
-          display: true,
-          text: dataset.label
-        },
-        grid: {
-          drawOnChartArea: index === 0
-        }
-      };
-    });
-    
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top',
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-        }
-      },
-      scales
-    };
+
+  // Format timestamp for display
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return timestamp; // Return original if invalid
+    return date.toLocaleString();
   };
+
+  // Format value for display
+  const formatValue = (value) => {
+    if (value === '0' || value === 0) return 'OFF';
+    if (value === '1' || value === 1) return 'ON';
+    return value;
+  };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = machineData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(machineData.length / itemsPerPage);
+
+  // Handle page change
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  if (loading || isLoading) {
+    return (
+      <div className="text-center my-4">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2">Loading data...</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <Row className="mb-4">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Select Machine</Form.Label>
+    <div className="machine-data-container">
+      {/* Machine Selection */}
+      <div className="mb-4">
+        <div className="row align-items-center">
+          <div className="col-md-2 d-flex align-items-center">
+            <i className="bi bi-gear-fill me-2"></i>
+            <span>Select Machine</span>
+          </div>
+          <div className="col-md-6">
             <Form.Select 
+              className="form-select" 
               value={selectedMachine} 
-              onChange={(e) => setSelectedMachine(e.target.value)}
-              disabled={loading}
+              onChange={handleMachineChange}
+              aria-label="Select Machine"
             >
               {machines.map((machine) => (
-                <option key={machine.id} value={machine.name}>
-                  {machine.name}
+                <option key={machine} value={machine}>
+                  {machine}
                 </option>
               ))}
             </Form.Select>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Time Range</Form.Label>
-            <Form.Select 
-              value={timeRange} 
-              onChange={(e) => setTimeRange(e.target.value)}
-              disabled={loading}
+          </div>
+          <div className="col-md-4 text-end">
+            <button 
+              className="btn btn-success" 
+              onClick={handleDownloadCSV}
+              disabled={machineData.length === 0}
             >
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-            </Form.Select>
-          </Form.Group>
-        </Col>
-      </Row>
-      
-      {loading ? (
-        <div className="text-center my-5">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
+              <i className="bi bi-download me-1"></i> Export to CSV
+            </button>
+          </div>
         </div>
-      ) : (
+      </div>
+
+      {/* Machine Details */}
+      {selectedMachine && (
+        <div className="mb-4">
+          <Card className="shadow-sm mb-4">
+            <Card.Body>
+              <div className="mb-2">
+                <strong>Total Log Entries:</strong> {machineData.length}
+              </div>
+              {machineData.length > 0 && (
+                <div>
+                  <strong>Last Updated:</strong> {formatTimestamp(machineData[0].START_TIME || machineData[0].TIMESTAMP)}
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </div>
+      )}
+
+      {/* Machine Log Data with Pagination */}
+      {machineData.length > 0 ? (
         <>
-          {/* Activity Status Chart */}
-          {machineData.activityData.datasets && machineData.activityData.datasets.length > 0 ? (
-            <Card className="mb-4">
-              <Card.Body>
-                <Card.Title>Machine Status Over Time</Card.Title>
-                <div style={{ height: '300px' }}>
-                  <Line data={machineData.activityData} options={chartOptions} />
-                </div>
-              </Card.Body>
-            </Card>
-          ) : (
-            <Card className="mb-4">
-              <Card.Body className="text-center">
-                <Card.Title>Machine Status Over Time</Card.Title>
-                <p className="my-5">No status data available for this machine</p>
-              </Card.Body>
-            </Card>
-          )}
-          
-          {/* Sensor Data Chart */}
-          {machineData.sensorData.datasets && machineData.sensorData.datasets.length > 0 ? (
-            <Card>
-              <Card.Body>
-                <Card.Title>Sensor Data Over Time</Card.Title>
-                <div style={{ height: '300px' }}>
-                  <Line data={machineData.sensorData} options={getSensorChartOptions()} />
-                </div>
-              </Card.Body>
-            </Card>
-          ) : (
-            <Card>
-              <Card.Body className="text-center">
-                <Card.Title>Sensor Data Over Time</Card.Title>
-                <p className="my-5">No sensor data available for this machine</p>
-              </Card.Body>
-            </Card>
-          )}
+          {/* Show entries selector */}
+          <div className="row mb-3">
+            <div className="col-md-6">
+              <div className="d-flex align-items-center">
+                <label className="me-2">Show</label>
+                <select 
+                  className="form-select form-select-sm" 
+                  style={{ width: 'auto' }}
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  {[10, 25, 50, 100].map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <label className="ms-2">entries</label>
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="table-responsive">
+            <table className="table table-striped table-hover table-sm">
+              <thead className="table-light">
+                <tr>
+                  <th className="text-center">NO.</th>
+                  <th>MACHINE NAME</th>
+                  <th>TYPE</th>
+                  <th>CATEGORY</th>
+                  <th>MEASUREMENT</th>
+                  <th>VALUE</th>
+                  <th>TIMESTAMP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.map((item, index) => (
+                  <tr key={index}>
+                    <td className="text-center">{indexOfFirstItem + index + 1}</td>
+                    <td>{item.MACHINE_NAME}</td>
+                    <td>{item.TYPE}</td>
+                    <td>{item.CATEGORY}</td>
+                    <td>{item.MEASUREMENT}</td>
+                    <td>
+                      {item.VALUE !== undefined && item.VALUE !== null ? (
+                        typeof item.VALUE === 'string' && (item.VALUE === '0' || item.VALUE === '1') ? (
+                          <span className={`badge ${formatValue(item.VALUE) === 'ON' ? 'bg-success' : 'bg-danger'}`}>
+                            {formatValue(item.VALUE)}
+                          </span>
+                        ) : item.VALUE
+                      ) : '-'}
+                    </td>
+                    <td>{formatTimestamp(item.START_TIME || item.TIMESTAMP)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="row mt-3">
+            <div className="col-md-6">
+              <div className="text-muted">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, machineData.length)} of {machineData.length} entries
+              </div>
+            </div>
+            <div className="col-md-6">
+              <nav aria-label="Data pagination">
+                <ul className="pagination justify-content-end">
+                  {/* Previous button */}
+                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                    <button 
+                      className="page-link" 
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </button>
+                  </li>
+                  
+                  {/* Page numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(number => {
+                      // Show pages around current page
+                      if (totalPages <= 5) return true;
+                      if (number === 1 || number === totalPages) return true;
+                      if (Math.abs(number - currentPage) <= 1) return true;
+                      return false;
+                    })
+                    .map((number, index, array) => {
+                      // Add ellipsis
+                      if (index > 0 && array[index - 1] !== number - 1) {
+                        return (
+                          <React.Fragment key={`ellipsis-${number}`}>
+                            <li className="page-item disabled">
+                              <span className="page-link">...</span>
+                            </li>
+                            <li className={`page-item ${currentPage === number ? 'active' : ''}`}>
+                              <button 
+                                className="page-link" 
+                                onClick={() => paginate(number)}
+                              >
+                                {number}
+                              </button>
+                            </li>
+                          </React.Fragment>
+                        );
+                      }
+                      return (
+                        <li 
+                          key={number} 
+                          className={`page-item ${currentPage === number ? 'active' : ''}`}
+                        >
+                          <button 
+                            className="page-link" 
+                            onClick={() => paginate(number)}
+                          >
+                            {number}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  
+                  {/* Next button */}
+                  <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                    <button 
+                      className="page-link" 
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
         </>
+      ) : (
+        <div className="alert alert-info">
+          <i className="bi bi-info-circle me-2"></i>
+          No data available for the selected machine. Please select another machine or check your connection.
+        </div>
       )}
     </div>
   );
