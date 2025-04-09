@@ -97,6 +97,14 @@ const AppStatus = ({ data }) => {
                     <td><i className="bi bi-arrow-down"></i> Data Input Request Count:</td>
                     <td id="data-input-request-count" className="text-end">{data.DataInputRequestCount || 0}</td>
                   </tr>
+                  <tr>
+                    <td><i className="bi bi-arrow-up-circle"></i> Data Output Count:</td>
+                    <td id="data-output-count" className="text-end">{data.DataOutputCount || 0}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-arrow-up"></i> Data Output Request Count:</td>
+                    <td id="data-output-request-count" className="text-end">{data.DataOutputRequestCount || 0}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -110,7 +118,7 @@ const AppStatus = ({ data }) => {
             </div>
             <div className="card-body">
               {/* Memory Section */}
-              <h6 className="border-bottom pb-2 text-info">Memory Usage</h6>
+              <h6 className="border-bottom pb-2 text-primary">Memory Usage</h6>
               <table className="table table-sm table-striped mb-4">
                 <tbody>
                   <tr>
