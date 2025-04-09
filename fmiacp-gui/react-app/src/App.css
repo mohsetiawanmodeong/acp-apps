@@ -1,0 +1,653 @@
+/* FMIACP Dashboard Styles - Combined CSS */
+
+/* Base styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: none !important;
+}
+
+/* Tambahkan style untuk mencegah image latar belakang */
+html, body, #root, .App {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hapus gambar background latar */
+body::before, body::after,
+.App::before, .App::after {
+  content: none !important;
+  display: none !important;
+  background-image: none !important;
+}
+
+/* Hiddenkan ACP logo besar di background */
+body > img[src*="acp.png"],
+#root > img[src*="acp.png"],
+.App > img[src*="acp.png"] {
+  display: none !important;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* App structure */
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  position: relative;
+  z-index: 1;
+}
+
+.main-content {
+  flex: 1;
+  padding-bottom: 2rem;
+  position: relative;
+  z-index: 2;
+  background-color: #f5f5f5;
+}
+
+/* Navbar styling */
+.navbar {
+  background-color: #0a2351 !important; /* Navy dark color */
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.navbar-brand {
+  font-weight: bold;
+  color: white !important;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-brand img {
+  margin-right: 10px;
+  height: 30px;
+  width: auto;
+  max-height: 30px;
+  object-fit: contain;
+}
+
+/* Setting khusus untuk logo ACP di navbar */
+img[src*="acp.png"] {
+  height: 30px !important;
+  width: auto !important;
+  max-height: 30px !important;
+  max-width: 100px !important;
+  object-fit: contain !important;
+}
+
+.navbar-title {
+  font-size: 1.25rem;
+}
+
+.dashboard-title {
+  color: #ffc107 !important; /* Yellow color from original */
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Footer styling */
+.footer {
+  padding: 12px 0;
+  background-color: #f5f5f5;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  border-top: 1px solid #ddd;
+  position: relative;
+  margin-top: auto;
+}
+
+.footer div {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.footer .container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer .text-muted {
+  font-size: 0.9rem;
+}
+
+.footer-version {
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+/* Tab Navigation */
+.dashboard-nav .nav-link {
+  color: #495057;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+}
+
+.dashboard-nav .nav-link.active {
+  background-color: #0a2351 !important; /* Navy dark for active tab */
+  color: white !important;
+  font-weight: 500;
+}
+
+/* Tab styles - first tab different color */
+.dashboard-nav .nav-item:first-child .nav-link.active {
+  background-color: #ffc107 !important; /* Yellow for Dashboard tab */
+  color: #212529 !important;
+}
+
+.dashboard-controls {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Dashboard header */
+.dashboard-header {
+  margin-bottom: 1.5rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+}
+
+.dashboard-header .last-updated {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+/* Stats Cards */
+.status-card, .stat-card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: none;
+  transition: transform 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.status-card:hover, .stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.status-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.stat-value.total {
+  color: #0d6efd;
+}
+
+.stat-value.online {
+  color: #198754;
+}
+
+.stat-value.offline {
+  color: #dc3545;
+}
+
+/* Color utilities */
+.bg-info {
+  background-color: #3498db !important;
+}
+
+.bg-danger {
+  background-color: #e74c3c !important;
+}
+
+.bg-success {
+  background-color: #2ecc71 !important;
+}
+
+/* Status indicators */
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-connected {
+  background-color: #198754;
+}
+
+.status-disconnected {
+  background-color: #dc3545;
+}
+
+/* Status indicator dot for connection status */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 5px;
+}
+
+.status-indicator.connected {
+  background-color: #28a745;
+  box-shadow: 0 0 5px #28a745;
+}
+
+.status-indicator.disconnected {
+  background-color: #dc3545;
+  box-shadow: 0 0 5px #dc3545;
+}
+
+/* Overrides for React Bootstrap components */
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.nav-pills .nav-link {
+  cursor: pointer;
+}
+
+.navbar .btn-link {
+  color: white;
+  font-size: 1.2rem;
+}
+
+.navbar .btn-link:hover {
+  color: #ffc107;
+}
+
+/* Table styles */
+.table-responsive {
+  overflow-x: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.machine-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.machine-table thead {
+  background-color: #f8f9fa;
+}
+
+.machine-table th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 10;
+  font-weight: 600;
+  padding: 0.75rem;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.machine-table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.machine-table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Badge styles */
+.badge {
+  font-size: 0.75rem;
+  font-weight: normal;
+  padding: 0.35em 0.65em;
+  display: inline-block;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+
+.status-badge {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.badge-success {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+/* Download button */
+.btn-download {
+  background-color: #27ae60;
+  border-color: #229954;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-download:hover, .btn-download:focus {
+  background-color: #229954;
+  border-color: #1e8449;
+  color: white;
+}
+
+/* Machine data cards */
+.machine-card {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-bottom: 1rem;
+}
+
+.machine-card-header {
+  background-color: #0a2351;
+  color: white;
+  padding: 1rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.card-title {
+  margin-bottom: 0;
+}
+
+.machine-card-inactive .machine-card-header {
+  background-color: #dc3545;
+}
+
+.machine-card-active .machine-card-header {
+  background-color: #198754;
+}
+
+/* Data table styles */
+.value-column {
+  min-width: 100px;
+  text-align: center;
+}
+
+/* Ensure the Value column is visible */
+.rdt_TableCol:nth-child(4),
+.rdt_TableCell:nth-child(4) {
+  visibility: visible !important;
+  display: table-cell !important;
+  min-width: 80px !important;
+}
+
+/* Sortable column headers */
+.sortable {
+  cursor: pointer;
+  position: relative;
+}
+
+.sortable:hover {
+  background-color: #e9ecef;
+}
+
+/* Form controls */
+.form-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.form-select {
+  border-radius: 0.25rem;
+  border: 1px solid #ced4da;
+  padding: 0.375rem 0.75rem;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(10, 35, 81, 0.25);
+  border-color: #0a2351;
+}
+
+/* Filter inputs */
+.filter-row {
+  margin-bottom: 1rem;
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-row .form-control {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem 0.75rem;
+}
+
+.filter-row .form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Search field styling with pointer-events auto */
+.search-input {
+  max-width: 300px;
+}
+
+.search-input .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  pointer-events: auto !important;
+}
+
+.search-input .input-group-text {
+  background-color: #f8f9fa;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Pagination controls */
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page-item .page-link {
+  position: relative;
+  display: block;
+  padding: 0.5rem 0.75rem;
+  margin-left: -1px;
+  line-height: 1.25;
+  color: #007bff;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+}
+
+.page-item.active .page-link {
+  z-index: 3;
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+/* Custom button styling */
+.btn-outline-primary {
+  color: #0a2351;
+  border-color: #0a2351;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0a2351;
+  border-color: #0a2351;
+}
+
+.btn-primary {
+  background-color: #0a2351;
+  border-color: #0a2351;
+}
+
+.btn-primary:hover {
+  background-color: #071a3e;
+  border-color: #071a3e;
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  margin: 2rem auto;
+  display: block;
+}
+
+/* Auto-refresh indicator */
+.last-updated {
+  font-size: 0.85rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+}
+
+.last-updated i {
+  margin-right: 5px;
+}
+
+/* Alert styling */
+.alert {
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Refresh button animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Logo styling */
+.logo-freeport {
+  height: 25px !important;
+  width: auto !important;
+  transition: transform 0.3s ease;
+}
+
+.logo-trakindo {
+  height: 45px !important;
+  width: auto !important;
+  transition: transform 0.3s ease;
+}
+
+.logo-freeport:hover, .logo-trakindo:hover {
+  transform: scale(1.05);
+}
+
+/* Card styling */
+.card {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+/* Make all inputs have pointer-events to prevent issues */
+input, button, select, textarea, .form-control, .btn {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar-title {
+    font-size: 1rem;
+  }
+  
+  .btn-download {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .search-input {
+    max-width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .filter-row .col-md-4 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .value-column {
+    min-width: auto;
+  }
+  
+  .dashboard-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .status-card h3 {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-title {
+    display: none;
+  }
+} 
