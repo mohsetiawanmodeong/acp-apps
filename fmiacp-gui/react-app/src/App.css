@@ -1,5 +1,18 @@
 /* FMIACP Dashboard Styles - Combined CSS */
 
+/* Color Variables */
+:root {
+  --primary-color: #0a2351;
+  --secondary-color: #0066cc;
+  --accent-color: #ffcc00;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+}
+
 /* Base styles */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -32,7 +45,7 @@ code {
 
 /* Footer */
 .footer {
-  background-color: #f8f9fa;
+  background-color: #f0f0f0;
   padding: 0.75rem 0;
   font-size: 14px;
   width: 100%;
@@ -56,7 +69,7 @@ code {
 
 /* Navbar with dark background */
 .navbar {
-  background-color: #0a2351 !important;
+  background-color: var(--primary-color) !important;
   padding: 0.5rem 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   height: 70px;
@@ -70,10 +83,14 @@ code {
 
 /* Logo styling */
 .logo-freeport {
-  height: 29px;
+  height: 27px;
+  width: auto;
+  display: flex;
 }
 .logo-trakindo {
-  height: 27px;
+  height: 25px;
+  width: auto;
+  display: flex;
 }
 
 /* Dashboard title styling */
@@ -89,87 +106,24 @@ code {
   pointer-events: none;
 }
 
-.dashboard-title {
-  color: #ffc107;
-  font-weight: bold;
-  margin: 0;
-  font-size: 1.4rem;
-  pointer-events: none;
-}
-
-/* Navbar buttons */
-.refresh-btn, .fullscreen-btn {
-  background: transparent;
-  border: none;
-  color: #fff;
-  padding: 0.25rem;
-  font-size: 1.5rem;
-  transition: transform 0.3s ease;
-}
-
-.refresh-btn:hover, .fullscreen-btn:hover {
-  transform: scale(1.1);
-  color: #ffc107;
-}
-
-.refresh-btn.spinning i {
-  animation: spin 1s linear;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Dashboard controls section */
-.dashboard-controls-container {
-  margin-top: 10px;
-}
-
-.dashboard-controls {
-  border-radius: 0.25rem;
-  background-color: #fff;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
 .dashboard-nav .nav-link {
-  color: #212529;
+  color: #495057;
   border-radius: 0.25rem;
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  margin-right: 3px;
+}
+
+.dashboard-nav .nav-link:hover {
+  background-color: rgba(10, 35, 81, 0.1);
 }
 
 .dashboard-nav .nav-link.active {
-  background-color: #212529;
-  color: #fff;
-}
-
-.dashboard-nav .download-btn {
-  display: flex;
-  align-items: center;
-  color: #28a745;
-}
-
-.dashboard-nav .download-btn:hover {
-  background-color: #f8f9fa;
-}
-
-/* Status indicator */
-.status-indicator {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-left: 5px;
-}
-
-.status-indicator.connected {
-  background-color: #28a745;
-  box-shadow: 0 0 5px #28a745;
-}
-
-.status-indicator.disconnected {
-  background-color: #dc3545;
-  box-shadow: 0 0 5px #dc3545;
+  background-color: #0a2351 !important;
+  color: white !important;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* Content section */
@@ -207,22 +161,7 @@ code {
   font-weight: 600;
 }
 
-/* Animation for refresh */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.refresh-btn.spinning svg {
-  animation: spin 1s linear infinite;
-  color: white !important;
-}
-
-/* Media queries */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-nav {
     flex-wrap: nowrap;
@@ -233,13 +172,18 @@ code {
   .dashboard-nav .nav-link {
     white-space: nowrap;
   }
-}
-
-/* Navbar brand */
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  height: 100%;
+  
+  .navbar-title {
+    font-size: 1rem;
+  }
+  
+  .dashboard-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.2rem;
+  }
 }
 
 /* Buttons styling */
@@ -268,47 +212,6 @@ code {
   transform: scale(1.15);
 }
 
-/* Tab Navigation */
-.dashboard-nav .nav-link {
-  color: #495057;
-  border-radius: 0.25rem;
-  padding: 0.35rem 0.7rem;
-  font-size: 0.9rem;
-}
-
-.dashboard-nav .nav-link.active {
-  background-color: #0a2351 !important;
-  color: white !important;
-  font-weight: 500;
-}
-
-/* Download button styling */
-.nav-link.download-btn {
-  background-color: #198754;
-  color: white !important;
-  display: flex;
-  align-items: center;
-  font-size: 0.8rem;
-  padding: 0.35rem;
-}
-
-.nav-link.download-btn:hover {
-  background-color: #157347;
-}
-
-/* Status Cards */
-.status-card, .stat-card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  border: none;
-  transition: transform 0.2s ease;
-  margin-bottom: 1rem;
-}
-
-.status-card:hover, .stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
 /* Card styling */
 .card {
   margin-bottom: 20px;
@@ -323,6 +226,19 @@ code {
   font-weight: bold;
 }
 
+/* Status cards */
+.status-card, .stat-card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: none;
+  transition: transform 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.status-card:hover, .stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
 /* Stats display */
 .display-4 {
   font-size: 2.5rem;
@@ -335,10 +251,10 @@ code {
 
 /* Status indicators */
 .status-dot {
+  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  display: inline-block;
 }
 
 .status-dot.danger {
@@ -353,23 +269,6 @@ code {
   background-color: #28a745;
 }
 
-.status-info {
-  color: #6c757d;
-  line-height: 1.4;
-}
-
-/* Auto-refresh indicator */
-.last-updated {
-  font-size: 0.85rem;
-  color: #6c757d;
-  display: flex;
-  align-items: center;
-}
-
-.last-updated i {
-  margin-right: 5px;
-}
-
 /* Alert styling */
 .alert {
   border-radius: 8px;
@@ -382,117 +281,7 @@ code {
   animation: spin 1s linear infinite;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .navbar-title {
-    font-size: 1rem;
-  }
-  
-  .dashboard-header h2 {
-    font-size: 1.5rem;
-  }
-  
-  .dashboard-title {
-    font-size: 1.2rem;
-  }
-}
-
-/* Menu styling - remove unused styles */
-.menu-container,
-.menu-btn,
-.dashboard-controls-container {
-  display: none; /* Hiding unused styles */
-}
-
-/* Dashboard tabs container */
-.dashboard-tabs-container {
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.nav-tabs {
-  border-bottom: none;
-}
-
-.nav-tabs .nav-link {
-  color: #6c757d;
-  border: none;
-  position: relative;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-}
-
-.nav-tabs .nav-link.active {
-  color: #0d6efd;
-  background-color: transparent;
-  border-color: transparent;
-}
-
-.nav-tabs .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #0d6efd;
-}
-
-.download-data-btn {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  padding: 0.35rem 0.85rem;
-}
-
-.last-update-info {
-  display: flex;
-  align-items: center;
-}
-
-.status-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-left: 8px;
-}
-
-.status-indicator.connected {
-  background-color: #28a745;
-}
-
-.status-indicator.disconnected {
-  background-color: #dc3545;
-}
-
-/* Custom Animation for fullscreen-btn */
-.fullscreen-btn {
-  transition: all 0.3s ease;
-}
-
-.fullscreen-btn:active svg {
-  transform: scale(0.9);
-}
-
-.main-content {
-  flex: 1 0 auto;
-  padding-bottom: 1rem;
-}
-
 /* Login Page Styles */
-.login-page {
-  background-color: #f8f9fa;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-container {
-  max-width: 400px;
-  width: 100%;
-  margin: 0 auto;
-}
-
 .login-card {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: none;
@@ -513,63 +302,56 @@ code {
   background-color: #f8f9fa;
 }
 
-/* App Status Styles */
-.app-status-container h3 {
-  color: #333;
-  margin-bottom: 1.5rem;
+/* Override Bootstrap classes with our color variables */
+.bg-primary {
+  background-color: var(--primary-color) !important;
 }
 
-.app-info-value {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #344767;
-  margin: 0;
+.text-primary {
+  color: var(--primary-color) !important;
 }
 
-.database-status {
-  display: flex;
-  align-items: center;
+/* Bottom navigation container */
+.bottom-nav-container {
+  padding: 0;
+  margin-bottom: 1rem;
 }
 
-.data-stats-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+/* Main tabs container style */
+.main-tabs {
+  flex-wrap: nowrap;
+  width: auto;
 }
 
-.data-stat-row, .system-stat-row {
-  display: grid;
-  grid-template-columns: 40px 1fr 1fr;
-  align-items: center;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 0.5rem;
+/* Navigation tabs styling */
+.nav-tabs {
+  border-bottom: none;
 }
 
-.data-stat-icon, .system-stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background-color: #f1f5fe;
-  border-radius: 8px;
-  color: #3b82f6;
+.nav-tabs .nav-item .nav-link {
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  position: relative;
+  background-color: transparent;
+  font-size: 16px;
+  white-space: nowrap;
 }
 
-.data-stat-label, .system-stat-label {
-  font-weight: 500;
-  color: #666;
-}
-
-.data-stat-value, .system-stat-value {
-  text-align: right;
-  font-weight: 600;
-  color: #344767;
-}
-
-/* User info in navbar */
-.user-info {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+.nav-tabs .nav-item .nav-link:hover {
+  color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Override tab active style for white background and primary color text */
+.nav-tabs .nav-item .nav-link.active {
+  background-color: white !important;
+  color: var(--primary-color) !important;
+  font-weight: 700;
+}
+
+/* Space between nav menu and content below */
+.main-content {
+  margin-top: 1rem;
 } 

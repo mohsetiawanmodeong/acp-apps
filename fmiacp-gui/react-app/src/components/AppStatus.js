@@ -1,5 +1,4 @@
 import React from 'react';
-import { BiHdd, BiMemoryCard, BiMicrochip, BiServer } from 'react-icons/bi';
 
 // Format bytes to KB, MB, GB
 const formatBytes = (bytes, decimals = 2) => {
@@ -35,159 +34,126 @@ const AppStatus = ({ data }) => {
 
   return (
     <div>
-      <div className="row mb-4">
-        <div className="col-md-4 mb-3">
+      <h3 className="mb-4">FMIACP App Status</h3>
+      
+      <div className="row mb-3">
+        <div className="col-md-4 mb-3 mb-md-0">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title">App Name</h5>
-              <h2 className="app-info-value">{data.Name || 'FMIACP'}</h2>
+              <h6 className="card-subtitle mb-2 text-muted">App Name</h6>
+              <p className="h4" id="app-name">{data.Name || 'FMIACP'}</p>
             </div>
           </div>
         </div>
         
-        <div className="col-md-4 mb-3">
+        <div className="col-md-4 mb-3 mb-md-0">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title">Version</h5>
-              <h2 className="app-info-value">{data.Version || '2.0'}</h2>
+              <h6 className="card-subtitle mb-2 text-muted">Version</h6>
+              <p className="h4" id="app-version">{data.Version || '2.0'}</p>
             </div>
           </div>
         </div>
         
-        <div className="col-md-4 mb-3">
+        <div className="col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title">Database Connection</h5>
-              <div className="database-status">
+              <h6 className="card-subtitle mb-2 text-muted">Database Connection</h6>
+              <p className="h4" id="db-connection">
                 <i className="bi bi-database-check text-success me-2"></i>
-                <h2 className="app-info-value text-success">Connected</h2>
-              </div>
+                <span className="text-success">Connected</span>
+              </p>
             </div>
           </div>
         </div>
       </div>
       
       <div className="row">
-        <div className="col-md-7 mb-3">
+        <div className="col-md-6 mb-3">
           <div className="card h-100">
+            <div className="card-header">
+              <h6 className="mb-0">Data Statistics</h6>
+            </div>
             <div className="card-body">
-              <h5 className="card-title">Data Statistics</h5>
-              
-              <div className="data-stats-table">
-                <div className="data-stat-row">
-                  <div className="data-stat-icon">
-                    <BiHdd />
-                  </div>
-                  <div className="data-stat-label">Data Store Size:</div>
-                  <div className="data-stat-value">{data.DataStoreSize || 0}</div>
-                </div>
-                
-                <div className="data-stat-row">
-                  <div className="data-stat-icon">
-                    <BiServer />
-                  </div>
-                  <div className="data-stat-label">Data Store Count:</div>
-                  <div className="data-stat-value">{data.DataStoreCount || 0}</div>
-                </div>
-                
-                <div className="data-stat-row">
-                  <div className="data-stat-icon">
-                    <BiServer />
-                  </div>
-                  <div className="data-stat-label">Data Store Fail Count:</div>
-                  <div className="data-stat-value">{data.DataStoreFailCount || 0}</div>
-                </div>
-                
-                <div className="data-stat-row">
-                  <div className="data-stat-icon">
-                    <BiServer />
-                  </div>
-                  <div className="data-stat-label">Data Input Count:</div>
-                  <div className="data-stat-value">{data.DataInputCount || 0}</div>
-                </div>
-                
-                <div className="data-stat-row">
-                  <div className="data-stat-icon">
-                    <BiServer />
-                  </div>
-                  <div className="data-stat-label">Data Input Request Count:</div>
-                  <div className="data-stat-value">{data.DataInputRequestCount || 0}</div>
-                </div>
-              </div>
+              <table className="table table-sm table-striped">
+                <tbody>
+                  <tr>
+                    <td><i className="bi bi-database"></i> Data Store Size:</td>
+                    <td id="data-store-size" className="text-end">{data.DataStoreSize || 0}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-check-circle"></i> Data Store Count:</td>
+                    <td id="data-store-count" className="text-end">{data.DataStoreCount || 0}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-exclamation-triangle"></i> Data Store Fail Count:</td>
+                    <td id="data-store-fail-count" className="text-end">{data.DataStoreFailCount || 0}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-arrow-down-circle"></i> Data Input Count:</td>
+                    <td id="data-input-count" className="text-end">{data.DataInputCount || 0}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-arrow-down"></i> Data Input Request Count:</td>
+                    <td id="data-input-request-count" className="text-end">{data.DataInputRequestCount || 0}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
         
-        <div className="col-md-5 mb-3">
+        <div className="col-md-6 mb-3">
           <div className="card h-100">
+            <div className="card-header">
+              <h6 className="mb-0">System Usage</h6>
+            </div>
             <div className="card-body">
-              <h5 className="card-title">System Usage</h5>
+              {/* Memory Section */}
+              <h6 className="border-bottom pb-2 text-info">Memory Usage</h6>
+              <table className="table table-sm table-striped mb-4">
+                <tbody>
+                  <tr>
+                    <td><i className="bi bi-hdd-rack"></i> RSS:</td>
+                    <td id="memory-rss" className="text-end">{rss}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-hdd"></i> Heap Total:</td>
+                    <td id="memory-heapTotal" className="text-end">{heapTotal}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-hdd-fill"></i> Heap Used:</td>
+                    <td id="memory-heapUsed" className="text-end">{heapUsed}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-device-hdd"></i> External:</td>
+                    <td id="memory-external" className="text-end">{external}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-collection"></i> Array Buffers:</td>
+                    <td id="memory-arrayBuffers" className="text-end">{arrayBuffers}</td>
+                  </tr>
+                </tbody>
+              </table>
               
-              <h6 className="mt-4 text-primary">Memory Usage</h6>
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMemoryCard />
-                </div>
-                <div className="system-stat-label">RSS:</div>
-                <div className="system-stat-value">{rss}</div>
-              </div>
-              
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMemoryCard />
-                </div>
-                <div className="system-stat-label">Heap Total:</div>
-                <div className="system-stat-value">{heapTotal}</div>
-              </div>
-              
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMemoryCard />
-                </div>
-                <div className="system-stat-label">Heap Used:</div>
-                <div className="system-stat-value">{heapUsed}</div>
-              </div>
-              
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMemoryCard />
-                </div>
-                <div className="system-stat-label">External:</div>
-                <div className="system-stat-value">{external}</div>
-              </div>
-              
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMemoryCard />
-                </div>
-                <div className="system-stat-label">Array Buffers:</div>
-                <div className="system-stat-value">{arrayBuffers}</div>
-              </div>
-              
-              <h6 className="mt-4 text-primary">CPU Usage</h6>
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMicrochip />
-                </div>
-                <div className="system-stat-label">User CPU:</div>
-                <div className="system-stat-value">{userCPU}</div>
-              </div>
-              
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMicrochip />
-                </div>
-                <div className="system-stat-label">System CPU:</div>
-                <div className="system-stat-value">{systemCPU}</div>
-              </div>
-              
-              <div className="system-stat-row">
-                <div className="system-stat-icon">
-                  <BiMicrochip />
-                </div>
-                <div className="system-stat-label">Total CPU:</div>
-                <div className="system-stat-value">{totalCPU}</div>
-              </div>
+              {/* CPU Section */}
+              <h6 className="border-bottom pb-2 text-success">CPU Usage</h6>
+              <table className="table table-sm table-striped">
+                <tbody>
+                  <tr>
+                    <td><i className="bi bi-person"></i> User CPU:</td>
+                    <td id="cpu-user" className="text-end">{userCPU}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-gear"></i> System CPU:</td>
+                    <td id="cpu-system" className="text-end">{systemCPU}</td>
+                  </tr>
+                  <tr>
+                    <td><i className="bi bi-percent"></i> Total CPU:</td>
+                    <td id="cpu-total" className="text-end">{totalCPU}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
