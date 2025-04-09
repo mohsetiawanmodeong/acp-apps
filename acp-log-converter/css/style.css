@@ -24,7 +24,7 @@ body {
 }
 
 .pre-scrollable {
-    max-height: 400px;
+    max-height: 550px;
     overflow-y: auto;
     background-color: #f8f9fa;
     padding: 15px;
