@@ -35,8 +35,6 @@ const AppStatus = ({ data }) => {
 
   return (
     <div>
-      <h3 className="mb-4">FMIACP App Status</h3>
-      
       <div className="row mb-4">
         <div className="col-md-4 mb-3">
           <div className="card h-100">
