@@ -122,12 +122,13 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
           </ul>
 
           {/* Last update info */}
-          <div className="download-info d-flex align-items-center">
+          <div className="d-flex align-items-center">
             <button className="btn btn-success btn-sm me-3">
               <i className="bi bi-download me-1"></i> Download Data
             </button>
             <div className="last-update text-white small">
-              Last update: {lastUpdate}
+              <span className="me-1"><i className="bi bi-arrow-repeat text-success realtime-indicator"></i></span>
+              Realtime updates: {lastUpdate}
               <span className={`ms-2 status-dot ${apiStatus ? 'bg-success' : 'bg-danger'}`}></span>
             </div>
           </div>

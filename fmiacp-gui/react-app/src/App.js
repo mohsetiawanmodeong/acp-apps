@@ -105,14 +105,26 @@ function App() {
     // Initial data fetch and API connectivity check
     checkApiConnectivity();
     
-    // Set up auto refresh every 60 seconds
+    // Set up auto refresh every 3 seconds for realtime updates
     const refreshInterval = setInterval(() => {
-      checkApiConnectivity();
-      fetchData();
+      console.log('Realtime update: fetching fresh data...');
+      
+      // Only check API connectivity every minute to reduce overhead
+      const now = new Date();
+      if (now.getSeconds() % 60 === 0) {
+        checkApiConnectivity();
+      }
+      
+      // Always fetch the appropriate data based on active tab
       if (activeTab === 'app-status') {
         fetchAppStatus();
+      } else {
+        fetchData();
       }
-    }, 60000);
+      
+      // Update timestamp
+      setLastUpdate(new Date().toLocaleTimeString());
+    }, 3000); // 3 second interval
     
     // Clean up on unmount
     return () => clearInterval(refreshInterval);

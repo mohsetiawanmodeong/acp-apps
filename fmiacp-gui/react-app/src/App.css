@@ -354,4 +354,15 @@ code {
 /* Space between nav menu and content below */
 .main-content {
   margin-top: 1rem;
+}
+
+/* Realtime indicator animation */
+.realtime-indicator {
+  display: inline-block;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 
