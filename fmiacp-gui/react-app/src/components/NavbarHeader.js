@@ -24,31 +24,33 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus }) => {
     <>
       {/* Navbar - Hanya logo dan judul di tengah */}
       <nav className="navbar navbar-dark sticky-top">
-        <div className="container-fluid position-relative">
+        <div className="container-fluid">
           {/* Logo Freeport di kiri */}
           <div className="navbar-brand">
             <img src={process.env.PUBLIC_URL + "/img/logo-freeport.png"} alt="Freeport" className="logo-freeport" />
           </div>
           
           {/* FMIACP Dashboard text di tengah dengan warna kuning */}
-          <h4 className="mb-0 dashboard-title">FMIACP Dashboard</h4>
+          <div className="navbar-title-container">
+            <h4 className="mb-0 dashboard-title">FMIACP Dashboard</h4>
+          </div>
           
           {/* Buttons dan Logo Trakindo di kanan */}
           <div className="d-flex align-items-center">
             <button 
-              className="btn btn-light btn-sm me-2" 
+              className="btn btn-link btn-sm btn-icon me-2" 
               onClick={onRefresh}
               title="Refresh Data"
             >
-              <BiRefresh />
+              <BiRefresh className="text-white" />
             </button>
             
             <button 
-              className="btn btn-light btn-sm me-2"
+              className="btn btn-link btn-sm btn-icon me-4"
               onClick={handleFullscreen}
               title="Toggle Fullscreen"
             >
-              <BiFullscreen />
+              <BiFullscreen className="text-white" />
             </button>
             
             <div className="navbar-brand">
@@ -59,11 +61,11 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus }) => {
       </nav>
 
       {/* Menu & Dashboard Controls */}
-      <div className="container-fluid my-3">
-        <div className="row mb-3">
+      <div className="container-fluid dashboard-controls-container">
+        <div className="row mb-2">
           <div className="col-12">
             <div className="card dashboard-controls">
-              <div className="card-body">
+              <div className="card-body py-2">
                 <div className="row align-items-center">
                   {/* Menu Tabs */}
                   <div className="col-md-8">

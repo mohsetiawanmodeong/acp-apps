@@ -58,7 +58,6 @@ code {
 /* Navbar styling */
 .navbar {
   background-color: #0a2351 !important; /* Navy dark color */
-  padding: 0.5rem 1rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 10;
@@ -75,19 +74,33 @@ code {
   border-radius: 4px;
 }
 
-.navbar-brand {
-  font-weight: bold;
-  color: white !important;
+/* Navbar brand and logo styling */
+.navbar .navbar-brand {
+  margin-right: 0;
+  padding: 0;
   display: flex;
   align-items: center;
 }
 
 .navbar-brand img {
-  margin-right: 10px;
-  height: 30px;
-  width: auto;
-  max-height: 30px;
   object-fit: contain;
+}
+
+/* Logo styling */
+.logo-freeport{
+  height: 25px !important;
+  width: auto !important;
+  transition: transform 0.3s ease;
+}
+
+.logo-trakindo {
+  height: 45px !important;
+  width: auto !important;
+  transition: transform 0.3s ease;
+}
+
+.logo-freeport:hover, .logo-trakindo:hover {
+  transform: scale(1.05);
 }
 
 /* Setting khusus untuk logo ACP di navbar */
@@ -99,14 +112,28 @@ img[src*="acp.png"] {
   object-fit: contain !important;
 }
 
-.navbar-title {
-  font-size: 1.25rem;
+/* FMIACP Dashboard title styling */
+.navbar-title-container {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  z-index: 5;
 }
 
 .dashboard-title {
-  color: #ffc107 !important; /* Yellow color from original */
-  font-weight: bold;
+  color: #ffcc00 !important; /* Yellow color */
+  font-weight: bold !important;
   margin: 0;
+}
+
+/* Navbar button styling */
+.navbar .btn-icon {
+  padding: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Footer styling */
@@ -152,12 +179,6 @@ img[src*="acp.png"] {
   background-color: #0a2351 !important; /* Navy dark for active tab */
   color: white !important;
   font-weight: 500;
-}
-
-/* Tab styles - first tab different color */
-.dashboard-nav .nav-item:first-child .nav-link.active {
-  background-color: #ffc107 !important; /* Yellow for Dashboard tab */
-  color: #212529 !important;
 }
 
 .dashboard-controls {
@@ -234,18 +255,27 @@ img[src*="acp.png"] {
 
 /* Status indicators */
 .status-dot {
-  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  display: inline-block;
 }
 
-.status-connected {
-  background-color: #198754;
-}
-
-.status-disconnected {
+.status-dot.danger {
   background-color: #dc3545;
+}
+
+.status-dot.warning {
+  background-color: #ffc107;
+}
+
+.status-dot.success {
+  background-color: #28a745;
+}
+
+.status-info {
+  color: #6c757d;
+  line-height: 1.4;
 }
 
 /* Status indicator dot for connection status */
@@ -279,11 +309,29 @@ img[src*="acp.png"] {
 
 .navbar .btn-link {
   color: white;
-  font-size: 1.2rem;
+  padding: 0.15rem;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  position: relative;
 }
 
 .navbar .btn-link:hover {
-  color: #ffc107;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.navbar .btn-link.me-1 {
+  margin-right: 0.25rem !important;
+}
+
+.navbar .btn-link.me-2 {
+  margin-right: 0.5rem !important;
 }
 
 /* Table styles */
@@ -578,23 +626,6 @@ img[src*="acp.png"] {
   animation: spin 1s linear infinite;
 }
 
-/* Logo styling */
-.logo-freeport {
-  height: 25px !important;
-  width: auto !important;
-  transition: transform 0.3s ease;
-}
-
-.logo-trakindo {
-  height: 45px !important;
-  width: auto !important;
-  transition: transform 0.3s ease;
-}
-
-.logo-freeport:hover, .logo-trakindo:hover {
-  transform: scale(1.05);
-}
-
 /* Card styling */
 .card {
   margin-bottom: 20px;
@@ -650,4 +681,25 @@ input, button, select, textarea, .form-control, .btn {
   .dashboard-title {
     display: none;
   }
+}
+
+/* Dashboard stat cards */
+.display-4 {
+  font-size: 2.5rem;
+  font-weight: 300;
+}
+
+.card h6 {
+  font-weight: 500;
+}
+
+/* Container spacing adjustment */
+.container-fluid {
+  padding: 0 1rem;
+}
+
+/* Menu controls spacing */
+.dashboard-controls-container {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
 } 
