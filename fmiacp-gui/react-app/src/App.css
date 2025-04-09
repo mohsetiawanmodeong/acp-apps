@@ -185,6 +185,7 @@ code {
 
 .refresh-btn.spinning svg {
   animation: spin 1s linear infinite;
+  color: white !important;
 }
 
 /* Media queries */
@@ -209,15 +210,28 @@ code {
 
 /* Buttons styling */
 .navbar .btn-link {
-  color: white;
+  color: white !important;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: transparent;
+  transition: transform 0.2s ease, background-color 0.2s;
+  border: none;
+  outline: none !important;
 }
 
 .navbar .btn-link:hover {
   background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.navbar .btn-link:active, 
+.navbar .btn-link:focus {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: none !important;
+  transform: scale(1.15);
 }
 
 /* Tab Navigation */
@@ -429,4 +443,13 @@ code {
 .status-indicator.disconnected {
   background-color: #dc3545;
   box-shadow: 0 0 5px #dc3545;
+}
+
+/* Custom Animation for fullscreen-btn */
+.fullscreen-btn {
+  transition: all 0.3s ease;
+}
+
+.fullscreen-btn:active svg {
+  transform: scale(0.9);
 } 

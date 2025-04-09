@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BiRefresh, BiFullscreen, BiDownload } from 'react-icons/bi';
 
 /**
@@ -6,6 +6,18 @@ import { BiRefresh, BiFullscreen, BiDownload } from 'react-icons/bi';
  * Displays the title and download button
  */
 const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTab }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const handleRefreshClick = () => {
+    setIsRefreshing(true);
+    onRefresh();
+    
+    // Reset refreshing state after animation completes
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000); // Match this with animation duration
+  };
+
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
@@ -48,11 +60,11 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
           {/* Buttons dan Logo Trakindo di kanan */}
           <div className="d-flex align-items-center">
             <button 
-              className="btn btn-link refresh-btn" 
-              onClick={onRefresh}
+              className={`btn btn-link refresh-btn ${isRefreshing ? 'spinning' : ''}`}
+              onClick={handleRefreshClick}
               title="Refresh Data"
             >
-              <BiRefresh size={25} />
+              <BiRefresh size={28} />
             </button>
             
             <button 
