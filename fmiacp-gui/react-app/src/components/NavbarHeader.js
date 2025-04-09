@@ -5,9 +5,7 @@ import { BiRefresh, BiFullscreen, BiDownload } from 'react-icons/bi';
  * NavbarHeader component for the application
  * Displays the title and download button
  */
-const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-
+const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTab }) => {
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
@@ -22,39 +20,47 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus }) => {
 
   return (
     <>
-      {/* Navbar - Hanya logo dan judul di tengah */}
+      {/* Navbar - Logo dan judul di tengah */}
       <nav className="navbar navbar-dark sticky-top">
         <div className="container-fluid">
           {/* Logo Freeport di kiri */}
-          <div className="navbar-brand">
-            <img src={process.env.PUBLIC_URL + "/img/logo-freeport.png"} alt="Freeport" className="logo-freeport" />
+          <div className="navbar-brand d-flex align-items-center">
+            <img 
+              src={process.env.PUBLIC_URL + "/img/logo-freeport.png"} 
+              alt="Freeport" 
+              className="logo-freeport" 
+            />
           </div>
           
           {/* FMIACP Dashboard text di tengah dengan warna kuning */}
           <div className="navbar-title-container">
-            <h4 className="mb-0 dashboard-title">FMIACP Dashboard</h4>
+            <h4 className="dashboard-title">FMIACP Dashboard</h4>
           </div>
           
           {/* Buttons dan Logo Trakindo di kanan */}
           <div className="d-flex align-items-center">
             <button 
-              className="btn btn-link btn-sm btn-icon me-2" 
+              className="btn btn-link refresh-btn" 
               onClick={onRefresh}
               title="Refresh Data"
             >
-              <BiRefresh className="text-white" />
+              <BiRefresh size={25} />
             </button>
             
             <button 
-              className="btn btn-link btn-sm btn-icon me-4"
+              className="btn btn-link fullscreen-btn me-4"
               onClick={handleFullscreen}
               title="Toggle Fullscreen"
             >
-              <BiFullscreen className="text-white" />
+              <BiFullscreen size={25} />
             </button>
             
-            <div className="navbar-brand">
-              <img src={process.env.PUBLIC_URL + "/img/logo-trakindo.png"} alt="Trakindo" className="logo-trakindo" />
+            <div className="navbar-brand d-flex align-items-center">
+              <img 
+                src={process.env.PUBLIC_URL + "/img/logo-trakindo.png"} 
+                alt="Trakindo" 
+                className="logo-trakindo" 
+              />
             </div>
           </div>
         </div>
@@ -65,7 +71,7 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus }) => {
         <div className="row mb-2">
           <div className="col-12">
             <div className="card dashboard-controls">
-              <div className="card-body py-2">
+              <div className="card-body">
                 <div className="row align-items-center">
                   {/* Menu Tabs */}
                   <div className="col-md-8">
@@ -106,9 +112,12 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus }) => {
                           App Status
                         </button>
                       </li>
-                      <li className="nav-item ms-2">
-                        <button className="btn btn-success btn-sm">
-                          <BiDownload /> Download Data
+                      <li className="nav-item">
+                        <button 
+                          className="nav-link download-btn"
+                          type="button"
+                        >
+                          <BiDownload className="me-1" size={14} /> Download Data
                         </button>
                       </li>
                     </ul>

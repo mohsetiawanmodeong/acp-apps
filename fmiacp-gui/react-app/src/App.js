@@ -62,7 +62,7 @@ function App() {
         return (
           <>
             {/* Stats Cards Row */}
-            <div className="row mt-1 mb-4">
+            <div className="row mb-4">
               <div className="col-md-3">
                 <div className="card h-100 shadow-sm">
                   <div className="card-body text-center">
