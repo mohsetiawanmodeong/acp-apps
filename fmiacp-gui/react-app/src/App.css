@@ -23,9 +23,35 @@ code {
   background-color: #f5f5f5;
 }
 
-.main-content {
+.content-wrapper {
   flex: 1;
-  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 120px); /* Adjust for navbar and footer height */
+}
+
+/* Footer */
+.footer {
+  background-color: #f8f9fa;
+  padding: 0.75rem 0;
+  font-size: 14px;
+  width: 100%;
+  border-top: 1px solid #e9ecef;
+}
+
+.footer-title {
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 0.3rem;
+}
+
+.footer-copyright {
+  font-size: 14px;
+  color: #666;
+}
+
+.footer .text-center {
+  line-height: 1.2;
 }
 
 /* Navbar with dark background */
@@ -164,13 +190,6 @@ code {
 .table-header {
   background-color: #f8f9fa;
   font-weight: 600;
-}
-
-/* Footer */
-.footer {
-  background-color: #f8f9fa;
-  padding: 1rem 0;
-  font-size: 0.875rem;
 }
 
 /* Animation for refresh */
@@ -452,4 +471,9 @@ code {
 
 .fullscreen-btn:active svg {
   transform: scale(0.9);
+}
+
+.main-content {
+  flex: 1 0 auto;
+  padding-bottom: 1rem;
 } 

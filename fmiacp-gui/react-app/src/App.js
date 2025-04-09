@@ -190,13 +190,15 @@ function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <div className="container-fluid pt-1">
-        {renderContent()}
+      <div className="content-wrapper">
+        <div className="container-fluid pt-1 main-content">
+          {renderContent()}
+        </div>
       </div>
       <footer className="footer">
         <div className="text-center">
-          <div>FMIACP Dashboard v2.0</div>
-          <div>Copyright © {new Date().getFullYear()} by Trakindo Technology Dept.</div>
+          <div className="footer-title">FMIACP Dashboard v2.0</div>
+          <div className="footer-copyright">Copyright &copy; 2025 by Trakindo Technology Dept.</div>
         </div>
       </footer>
     </div>
