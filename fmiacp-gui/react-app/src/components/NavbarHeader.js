@@ -84,8 +84,8 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
       </nav>
 
       {/* Second navigation bar with bottom tabs - exactly like image 2 */}
-      <div style={{ backgroundColor: navyBlue }} className="bottom-nav-container">
-        <div className="container-fluid d-flex justify-content-between align-items-center">
+      <div style={{ backgroundColor: navyBlue }} className="bottom-nav-container position-relative">
+        <div className="container-fluid d-flex">
           <ul className="nav nav-tabs main-tabs flex-nowrap">
             <li className="nav-item">
               <button 
@@ -122,14 +122,10 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
           </ul>
 
           {/* Last update info */}
-          <div className="d-flex align-items-center">
-            <button className="btn btn-success btn-sm me-3">
-              <i className="bi bi-download me-1"></i> Download Data
-            </button>
-            <div className="last-update text-white small">
-              <span className="me-2"><i>Realtime: {lastUpdate}</i></span>
-              <span className={`status-dot ${apiStatus ? 'bg-success' : 'bg-danger'}`}></span>
-            </div>
+          <div className="realtime-corner">
+            <i className="bi bi-arrow-repeat realtime-indicator"></i>
+            <span>Realtime: {lastUpdate}</span>
+            <span className={`ms-2 status-dot ${apiStatus ? 'bg-success' : 'bg-danger'}`}></span>
           </div>
         </div>
       </div>

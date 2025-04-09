@@ -257,9 +257,10 @@ code {
 /* Status indicators */
 .status-dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  margin-left: 8px;
 }
 
 .status-dot.danger {
@@ -364,4 +365,162 @@ code {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Styles for DataTables component */
+.data-tables-container {
+  overflow: hidden;
+}
+
+.sortable {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.sortable:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.sortable.active {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.sortable::after {
+  content: '\F282';
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  right: 0.5rem;
+  opacity: 0.3;
+  font-size: 0.8rem;
+}
+
+.sortable.active::after {
+  opacity: 1;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  border-radius: 0.25rem;
+}
+
+.pagination .page-link {
+  color: var(--primary-color);
+  cursor: pointer;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Realtime indicator animation */
+.realtime-indicator {
+  display: inline-block;
+  animation: spin 2s linear infinite;
+  margin-right: 5px;
+  font-size: 1rem;
+  color: #00ff00 !important;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+/* Column filter styling */
+.column-filters th {
+  padding: 3px 5px;
+  position: relative;
+}
+
+.column-filters .form-control-sm {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  height: auto;
+}
+
+.clear-filter {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: #999;
+  background: transparent;
+  border: none;
+}
+
+.clear-filter:hover {
+  color: #333;
+}
+
+/* Table header row in DataTables */
+.table-sm thead th {
+  position: relative;
+  padding-right: 1.5rem; /* Space for the sort icon */
+}
+
+/* Style for cells with status badges */
+.table-sm td .badge {
+  width: 70px;
+  text-align: center;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Last update info styling */
+.last-update {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-right: 15px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Realtime corner position */
+.realtime-corner {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.85rem;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.realtime-corner:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.realtime-corner .realtime-indicator {
+  margin-right: 5px;
+  color: #00ff00 !important;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 } 

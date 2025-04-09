@@ -3,6 +3,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NavbarHeader from './components/NavbarHeader';
 import DataTable from './components/DataTable';
+import DataTables from './components/DataTables';
 import AppStatus from './components/AppStatus';
 import ApiService from './services/api';
 
@@ -17,9 +18,13 @@ function App() {
   const [useMockData, setUseMockData] = useState(false);
 
   // Wrap fetch functions in useCallback to prevent recreation on each render
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
+      // Only show loading indicator for initial load or manual refresh
+      if (showLoading) {
+        setLoading(true);
+      }
+      
       // Try to get data from API
       const result = await ApiService.getData();
       setData(result);
@@ -40,13 +45,19 @@ function App() {
         setError("Failed to load data. Please check your connection.");
       }
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, [useMockData]);
 
-  const fetchAppStatus = useCallback(async () => {
+  const fetchAppStatus = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
+      // Only show loading indicator for initial load or manual refresh
+      if (showLoading) {
+        setLoading(true);
+      }
+      
       const statusData = await ApiService.getStatus();
       setAppStatusData(statusData);
       setError(null);
@@ -63,12 +74,14 @@ function App() {
         setError("Failed to load application status. Please check your connection.");
       }
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, [useMockData]);
 
   // Check API connectivity
-  const checkApiConnectivity = useCallback(async () => {
+  const checkApiConnectivity = useCallback(async (showLoading = true) => {
     try {
       const pingResult = await ApiService.pingApi();
       setApiConnected(pingResult.success);
@@ -76,7 +89,7 @@ function App() {
       if (pingResult.success) {
         console.log('API is connected. Fetching data...');
         setUseMockData(false);
-        fetchData();
+        fetchData(showLoading);
       } else {
         console.warn('API is not connected. Using mock data.');
         setUseMockData(true);
@@ -84,7 +97,7 @@ function App() {
         setData(ApiService.getMockData());
         setAppStatusData(ApiService.getMockAppStatus());
         setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
-        setLoading(false);
+        if (showLoading) setLoading(false);
         setError('Using mock data - API server unavailable');
       }
     } catch (error) {
@@ -95,15 +108,15 @@ function App() {
       setData(ApiService.getMockData());
       setAppStatusData(ApiService.getMockAppStatus());
       setLastUpdate(new Date().toLocaleTimeString() + ' (Mock)');
-      setLoading(false);
+      if (showLoading) setLoading(false);
       setError('Using mock data - API server unavailable');
     }
   }, [fetchData]);
 
   // Initial setup and auto-refresh
   useEffect(() => {
-    // Initial data fetch and API connectivity check
-    checkApiConnectivity();
+    // Initial data fetch and API connectivity check - show loading for initial load
+    checkApiConnectivity(true);
     
     // Set up auto refresh every 3 seconds for realtime updates
     const refreshInterval = setInterval(() => {
@@ -112,14 +125,16 @@ function App() {
       // Only check API connectivity every minute to reduce overhead
       const now = new Date();
       if (now.getSeconds() % 60 === 0) {
-        checkApiConnectivity();
+        // Don't show loading for periodic connectivity check
+        checkApiConnectivity(false);
       }
       
       // Always fetch the appropriate data based on active tab
+      // Pass false to avoid showing loading spinner for auto-refresh
       if (activeTab === 'app-status') {
-        fetchAppStatus();
+        fetchAppStatus(false);
       } else {
-        fetchData();
+        fetchData(false);
       }
       
       // Update timestamp
@@ -135,15 +150,24 @@ function App() {
     console.log("App.js - activeTab changed to:", activeTab);
     
     // If app-status tab is selected, fetch status data
+    // Show loading indicator for tab changes
     if (activeTab === 'app-status') {
-      fetchAppStatus();
-    } else if (activeTab === 'machine-data' || activeTab === 'dashboard') {
-      fetchData();
+      fetchAppStatus(true);
+    } else if (activeTab === 'machine-data' || activeTab === 'dashboard' || activeTab === 'data-tables') {
+      fetchData(true);
     }
   }, [activeTab, fetchAppStatus, fetchData]);
 
   const handleRefresh = () => {
-    checkApiConnectivity();
+    // For manual refresh, always show the loading spinner
+    checkApiConnectivity(true);
+    
+    // Fetch appropriate data based on current tab with loading indicator
+    if (activeTab === 'app-status') {
+      fetchAppStatus(true);
+    } else {
+      fetchData(true);
+    }
   };
 
   // Compute dashboard stats from actual or mock data
@@ -271,7 +295,7 @@ function App() {
                   {error}
                 </div>
               )}
-              <p>Data tables content goes here</p>
+              <DataTables data={data} loading={loading} />
             </div>
           </div>
         );
