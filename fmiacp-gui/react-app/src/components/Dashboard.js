@@ -16,7 +16,37 @@ ChartJS.register(
   Title
 );
 
+// Helper function to get stored filter values from localStorage
+const getStoredFilter = (key, defaultValue) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.error("Error retrieving stored filter:", error);
+    return defaultValue;
+  }
+};
+
+// Helper function to store filter values in localStorage
+const storeFilter = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error("Error storing filter:", error);
+  }
+};
+
 const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
+  // Default date values
+  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  
+  const defaultDateRange = {
+    startDate: yesterday,
+    endDate: today
+  };
+  
+  // Initial state values from localStorage for persistence
   const [machineStats, setMachineStats] = useState({
     total: 0,
     active: 0,
@@ -34,25 +64,22 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     counts: [0, 0]
   });
 
+  // eslint-disable-next-line no-unused-vars
   const [activityTimeline, setActivityTimeline] = useState({
     labels: [],
     datasets: []
   });
   
-  // New state for machine trends
+  // eslint-disable-next-line no-unused-vars
   const [machineTrends, setMachineTrends] = useState({
     labels: [],
     datasets: []
   });
   
-  // New state for top problematic machines
   const [topProblematicMachines, setTopProblematicMachines] = useState([]);
 
-  // New state for date filters
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0], // Default to yesterday
-    endDate: new Date().toISOString().split('T')[0] // Default to today
-  });
+  // Load stored filters from localStorage
+  const [dateRange, setDateRange] = useState(getStoredFilter('machineTrendsFilter', defaultDateRange));
   
   const [filteredMachineTrends, setFilteredMachineTrends] = useState({
     labels: [],
@@ -61,6 +88,16 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
 
   const [lastRefreshed, setLastRefreshed] = useState(new Date().toLocaleTimeString());
   const refreshTimerRef = useRef(null);
+
+  // Load activity timeline filter from localStorage
+  const [activityTimelineFilter, setActivityTimelineFilter] = useState(
+    getStoredFilter('activityTimelineFilter', defaultDateRange)
+  );
+
+  const [filteredActivityTimeline, setFilteredActivityTimeline] = useState({
+    labels: [],
+    datasets: []
+  });
 
   // Set up auto refresh
   useEffect(() => {
@@ -80,6 +117,15 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       }
     };
   }, [onRefresh]);
+
+  // Effect for updating localStorage when filters change
+  useEffect(() => {
+    storeFilter('machineTrendsFilter', dateRange);
+  }, [dateRange]);
+
+  useEffect(() => {
+    storeFilter('activityTimelineFilter', activityTimelineFilter);
+  }, [activityTimelineFilter]);
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -179,16 +225,34 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       // Create trend datasets for top machines
       const machineTrendDatasets = generateMachineTrendData(topMachines, data);
       
+      // Store machine trends data (for potential future use)
+      // eslint-disable-next-line no-unused-vars
       setMachineTrends({
         labels: generateTimeLabels(),
         datasets: machineTrendDatasets
       });
       
-      // Set initial filtered data to match full data
-      setFilteredMachineTrends({
-        labels: generateTimeLabels(),
-        datasets: machineTrendDatasets
-      });
+      // Check if we have active date filters and apply them to the new data
+      const hasCustomDateRange = 
+        dateRange.startDate !== new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ||
+        dateRange.endDate !== new Date().toISOString().split('T')[0];
+      
+      // If we have custom date range, apply it to the new data
+      if (hasCustomDateRange) {
+        const filteredLabels = generateTimeLabels(dateRange.startDate, dateRange.endDate);
+        const filteredDatasets = generateMachineTrendData(topMachines, data, dateRange.startDate, dateRange.endDate);
+        
+        setFilteredMachineTrends({
+          labels: filteredLabels,
+          datasets: filteredDatasets
+        });
+      } else {
+        // Otherwise use the default data (last 24 hours)
+        setFilteredMachineTrends({
+          labels: generateTimeLabels(),
+          datasets: machineTrendDatasets
+        });
+      }
       
       // CREATE TOP 10 PROBLEMATIC MACHINES DATA
       // Count active events by machine
@@ -211,8 +275,28 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         .slice(0, 10);
       
       setTopProblematicMachines(problematicMachines);
+
+      // Generate default activity timeline (last 24 hours)
+      const activityTimelineData = generateActivityTimelineData(data);
+      setActivityTimeline(activityTimelineData);
+      
+      // Apply current activity timeline filter if set
+      const hasCustomActivityRange = 
+        activityTimelineFilter.startDate !== new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ||
+        activityTimelineFilter.endDate !== new Date().toISOString().split('T')[0];
+      
+      if (hasCustomActivityRange) {
+        const filteredData = generateActivityTimelineData(
+          data,
+          activityTimelineFilter.startDate, 
+          activityTimelineFilter.endDate
+        );
+        setFilteredActivityTimeline(filteredData);
+      } else {
+        setFilteredActivityTimeline(activityTimelineData);
+      }
     }
-  }, [data]);
+  }, [data, dateRange.startDate, dateRange.endDate, activityTimelineFilter.startDate, activityTimelineFilter.endDate]);
 
   // New function to generate time labels based on date range
   const generateTimeLabels = (start = null, end = null) => {
@@ -286,16 +370,18 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     });
   };
   
-  // Handle date filter change
+  // Handle date filter change for Machine Trends
   const handleDateChange = (e) => {
     const { name, value } = e.target;
-    setDateRange(prev => ({
-      ...prev,
+    const newDateRange = {
+      ...dateRange,
       [name]: value
-    }));
+    };
+    setDateRange(newDateRange);
+    storeFilter('machineTrendsFilter', newDateRange);
   };
   
-  // Apply date filter
+  // Apply date filter for Machine Trends - Modified to store the filter settings
   const applyDateFilter = () => {
     if (!data || data.length === 0) return;
     
@@ -318,20 +404,159 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       labels: timeLabels,
       datasets: datasets
     });
+    
+    // Store the applied filter to localStorage
+    storeFilter('machineTrendsFilter', dateRange);
   };
   
-  // Reset date filter to last 24 hours
+  // Reset date filter to last 24 hours for Machine Trends
   const resetDateFilter = () => {
-    const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
-    const today = new Date().toISOString().split('T')[0];
-    
-    setDateRange({
+    const newDateRange = {
       startDate: yesterday,
       endDate: today
+    };
+    
+    setDateRange(newDateRange);
+    
+    // Apply default filter immediately
+    if (data && data.length > 0) {
+      const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))];
+      const machineEventCounts = {};
+      uniqueMachines.forEach(machine => {
+        machineEventCounts[machine] = data.filter(item => item.MACHINE_NAME === machine).length;
+      });
+      
+      const topMachines = Object.keys(machineEventCounts)
+        .sort((a, b) => machineEventCounts[b] - machineEventCounts[a])
+        .slice(0, 5);
+        
+      // Reset to default data (last 24 hours)
+      setFilteredMachineTrends({
+        labels: generateTimeLabels(),
+        datasets: generateMachineTrendData(topMachines, data)
+      });
+    }
+    
+    // Reset the stored filter in localStorage
+    storeFilter('machineTrendsFilter', newDateRange);
+  };
+
+  // ACTIVITY TIMELINE DATA function definition
+  // Create timeline data - group by hour
+  const generateActivityTimelineData = (dataToUse, startDateStr, endDateStr) => {
+    if (!dataToUse || dataToUse.length === 0) return {labels: [], datasets: []};
+    
+    const startDate = startDateStr ? new Date(startDateStr) : new Date(new Date().setDate(new Date().getDate() - 1));
+    const endDate = endDateStr ? new Date(endDateStr) : new Date();
+    
+    // Calculate hours between dates, but cap at 72 hours (3 days) for readability
+    let hoursDiff = Math.min(Math.floor((endDate - startDate) / (1000 * 60 * 60)), 72);
+    if (hoursDiff < 1) hoursDiff = 24; // Default to 24 hours if range is invalid
+    
+    const timePoints = [];
+    const now = new Date(endDate);
+    
+    for (let i = hoursDiff - 1; i >= 0; i--) {
+      const hour = new Date(now);
+      hour.setHours(now.getHours() - i);
+      timePoints.push(hour);
+    }
+
+    const timeLabels = timePoints.map(date => {
+      return `${date.toLocaleDateString()} ${date.getHours()}:00`;
     });
     
-    // Reset to original data
-    setFilteredMachineTrends(machineTrends);
+    // Get top 5 machines for timeline
+    const uniqueMachines = [...new Set(dataToUse.map(item => item.MACHINE_NAME))];
+    const machineEventCounts = {};
+    uniqueMachines.forEach(machine => {
+      machineEventCounts[machine] = dataToUse.filter(item => item.MACHINE_NAME === machine).length;
+    });
+    
+    // Sort machines by event count and get top 5
+    const topMachines = Object.keys(machineEventCounts)
+      .sort((a, b) => machineEventCounts[b] - machineEventCounts[a])
+      .slice(0, 5);
+    
+    // Create datasets for top 5 machines
+    const datasets = topMachines.map((machine, index) => {
+      const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+      const color = colors[index % colors.length];
+      
+      const hourData = timePoints.map(hour => {
+        const startOfHour = new Date(hour);
+        const endOfHour = new Date(hour);
+        endOfHour.setHours(hour.getHours() + 1);
+        
+        // Count entries of this machine in this hour
+        return dataToUse.filter(item => {
+          const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
+          return item.MACHINE_NAME === machine && 
+                 itemDate >= startOfHour && 
+                 itemDate < endOfHour;
+        }).length;
+      });
+      
+      return {
+        label: machine,
+        data: hourData,
+        borderColor: color,
+        backgroundColor: `${color}30`,
+        tension: 0.3,
+        fill: true
+      };
+    });
+    
+    return {
+      labels: timeLabels,
+      datasets: datasets
+    };
+  };
+
+  // Handle date change for Activity Timeline
+  const handleActivityTimelineFilterChange = (e) => {
+    const { name, value } = e.target;
+    const newFilter = {
+      ...activityTimelineFilter,
+      [name]: value
+    };
+    setActivityTimelineFilter(newFilter);
+    storeFilter('activityTimelineFilter', newFilter);
+  };
+
+  // Apply date filter for activity timeline
+  const applyActivityTimelineFilter = () => {
+    if (!data || data.length === 0) return;
+    
+    const filteredData = generateActivityTimelineData(
+      data,
+      activityTimelineFilter.startDate, 
+      activityTimelineFilter.endDate
+    );
+    
+    setFilteredActivityTimeline(filteredData);
+    
+    // Store the applied filter
+    storeFilter('activityTimelineFilter', activityTimelineFilter);
+  };
+  
+  // Reset activity timeline filter to last 24 hours
+  const resetActivityTimelineFilter = () => {
+    const newFilter = {
+      startDate: yesterday,
+      endDate: today
+    };
+    
+    setActivityTimelineFilter(newFilter);
+    
+    // Apply default filter immediately
+    if (data && data.length > 0) {
+      const defaultData = generateActivityTimelineData(data);
+      setFilteredActivityTimeline(defaultData);
+    }
+    
+    // Reset the stored filter
+    storeFilter('activityTimelineFilter', newFilter);
   };
 
   const pieChartOptions = {
@@ -380,7 +605,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       },
       title: {
         display: true,
-        text: 'Activity Timeline (Last 24 Hours)'
+        text: 'Activity Timeline (Top 5 Machines)'
       }
     },
     scales: {
@@ -424,6 +649,22 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       onRefresh();
       setLastRefreshed(new Date().toLocaleTimeString());
     }
+  };
+
+  // Function to export data
+  // eslint-disable-next-line no-unused-vars
+  const exportData = (chartType) => {
+    // Simple export function - in production, you'd implement proper export logic
+    alert(`Exporting ${chartType} data...`);
+    // Would typically download CSV/JSON of the relevant data
+  };
+
+  // Function to generate report
+  // eslint-disable-next-line no-unused-vars
+  const generateReport = (chartType) => {
+    // Simple report generation function
+    alert(`Generating report for ${chartType}...`);
+    // Would typically generate a PDF or other report format
   };
 
   if (loading) {
@@ -698,6 +939,85 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         </div>
       </div>
 
+      {/* Activity Timeline - Full Width */}
+      <div className="card shadow-sm mb-4">
+        <div className="card-header bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">
+              <i className="bi bi-graph-up me-2"></i>
+              Activity Timeline
+            </h5>
+          </div>
+        </div>
+        <div className="card-body">
+          <div className="mb-3">
+            <p className="text-xs font-weight-bold text-primary mb-2">
+              Grafik ini menunjukkan jumlah aktivitas (events) per jam dari lima mesin teratas.
+              Setiap titik mewakili jumlah event untuk mesin tertentu pada jam tersebut.
+              Semakin tinggi nilai, semakin banyak aktivitas.
+            </p>
+            
+            <div className="row g-2 align-items-center mb-3">
+              <div className="col-auto">
+                <label className="col-form-label col-form-label-sm">Start</label>
+              </div>
+              <div className="col-auto">
+                <input 
+                  type="date" 
+                  className="form-control form-control-sm" 
+                  style={{width: "140px"}}
+                  name="startDate"
+                  value={activityTimelineFilter.startDate}
+                  onChange={handleActivityTimelineFilterChange}
+                  max={activityTimelineFilter.endDate}
+                />
+              </div>
+              <div className="col-auto">
+                <label className="col-form-label col-form-label-sm">End</label>
+              </div>
+              <div className="col-auto">
+                <input 
+                  type="date" 
+                  className="form-control form-control-sm" 
+                  style={{width: "140px"}}
+                  name="endDate"
+                  value={activityTimelineFilter.endDate}
+                  onChange={handleActivityTimelineFilterChange}
+                  min={activityTimelineFilter.startDate}
+                  max={today}
+                />
+              </div>
+              <div className="col-auto">
+                <button 
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={applyActivityTimelineFilter}
+                >
+                  Filter
+                </button>
+              </div>
+              <div className="col-auto">
+                <button 
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={resetActivityTimelineFilter}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ height: '300px' }}>
+            <Line data={filteredActivityTimeline} options={lineChartOptions} />
+          </div>
+          
+          <div className="card-footer small text-muted">
+            Activity timeline for top 5 machines over selected date range
+          </div>
+        </div>
+      </div>
+
       {/* Top 10 Event Machines - NEW */}
       <div className="card shadow-sm mb-4">
         <div className="card-header bg-light">
@@ -736,21 +1056,6 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         </div>
         <div className="card-footer small text-muted">
           Machines ranked by number of active events
-        </div>
-      </div>
-
-      {/* Activity Timeline */}
-      <div className="card shadow-sm mb-4">
-        <div className="card-body">
-          <div style={{ height: '300px' }}>
-            <Line 
-              data={activityTimeline} 
-              options={lineChartOptions} 
-            />
-          </div>
-        </div>
-        <div className="card-footer small text-muted">
-          Activity timeline for top machine types over last 24 hours
         </div>
       </div>
 

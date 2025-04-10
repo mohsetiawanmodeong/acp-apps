@@ -147,7 +147,7 @@ const MachineData = ({ data = [], loading }) => {
       {selectedMachine && (
         <div className="mb-4">
           <Card className="shadow-sm mb-4">
-            <Card.Body>
+              <Card.Body>
               <div className="mb-2">
                 <strong>Total Log Entries:</strong> {machineData.length}
               </div>
@@ -156,8 +156,8 @@ const MachineData = ({ data = [], loading }) => {
                   <strong>Last Updated:</strong> {formatTimestamp(machineData[0].START_TIME || machineData[0].TIMESTAMP)}
                 </div>
               )}
-            </Card.Body>
-          </Card>
+              </Card.Body>
+            </Card>
         </div>
       )}
 
@@ -304,7 +304,7 @@ const MachineData = ({ data = [], loading }) => {
                 </ul>
               </nav>
             </div>
-          </div>
+                </div>
         </>
       ) : (
         <div className="alert alert-info">
