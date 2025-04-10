@@ -254,45 +254,79 @@ const DataTables = ({ data, loading }) => {
     return date.toLocaleString();
   };
 
-  // Determine column headers from data and customize their order
-  const getTableHeaders = () => {
-    if (!tableData.length) return [];
+  // Get badge color class for machine type
+  const getTypeBadgeClass = (type) => {
+    const badgeMap = {
+      'PARKING_BRAKE': 'bg-warning',
+      'FRONT_SAFE_ZONE': 'bg-primary',
+      'REAR_SAFE_ZONE': 'bg-info',
+    };
     
-    // Define a reordering of fields
-    const headerOrder = [
-      'MACHINE_NAME',
-      'START_TIME',
-      'TYPE',       // Type sekarang sebelum Category
-      'CATEGORY',   // Category setelah Type
-      'MEASUREMENT',
-      'VALUE',
-      // All other fields that may exist in the data
-    ];
-    
-    // Get all headers from the data
-    const allHeaders = Object.keys(tableData[0]);
-    
-    // Create an ordered list of headers based on our preference
-    const orderedHeaders = [];
-    
-    // First add headers in our specific order (if they exist in the data)
-    headerOrder.forEach(header => {
-      if (allHeaders.includes(header)) {
-        orderedHeaders.push(header);
-      }
-    });
-    
-    // Then add any remaining headers that weren't in our ordered list
-    allHeaders.forEach(header => {
-      if (!orderedHeaders.includes(header) && header !== 'ID') {
-        orderedHeaders.push(header);
-      }
-    });
-    
-    return orderedHeaders;
+    return badgeMap[type] || 'bg-secondary';
   };
 
-  const headers = getTableHeaders();
+  // Render table cells based on content
+  const renderCell = (item, column) => {
+    switch(column) {
+      case 'TYPE':
+        return (
+          <span className={`badge ${getTypeBadgeClass(item[column])} px-2 py-1`} style={{minWidth: '130px', display: 'inline-block'}}>
+            {item[column]}
+          </span>
+        );
+      case 'VALUE':
+        const value = formatValue(item[column]);
+        if (value === 'ON') {
+          return <span className="badge bg-success px-2 py-1" style={{minWidth: '60px', display: 'inline-block'}}>ON</span>;
+        } else if (value === 'OFF') {
+          return <span className="badge bg-danger px-2 py-1" style={{minWidth: '60px', display: 'inline-block'}}>OFF</span>;
+        }
+        return item[column];
+      case 'START_TIME':
+      case 'TIMESTAMP':
+        return formatTimestamp(item[column]);
+      default:
+        return item[column];
+    }
+  };
+
+  // Determine what headers to use - this is to ensure we have a consistent set of headers
+  const determineHeaders = () => {
+    if (!tableData || tableData.length === 0) {
+      return ['MACHINE_NAME', 'TYPE', 'CATEGORY', 'VALUE', 'START_TIME'];
+    }
+    
+    // Get all possible headers from the first item
+    const sampleItem = tableData[0];
+    const possibleHeaders = Object.keys(sampleItem).filter(key => 
+      key !== 'ID' && key !== 'id' && key !== '_id'
+    );
+    
+    // Prioritize common headers
+    const priorityHeaders = [
+      'MACHINE_NAME', 
+      'TYPE', 
+      'CATEGORY', 
+      'VALUE', 
+      'DESCRIPTION',
+      'START_TIME',
+      'TIMESTAMP'
+    ];
+    
+    // Return priority headers that exist in our data
+    const availableHeaders = priorityHeaders.filter(header => 
+      possibleHeaders.includes(header)
+    );
+    
+    // Add any other headers that aren't in our priority list
+    const otherHeaders = possibleHeaders.filter(header => 
+      !availableHeaders.includes(header)
+    );
+    
+    return [...availableHeaders, ...otherHeaders];
+  };
+
+  const headers = determineHeaders();
 
   // Handle page change
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -394,7 +428,7 @@ const DataTables = ({ data, loading }) => {
               {headers.map(header => (
                 <th 
                   key={header} 
-                  className={sortField === header ? 'sortable active' : 'sortable'}
+                  className={`${sortField === header ? 'sortable active' : 'sortable'} text-center`}
                   onClick={() => handleSort(header)}
                 >
                   {header.replace(/_/g, ' ')}
@@ -407,10 +441,10 @@ const DataTables = ({ data, loading }) => {
             <tr className="column-filters">
               <th></th> {/* Empty cell for the No. column */}
               {headers.map(header => (
-                <th key={`filter-${header}`}>
+                <th key={`filter-${header}`} className="text-center">
                   <input
                     type="text"
-                    className="form-control form-control-sm"
+                    className="form-control form-control-sm text-center"
                     placeholder={`Filter ${header.replace(/_/g, ' ')}...`}
                     value={columnFilters[header] || ''}
                     onChange={(e) => handleColumnFilter(header, e.target.value)}
@@ -418,11 +452,12 @@ const DataTables = ({ data, loading }) => {
                   />
                   {columnFilters[header] && (
                     <button 
-                      className="btn btn-sm btn-link clear-filter" 
+                      className="btn btn-sm btn-link text-decoration-none"
                       onClick={(e) => {
                         e.stopPropagation();
                         clearColumnFilter(header);
                       }}
+                      style={{ position: 'absolute', right: '10px', top: '5px' }}
                     >
                       <i className="bi bi-x"></i>
                     </button>
@@ -436,14 +471,8 @@ const DataTables = ({ data, loading }) => {
               <tr key={index}>
                 <td className="text-center">{indexOfFirstItem + index + 1}</td>
                 {headers.map(header => (
-                  <td key={header}>
-                    {header === 'START_TIME' || header === 'TIMESTAMP'
-                      ? formatTimestamp(item[header]) 
-                      : header === 'VALUE' 
-                        ? <span className={`badge ${formatValue(item[header]) === 'ON' ? 'bg-success' : 'bg-danger'}`}>
-                            {formatValue(item[header])}
-                          </span>
-                        : item[header]}
+                  <td key={`${index}-${header}`} className="text-center">
+                    {renderCell(item, header)}
                   </td>
                 ))}
               </tr>
