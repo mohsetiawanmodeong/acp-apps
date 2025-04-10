@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Badge } from 'react-bootstrap';
+import { Badge, Table } from 'react-bootstrap';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 
@@ -35,6 +35,26 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
   });
 
   const [activityTimeline, setActivityTimeline] = useState({
+    labels: [],
+    datasets: []
+  });
+  
+  // New state for machine trends
+  const [machineTrends, setMachineTrends] = useState({
+    labels: [],
+    datasets: []
+  });
+  
+  // New state for top problematic machines
+  const [topProblematicMachines, setTopProblematicMachines] = useState([]);
+
+  // New state for date filters
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0], // Default to yesterday
+    endDate: new Date().toISOString().split('T')[0] // Default to today
+  });
+  
+  const [filteredMachineTrends, setFilteredMachineTrends] = useState({
     labels: [],
     datasets: []
   });
@@ -143,8 +163,176 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         labels: timeLabels,
         datasets: datasets
       });
+      
+      // CREATE MACHINE TREND DATA
+      // Get top 5 machines for trend analysis
+      const machineEventCounts = {};
+      uniqueMachines.forEach(machine => {
+        machineEventCounts[machine] = data.filter(item => item.MACHINE_NAME === machine).length;
+      });
+      
+      // Sort machines by event count and get top 5
+      const topMachines = Object.keys(machineEventCounts)
+        .sort((a, b) => machineEventCounts[b] - machineEventCounts[a])
+        .slice(0, 5);
+      
+      // Create trend datasets for top machines
+      const machineTrendDatasets = generateMachineTrendData(topMachines, data);
+      
+      setMachineTrends({
+        labels: generateTimeLabels(),
+        datasets: machineTrendDatasets
+      });
+      
+      // Set initial filtered data to match full data
+      setFilteredMachineTrends({
+        labels: generateTimeLabels(),
+        datasets: machineTrendDatasets
+      });
+      
+      // CREATE TOP 10 PROBLEMATIC MACHINES DATA
+      // Count active events by machine
+      const machineActiveEvents = {};
+      uniqueMachines.forEach(machine => {
+        machineActiveEvents[machine] = data.filter(item => 
+          item.MACHINE_NAME === machine && (item.VALUE === '1' || item.VALUE === 1)
+        ).length;
+      });
+      
+      // Sort and get top 10 problematic machines
+      const problematicMachines = Object.keys(machineActiveEvents)
+        .map(machine => ({
+          name: machine,
+          activeEvents: machineActiveEvents[machine],
+          totalEvents: machineEventCounts[machine],
+          type: data.find(item => item.MACHINE_NAME === machine)?.TYPE || 'Unknown',
+        }))
+        .sort((a, b) => b.activeEvents - a.activeEvents)
+        .slice(0, 10);
+      
+      setTopProblematicMachines(problematicMachines);
     }
   }, [data]);
+
+  // New function to generate time labels based on date range
+  const generateTimeLabels = (start = null, end = null) => {
+    const timeLabels = [];
+    const startDate = start ? new Date(start) : new Date(new Date().setDate(new Date().getDate() - 1));
+    const endDate = end ? new Date(end) : new Date();
+    
+    // Set to beginning of day
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Set to end of day
+    endDate.setHours(23, 59, 59, 999);
+    
+    // Generate hourly labels between start and end date
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      timeLabels.push(`${currentDate.getHours()}:00`);
+      currentDate.setHours(currentDate.getHours() + 1);
+    }
+    
+    return timeLabels;
+  };
+  
+  // New function to generate machine trend data based on date range
+  const generateMachineTrendData = (machines, data, start = null, end = null) => {
+    const startDate = start ? new Date(start) : new Date(new Date().setDate(new Date().getDate() - 1));
+    const endDate = end ? new Date(end) : new Date();
+    
+    // Set to beginning of day
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Set to end of day
+    endDate.setHours(23, 59, 59, 999);
+    
+    // Generate hourly time slots
+    const timeSlots = [];
+    const currentSlot = new Date(startDate);
+    while (currentSlot <= endDate) {
+      timeSlots.push(new Date(currentSlot));
+      currentSlot.setHours(currentSlot.getHours() + 1);
+    }
+    
+    // Create datasets for each machine
+    return machines.map((machine, index) => {
+      const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+      const color = colors[index % colors.length];
+      
+      const hourData = timeSlots.map(hour => {
+        const startOfHour = new Date(hour);
+        const endOfHour = new Date(hour);
+        endOfHour.setHours(hour.getHours() + 1);
+        
+        // Count entries for this machine in this hour
+        return data.filter(item => {
+          const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
+          return item.MACHINE_NAME === machine && 
+                 itemDate >= startOfHour && 
+                 itemDate < endOfHour;
+        }).length;
+      });
+      
+      return {
+        label: machine,
+        data: hourData,
+        borderColor: color,
+        backgroundColor: `${color}30`,
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      };
+    });
+  };
+  
+  // Handle date filter change
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    setDateRange(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Apply date filter
+  const applyDateFilter = () => {
+    if (!data || data.length === 0) return;
+    
+    // Get top 5 machines
+    const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))];
+    const machineEventCounts = {};
+    uniqueMachines.forEach(machine => {
+      machineEventCounts[machine] = data.filter(item => item.MACHINE_NAME === machine).length;
+    });
+    
+    const topMachines = Object.keys(machineEventCounts)
+      .sort((a, b) => machineEventCounts[b] - machineEventCounts[a])
+      .slice(0, 5);
+    
+    // Generate new time labels and datasets based on date range
+    const timeLabels = generateTimeLabels(dateRange.startDate, dateRange.endDate);
+    const datasets = generateMachineTrendData(topMachines, data, dateRange.startDate, dateRange.endDate);
+    
+    setFilteredMachineTrends({
+      labels: timeLabels,
+      datasets: datasets
+    });
+  };
+  
+  // Reset date filter to last 24 hours
+  const resetDateFilter = () => {
+    const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    
+    setDateRange({
+      startDate: yesterday,
+      endDate: today
+    });
+    
+    // Reset to original data
+    setFilteredMachineTrends(machineTrends);
+  };
 
   const pieChartOptions = {
     responsive: true,
@@ -155,7 +343,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       },
       title: {
         display: true,
-        text: 'Machine Status Distribution'
+        text: 'ACP Status Distribution'
       }
     }
   };
@@ -201,6 +389,30 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         title: {
           display: true,
           text: 'Activity Count'
+        }
+      }
+    }
+  };
+  
+  // New options for machine trends chart
+  const machineTrendOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Machine Activity Trends (Last 24 Hours)'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Event Count'
         }
       }
     }
@@ -383,7 +595,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
               </div>
             </div>
             <div className="card-footer small text-muted">
-              Distribution of machine status (ON/OFF)
+              Distribution of ACP status (ON/OFF)
             </div>
           </div>
         </div>
@@ -411,6 +623,119 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
               Number of data points by machine type
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Machine Trends Chart - NEW */}
+      <div className="card shadow-sm mb-4">
+        <div className="card-header bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">
+              <i className="bi bi-graph-up me-2"></i>
+              Machine Trends
+            </h5>
+          </div>
+        </div>
+        <div className="card-body">
+          <form className="row g-2 align-items-center mb-3">
+            <div className="col-auto">
+              <label className="col-form-label col-form-label-sm">Start</label>
+            </div>
+            <div className="col-auto">
+              <input 
+                type="date" 
+                className="form-control form-control-sm" 
+                style={{width: "140px"}}
+                name="startDate"
+                value={dateRange.startDate}
+                onChange={handleDateChange}
+                max={dateRange.endDate}
+              />
+            </div>
+            <div className="col-auto">
+              <label className="col-form-label col-form-label-sm">End</label>
+            </div>
+            <div className="col-auto">
+              <input 
+                type="date" 
+                className="form-control form-control-sm" 
+                style={{width: "140px"}}
+                name="endDate"
+                value={dateRange.endDate}
+                onChange={handleDateChange}
+                min={dateRange.startDate}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div className="col-auto">
+              <button 
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={applyDateFilter}
+              >
+                Filter
+              </button>
+            </div>
+            <div className="col-auto">
+              <button 
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                onClick={resetDateFilter}
+              >
+                Reset
+              </button>
+            </div>
+          </form>
+          <div style={{ height: '300px' }}>
+            <Line 
+              data={filteredMachineTrends} 
+              options={machineTrendOptions} 
+            />
+          </div>
+        </div>
+        <div className="card-footer small text-muted">
+          Trend analysis for top 5 machines over the selected date range
+        </div>
+      </div>
+
+      {/* Top 10 Event Machines - NEW */}
+      <div className="card shadow-sm mb-4">
+        <div className="card-header bg-light">
+          <h5 className="mb-0">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            Top 10 Event Machines
+          </h5>
+        </div>
+        <div className="card-body">
+          {topProblematicMachines.length > 0 ? (
+            <div className="table-responsive">
+              <Table hover className="table-sm">
+                <thead className="table-light">
+                  <tr>
+                    <th>Machine</th>
+                    <th>Type</th>
+                    <th className="text-center">Active Events</th>
+                    <th className="text-center">Total Events</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topProblematicMachines.map((machine, index) => (
+                    <tr key={index}>
+                      <td><strong>{machine.name}</strong></td>
+                      <td>{machine.type}</td>
+                      <td className="text-center fw-bold text-danger">{machine.activeEvents}</td>
+                      <td className="text-center">{machine.totalEvents}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-center text-muted">No event machines detected</p>
+          )}
+        </div>
+        <div className="card-footer small text-muted">
+          Machines ranked by number of active events
         </div>
       </div>
 

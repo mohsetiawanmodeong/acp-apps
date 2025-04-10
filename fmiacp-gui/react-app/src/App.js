@@ -105,7 +105,7 @@ function App() {
       
       // Update timestamp
       setLastUpdate(new Date().toLocaleTimeString());
-    }, 5000); // 5 second interval
+    }, 10000); // 10 second interval
     
     // Clean up on unmount
     return () => clearInterval(refreshInterval);
