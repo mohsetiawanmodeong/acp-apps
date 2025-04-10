@@ -91,7 +91,7 @@ function App() {
     // Initial data fetch and API connectivity check - show loading for initial load
     checkApiConnectivity(true);
     
-    // Set up auto refresh every 10 seconds for realtime updates
+    // Set up auto refresh every 5 seconds for realtime updates
     const refreshInterval = setInterval(() => {
       console.log('Realtime update: fetching fresh data...');
       
@@ -105,7 +105,7 @@ function App() {
       
       // Update timestamp
       setLastUpdate(new Date().toLocaleTimeString());
-    }, 10000); // 10 second interval
+    }, 5000); // 5 second interval
     
     // Clean up on unmount
     return () => clearInterval(refreshInterval);
