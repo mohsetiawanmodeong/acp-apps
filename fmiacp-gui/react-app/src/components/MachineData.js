@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form } from 'react-bootstrap';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale, 
+  LinearScale, 
+  PointElement, 
+  LineElement, 
+  Title, 
+  Tooltip, 
+  Legend
+);
 
 const MachineData = ({ data = [], loading }) => {
   const [selectedMachine, setSelectedMachine] = useState('');
@@ -96,6 +109,139 @@ const MachineData = ({ data = [], loading }) => {
 
   // Handle page change
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Prepare data for machine activity chart
+  const prepareMachineActivityData = () => {
+    if (!machineData || machineData.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+    
+    // Sort data by timestamp
+    const sortedData = [...machineData].sort((a, b) => {
+      const dateA = new Date(a.START_TIME || a.TIMESTAMP);
+      const dateB = new Date(b.START_TIME || b.TIMESTAMP);
+      return dateA - dateB;
+    });
+    
+    // Generate time labels
+    const timeLabels = sortedData.map(item => {
+      const date = new Date(item.START_TIME || item.TIMESTAMP);
+      return date.toLocaleString();
+    });
+    
+    // Convert values to numeric (1 for ON, 0 for OFF)
+    const values = sortedData.map(item => {
+      if (item.VALUE === '1' || item.VALUE === 1) return 1;
+      if (item.VALUE === '0' || item.VALUE === 0) return 0;
+      return null;
+    });
+    
+    // Generate datasets by type
+    const typeMap = {};
+    sortedData.forEach((item, index) => {
+      if (!typeMap[item.TYPE]) {
+        typeMap[item.TYPE] = {
+          label: item.TYPE,
+          data: new Array(sortedData.length).fill(null),
+          borderColor: getTypeColor(item.TYPE),
+          backgroundColor: getTypeColor(item.TYPE, 0.2),
+          tension: 0.3,
+          fill: true,
+          pointRadius: 4
+        };
+      }
+      typeMap[item.TYPE].data[index] = values[index];
+    });
+    
+    return {
+      labels: timeLabels,
+      datasets: Object.values(typeMap)
+    };
+  };
+  
+  // Get color for machine type
+  const getTypeColor = (type, alpha = 1) => {
+    const colorMap = {
+      'PARKING_BRAKE': `rgba(255, 193, 7, ${alpha})`, // warning color (yellow)
+      'FRONT_SAFE_ZONE': `rgba(13, 110, 253, ${alpha})`, // primary color (blue)
+      'REAR_SAFE_ZONE': `rgba(13, 202, 240, ${alpha})`, // info color (light blue)
+      'DEFAULT': `rgba(153, 102, 255, ${alpha})`
+    };
+    
+    return colorMap[type] || colorMap.DEFAULT;
+  };
+  
+  // Get badge color class for type
+  const getTypeBadgeClass = (type) => {
+    const badgeMap = {
+      'PARKING_BRAKE': 'bg-warning',
+      'FRONT_SAFE_ZONE': 'bg-primary',
+      'REAR_SAFE_ZONE': 'bg-info',
+    };
+    
+    return badgeMap[type] || 'bg-secondary';
+  };
+  
+  // Format type name for display
+  const formatTypeName = (type) => {
+    return type;
+  };
+  
+  // Chart options
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 1.2,
+        ticks: {
+          callback: function(value) {
+            if (value === 0) return 'OFF';
+            if (value === 1) return 'ON';
+            return '';
+          }
+        },
+        title: {
+          display: true,
+          text: 'Status'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Time'
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Machine Activity Timeline'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const value = context.raw;
+            let status = 'Unknown';
+            if (value === 0) status = 'OFF';
+            if (value === 1) status = 'ON';
+            return `${context.dataset.label}: ${status}`;
+          }
+        }
+      }
+    }
+  };
 
   if (loading || isLoading) {
     return (
@@ -195,32 +341,36 @@ const MachineData = ({ data = [], loading }) => {
               <thead className="table-light">
                 <tr>
                   <th className="text-center">NO.</th>
-                  <th>MACHINE NAME</th>
-                  <th>TYPE</th>
-                  <th>CATEGORY</th>
-                  <th>MEASUREMENT</th>
-                  <th>VALUE</th>
-                  <th>TIMESTAMP</th>
+                  <th className="text-center">MACHINE NAME</th>
+                  <th className="text-center">TYPE</th>
+                  <th className="text-center">CATEGORY</th>
+                  <th className="text-center">MEASUREMENT</th>
+                  <th className="text-center">VALUE</th>
+                  <th className="text-center">TIMESTAMP</th>
                 </tr>
               </thead>
               <tbody>
                 {currentItems.map((item, index) => (
                   <tr key={index}>
                     <td className="text-center">{indexOfFirstItem + index + 1}</td>
-                    <td>{item.MACHINE_NAME}</td>
-                    <td>{item.TYPE}</td>
-                    <td>{item.CATEGORY}</td>
-                    <td>{item.MEASUREMENT}</td>
-                    <td>
+                    <td className="text-center">{item.MACHINE_NAME}</td>
+                    <td className="text-center">
+                      <span className={`badge ${getTypeBadgeClass(item.TYPE)} px-2 py-1`} style={{minWidth: '130px', display: 'inline-block'}}>
+                        {formatTypeName(item.TYPE)}
+                      </span>
+                    </td>
+                    <td className="text-center">{item.CATEGORY}</td>
+                    <td className="text-center">{item.MEASUREMENT}</td>
+                    <td className="text-center">
                       {item.VALUE !== undefined && item.VALUE !== null ? (
                         typeof item.VALUE === 'string' && (item.VALUE === '0' || item.VALUE === '1') ? (
-                          <span className={`badge ${formatValue(item.VALUE) === 'ON' ? 'bg-success' : 'bg-danger'}`}>
+                          <span className={`badge px-2 py-1 ${formatValue(item.VALUE) === 'ON' ? 'bg-success' : 'bg-danger'}`} style={{minWidth: '60px', display: 'inline-block'}}>
                             {formatValue(item.VALUE)}
                           </span>
                         ) : item.VALUE
                       ) : '-'}
                     </td>
-                    <td>{formatTimestamp(item.START_TIME || item.TIMESTAMP)}</td>
+                    <td className="text-center">{formatTimestamp(item.START_TIME || item.TIMESTAMP)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -304,7 +454,27 @@ const MachineData = ({ data = [], loading }) => {
                 </ul>
               </nav>
             </div>
-                </div>
+          </div>
+
+          {/* Machine Activity Chart */}
+          <div className="card shadow-sm mt-4 mb-4">
+            <div className="card-header bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <i className="bi bi-graph-up me-2"></i>
+                  Machine Activity Chart
+                </h5>
+              </div>
+            </div>
+            <div className="card-body">
+              <div style={{ height: '300px' }}>
+                <Line data={prepareMachineActivityData()} options={chartOptions} />
+              </div>
+            </div>
+            <div className="card-footer small text-muted">
+              Activity timeline for {selectedMachine} showing status changes over time
+            </div>
+          </div>
         </>
       ) : (
         <div className="alert alert-info">

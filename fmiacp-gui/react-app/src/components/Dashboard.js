@@ -36,6 +36,18 @@ const storeFilter = (key, value) => {
   }
 };
 
+// Get badge color class for machine type
+// eslint-disable-next-line no-unused-vars
+const getTypeBadgeClass = (type) => {
+  const badgeMap = {
+    'PARKING_BRAKE': 'bg-warning',
+    'FRONT_SAFE_ZONE': 'bg-primary',
+    'REAR_SAFE_ZONE': 'bg-info',
+  };
+  
+  return badgeMap[type] || 'bg-secondary';
+};
+
 const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
   // Default date values
   const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
@@ -62,6 +74,13 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
   const [statusDistribution, setStatusDistribution] = useState({
     labels: ['ON', 'OFF'],
     counts: [0, 0]
+  });
+
+  // Tambahkan state untuk distribusi status berdasarkan tipe
+  const [typeStatusDistribution, setTypeStatusDistribution] = useState({
+    frontSafeZone: { on: 0, off: 0 },
+    rearSafeZone: { on: 0, off: 0 },
+    parkingBrake: { on: 0, off: 0 }
   });
 
   // eslint-disable-next-line no-unused-vars
@@ -129,15 +148,24 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
 
   useEffect(() => {
     if (data && data.length > 0) {
-      // Calculate machine statistics
-      const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))];
-      const activeMachines = [...new Set(data.filter(item => item.VALUE === '1' || item.VALUE === 1).map(item => item.MACHINE_NAME))];
+      // Hitung statistik berdasarkan tipe mesin, bukan berdasarkan nama mesin
+      // Kita fokus pada 3 tipe mesin: PARKING_BRAKE, REAR_SAFE_ZONE, dan FRONT_SAFE_ZONE
+      const types = [...new Set(data.map(item => item.TYPE))];
+      const totalMachineTypes = types.length;
+      
+      // Hitung mesin aktif berdasarkan tipe (yang memiliki setidaknya satu status ON)
+      const activeTypes = types.filter(type => {
+        return data.some(item => item.TYPE === type && (item.VALUE === '1' || item.VALUE === 1));
+      }).length;
+      
+      // Mesin tidak aktif adalah total dikurangi aktif
+      const inactiveTypes = totalMachineTypes - activeTypes;
       
       // Set machine stats
       setMachineStats({
-        total: uniqueMachines.length,
-        active: activeMachines.length,
-        inactive: uniqueMachines.length - activeMachines.length,
+        total: totalMachineTypes,
+        active: activeTypes,
+        inactive: inactiveTypes,
         dataPoints: data.length
       });
 
@@ -145,7 +173,6 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       setLastRefreshed(new Date().toLocaleTimeString());
 
       // Calculate machine types data
-      const types = [...new Set(data.map(item => item.TYPE))];
       const typeCounts = types.map(type => {
         return data.filter(item => item.TYPE === type).length;
       });
@@ -162,6 +189,26 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       setStatusDistribution({
         labels: ['ON', 'OFF'],
         counts: [onCount, offCount]
+      });
+      
+      // Calculate type status distribution
+      const frontSafeZoneData = data.filter(item => item.TYPE === 'FRONT_SAFE_ZONE');
+      const rearSafeZoneData = data.filter(item => item.TYPE === 'REAR_SAFE_ZONE');
+      const parkingBrakeData = data.filter(item => item.TYPE === 'PARKING_BRAKE');
+      
+      setTypeStatusDistribution({
+        frontSafeZone: {
+          on: frontSafeZoneData.filter(item => item.VALUE === '1' || item.VALUE === 1).length,
+          off: frontSafeZoneData.filter(item => item.VALUE === '0' || item.VALUE === 0).length
+        },
+        rearSafeZone: {
+          on: rearSafeZoneData.filter(item => item.VALUE === '1' || item.VALUE === 1).length,
+          off: rearSafeZoneData.filter(item => item.VALUE === '0' || item.VALUE === 0).length
+        },
+        parkingBrake: {
+          on: parkingBrakeData.filter(item => item.VALUE === '1' || item.VALUE === 1).length,
+          off: parkingBrakeData.filter(item => item.VALUE === '0' || item.VALUE === 0).length
+        }
       });
 
       // Create timeline data - group by hour
@@ -213,8 +260,8 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       // CREATE MACHINE TREND DATA
       // Get top 5 machines for trend analysis
       const machineEventCounts = {};
-      uniqueMachines.forEach(machine => {
-        machineEventCounts[machine] = data.filter(item => item.MACHINE_NAME === machine).length;
+      types.forEach(type => {
+        machineEventCounts[type] = data.filter(item => item.TYPE === type).length;
       });
       
       // Sort machines by event count and get top 5
@@ -255,22 +302,62 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       }
       
       // CREATE TOP 10 PROBLEMATIC MACHINES DATA
-      // Count active events by machine
-      const machineActiveEvents = {};
-      uniqueMachines.forEach(machine => {
-        machineActiveEvents[machine] = data.filter(item => 
-          item.MACHINE_NAME === machine && (item.VALUE === '1' || item.VALUE === 1)
-        ).length;
+      // Count events by machine with detailed breakdown
+      const machineDetailedEvents = {};
+      
+      data.forEach(item => {
+        const machineName = item.MACHINE_NAME;
+        const type = item.TYPE || 'Unknown';
+        const isActive = (item.VALUE === '1' || item.VALUE === 1);
+        
+        // Skip if machine name is undefined/empty
+        if (!machineName) return;
+        
+        // Initialize machine data structure if needed
+        if (!machineDetailedEvents[machineName]) {
+          machineDetailedEvents[machineName] = {
+            name: machineName,
+            totalEvents: 0,
+            activeEvents: 0,
+            inactiveEvents: 0,
+            frontSafeZone: { total: 0, on: 0, off: 0 },
+            rearSafeZone: { total: 0, on: 0, off: 0 },
+            parkingBrake: { total: 0, on: 0, off: 0 },
+            type: type // Save the primary type of the machine
+          };
+        }
+        
+        // Increment total events
+        machineDetailedEvents[machineName].totalEvents++;
+        
+        // Increment active/inactive events
+        if (isActive) {
+          machineDetailedEvents[machineName].activeEvents++;
+        } else {
+          machineDetailedEvents[machineName].inactiveEvents++;
+        }
+        
+        // Increment type-specific counters
+        if (type === 'FRONT_SAFE_ZONE') {
+          machineDetailedEvents[machineName].frontSafeZone.total++;
+          if (isActive) machineDetailedEvents[machineName].frontSafeZone.on++;
+          else machineDetailedEvents[machineName].frontSafeZone.off++;
+        } 
+        else if (type === 'REAR_SAFE_ZONE') {
+          machineDetailedEvents[machineName].rearSafeZone.total++;
+          if (isActive) machineDetailedEvents[machineName].rearSafeZone.on++;
+          else machineDetailedEvents[machineName].rearSafeZone.off++;
+        } 
+        else if (type === 'PARKING_BRAKE') {
+          machineDetailedEvents[machineName].parkingBrake.total++;
+          if (isActive) machineDetailedEvents[machineName].parkingBrake.on++;
+          else machineDetailedEvents[machineName].parkingBrake.off++;
+        }
       });
       
       // Sort and get top 10 problematic machines
-      const problematicMachines = Object.keys(machineActiveEvents)
-        .map(machine => ({
-          name: machine,
-          activeEvents: machineActiveEvents[machine],
-          totalEvents: machineEventCounts[machine],
-          type: data.find(item => item.MACHINE_NAME === machine)?.TYPE || 'Unknown',
-        }))
+      const problematicMachines = Object.values(machineDetailedEvents)
+        .filter(machine => machine && machine.totalEvents > 0) // Filter out any invalid entries
         .sort((a, b) => b.activeEvents - a.activeEvents)
         .slice(0, 10);
       
@@ -352,7 +439,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         // Count entries for this machine in this hour
         return data.filter(item => {
           const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
-          return item.MACHINE_NAME === machine && 
+          return item.TYPE === machine && 
                  itemDate >= startOfHour && 
                  itemDate < endOfHour;
         }).length;
@@ -386,10 +473,10 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     if (!data || data.length === 0) return;
     
     // Get top 5 machines
-    const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))];
+    const types = [...new Set(data.map(item => item.TYPE))];
     const machineEventCounts = {};
-    uniqueMachines.forEach(machine => {
-      machineEventCounts[machine] = data.filter(item => item.MACHINE_NAME === machine).length;
+    types.forEach(type => {
+      machineEventCounts[type] = data.filter(item => item.TYPE === type).length;
     });
     
     const topMachines = Object.keys(machineEventCounts)
@@ -420,10 +507,10 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     
     // Apply default filter immediately
     if (data && data.length > 0) {
-      const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))];
+      const types = [...new Set(data.map(item => item.TYPE))];
       const machineEventCounts = {};
-      uniqueMachines.forEach(machine => {
-        machineEventCounts[machine] = data.filter(item => item.MACHINE_NAME === machine).length;
+      types.forEach(type => {
+        machineEventCounts[type] = data.filter(item => item.TYPE === type).length;
       });
       
       const topMachines = Object.keys(machineEventCounts)
@@ -467,10 +554,10 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     });
     
     // Get top 5 machines for timeline
-    const uniqueMachines = [...new Set(dataToUse.map(item => item.MACHINE_NAME))];
+    const types = [...new Set(dataToUse.map(item => item.TYPE))];
     const machineEventCounts = {};
-    uniqueMachines.forEach(machine => {
-      machineEventCounts[machine] = dataToUse.filter(item => item.MACHINE_NAME === machine).length;
+    types.forEach(type => {
+      machineEventCounts[type] = dataToUse.filter(item => item.TYPE === type).length;
     });
     
     // Sort machines by event count and get top 5
@@ -491,7 +578,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         // Count entries of this machine in this hour
         return dataToUse.filter(item => {
           const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
-          return item.MACHINE_NAME === machine && 
+          return item.TYPE === machine && 
                  itemDate >= startOfHour && 
                  itemDate < endOfHour;
         }).length;
@@ -572,6 +659,21 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       }
     }
   };
+  
+  // Options untuk pie chart distribusi status per tipe
+  const typeStatusPieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+      },
+      title: {
+        display: true,
+        text: 'Status Distribution by Type'
+      }
+    }
+  };
 
   const barChartOptions = {
     responsive: true,
@@ -582,7 +684,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       },
       title: {
         display: true,
-        text: 'Data by Machine Type'
+        text: 'Data by ACP Event Type'
       }
     },
     scales: {
@@ -590,7 +692,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Number of Data Points'
+          text: 'Number of Log Events'
         }
       }
     }
@@ -768,7 +870,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
               <div className="row align-items-center">
                 <div className="col mr-2">
                   <div className="text-xs font-weight-bold text-info text-uppercase mb-1">
-                    Data Points
+                    TOTAL LOG EVENTS
                   </div>
                   <div className="h3 mb-0 font-weight-bold">{machineStats.dataPoints}</div>
                 </div>
@@ -841,7 +943,62 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
           </div>
         </div>
 
-        <div className="col-md-8">
+        {/* Pie Chart untuk Status Distribution by Type */}
+        <div className="col-md-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body">
+              <div style={{ height: '250px' }}>
+                <Pie 
+                  data={{
+                    labels: [
+                      'Front Safe Zone ON', 
+                      'Front Safe Zone OFF',
+                      'Rear Safe Zone ON', 
+                      'Rear Safe Zone OFF',
+                      'Parking Brake ON', 
+                      'Parking Brake OFF'
+                    ],
+                    datasets: [
+                      {
+                        data: [
+                          typeStatusDistribution.frontSafeZone.on,
+                          typeStatusDistribution.frontSafeZone.off,
+                          typeStatusDistribution.rearSafeZone.on,
+                          typeStatusDistribution.rearSafeZone.off,
+                          typeStatusDistribution.parkingBrake.on,
+                          typeStatusDistribution.parkingBrake.off
+                        ],
+                        backgroundColor: [
+                          'rgba(13, 110, 253, 0.8)',   // Front Safe Zone ON - primary (lebih pekat)
+                          'rgba(13, 110, 253, 0.4)',   // Front Safe Zone OFF - primary (lebih transparan)
+                          'rgba(13, 202, 240, 0.8)',   // Rear Safe Zone ON - info (lebih pekat)
+                          'rgba(13, 202, 240, 0.4)',   // Rear Safe Zone OFF - info (lebih transparan)
+                          'rgba(255, 193, 7, 0.8)',    // Parking Brake ON - warning (lebih pekat)
+                          'rgba(255, 193, 7, 0.4)',    // Parking Brake OFF - warning (lebih transparan)
+                        ],
+                        borderColor: [
+                          'rgba(13, 110, 253, 1)',     // Front Safe Zone ON
+                          'rgba(13, 110, 253, 1)',     // Front Safe Zone OFF
+                          'rgba(13, 202, 240, 1)',     // Rear Safe Zone ON
+                          'rgba(13, 202, 240, 1)',     // Rear Safe Zone OFF
+                          'rgba(255, 193, 7, 1)',      // Parking Brake ON
+                          'rgba(255, 193, 7, 1)',      // Parking Brake OFF
+                        ],
+                        borderWidth: 1,
+                      },
+                    ],
+                  }} 
+                  options={typeStatusPieOptions} 
+                />
+              </div>
+            </div>
+            <div className="card-footer small text-muted">
+              Status distribution per ACP event type
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-4">
           <div className="card shadow-sm h-100">
             <div className="card-body">
               <div style={{ height: '250px' }}>
@@ -851,7 +1008,13 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
                     datasets: [
                       {
                         data: machineTypesData.counts,
-                        backgroundColor: '#4e73df',
+                        backgroundColor: machineTypesData.labels.map(type => {
+                          // Gunakan warna yang sesuai dengan badge tipe
+                          if (type === 'PARKING_BRAKE') return 'rgba(255, 193, 7, 0.8)'; // warning
+                          if (type === 'FRONT_SAFE_ZONE') return 'rgba(13, 110, 253, 0.8)'; // primary
+                          if (type === 'REAR_SAFE_ZONE') return 'rgba(13, 202, 240, 0.8)'; // info
+                          return 'rgba(153, 102, 255, 0.8)'; // default
+                        }),
                         barPercentage: 0.7,
                       },
                     ],
@@ -861,7 +1024,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
               </div>
             </div>
             <div className="card-footer small text-muted">
-              Number of data points by machine type
+              Number of data points by ACP event type
             </div>
           </div>
         </div>
@@ -1032,19 +1195,46 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
               <Table hover className="table-sm">
                 <thead className="table-light">
                   <tr>
-                    <th>Machine</th>
-                    <th>Type</th>
+                    <th className="text-center">Machine</th>
+                    <th className="text-center">
+                      <span className="badge bg-primary px-2">Front Safe Zone</span>
+                    </th>
+                    <th className="text-center">
+                      <span className="badge bg-info px-2">Rear Safe Zone</span>
+                    </th>
+                    <th className="text-center">
+                      <span className="badge bg-warning px-2">Parking Brake</span>
+                    </th>
                     <th className="text-center">Active Events</th>
+                    <th className="text-center">Inactive Events</th>
                     <th className="text-center">Total Events</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topProblematicMachines.map((machine, index) => (
                     <tr key={index}>
-                      <td><strong>{machine.name}</strong></td>
-                      <td>{machine.type}</td>
-                      <td className="text-center fw-bold text-danger">{machine.activeEvents}</td>
-                      <td className="text-center">{machine.totalEvents}</td>
+                      <td className="text-center"><strong>{machine?.name || 'Unknown'}</strong></td>
+                      <td className="text-center">
+                        <small className="d-block text-primary fw-bold">{machine?.frontSafeZone?.total || 0}</small>
+                        <small className="d-block">
+                          <span className="text-success">{machine?.frontSafeZone?.on || 0} ON</span> / <span className="text-danger">{machine?.frontSafeZone?.off || 0} OFF</span>
+                        </small>
+                      </td>
+                      <td className="text-center">
+                        <small className="d-block text-info fw-bold">{machine?.rearSafeZone?.total || 0}</small>
+                        <small className="d-block">
+                          <span className="text-success">{machine?.rearSafeZone?.on || 0} ON</span> / <span className="text-danger">{machine?.rearSafeZone?.off || 0} OFF</span>
+                        </small>
+                      </td>
+                      <td className="text-center">
+                        <small className="d-block text-warning fw-bold">{machine?.parkingBrake?.total || 0}</small>
+                        <small className="d-block">
+                          <span className="text-success">{machine?.parkingBrake?.on || 0} ON</span> / <span className="text-danger">{machine?.parkingBrake?.off || 0} OFF</span>
+                        </small>
+                      </td>
+                      <td className="text-center fw-bold text-danger">{machine?.activeEvents || 0}</td>
+                      <td className="text-center">{machine?.inactiveEvents || 0}</td>
+                      <td className="text-center fw-bold">{machine?.totalEvents || 0}</td>
                     </tr>
                   ))}
                 </tbody>
