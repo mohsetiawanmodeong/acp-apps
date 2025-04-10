@@ -221,15 +221,15 @@ const MachineData = ({ data = [], loading }) => {
         }
       }
     },
-    plugins: {
-      legend: {
-        position: 'top',
-      },
+      plugins: {
+        legend: {
+          position: 'top',
+        },
       title: {
         display: true,
         text: 'Machine Activity Timeline'
       },
-      tooltip: {
+        tooltip: {
         callbacks: {
           label: function(context) {
             const value = context.raw;
@@ -467,14 +467,14 @@ const MachineData = ({ data = [], loading }) => {
               </div>
             </div>
             <div className="card-body">
-              <div style={{ height: '300px' }}>
+                <div style={{ height: '300px' }}>
                 <Line data={prepareMachineActivityData()} options={chartOptions} />
               </div>
             </div>
             <div className="card-footer small text-muted">
               Activity timeline for {selectedMachine} showing status changes over time
             </div>
-          </div>
+                </div>
         </>
       ) : (
         <div className="alert alert-info">

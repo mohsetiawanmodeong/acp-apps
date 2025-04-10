@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge, Table } from 'react-bootstrap';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
@@ -61,8 +61,12 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
   // Initial state values from localStorage for persistence
   const [machineStats, setMachineStats] = useState({
     total: 0,
-    active: 0,
-    inactive: 0,
+    frontSafeZoneTotal: 0,
+    rearSafeZoneTotal: 0,
+    parkingBrakeTotal: 0,
+    frontSafeZoneOn: 0,
+    rearSafeZoneOn: 0,
+    parkingBrakeOn: 0,
     dataPoints: 0
   });
 
@@ -106,7 +110,6 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
   });
 
   const [lastRefreshed, setLastRefreshed] = useState(new Date().toLocaleTimeString());
-  const refreshTimerRef = useRef(null);
 
   // Load activity timeline filter from localStorage
   const [activityTimelineFilter, setActivityTimelineFilter] = useState(
@@ -117,25 +120,6 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     labels: [],
     datasets: []
   });
-
-  // Set up auto refresh
-  useEffect(() => {
-    // Initial refresh
-    if (onRefresh) {
-      // Start auto-refresh timer for every 10 seconds
-      refreshTimerRef.current = setInterval(() => {
-        onRefresh();
-        setLastRefreshed(new Date().toLocaleTimeString());
-      }, 10000); // 10 seconds
-    }
-
-    return () => {
-      // Clean up timer on component unmount
-      if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
-      }
-    };
-  }, [onRefresh]);
 
   // Effect for updating localStorage when filters change
   useEffect(() => {
@@ -151,21 +135,37 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       // Hitung statistik berdasarkan tipe mesin, bukan berdasarkan nama mesin
       // Kita fokus pada 3 tipe mesin: PARKING_BRAKE, REAR_SAFE_ZONE, dan FRONT_SAFE_ZONE
       const types = [...new Set(data.map(item => item.TYPE))];
-      const totalMachineTypes = types.length;
       
-      // Hitung mesin aktif berdasarkan tipe (yang memiliki setidaknya satu status ON)
-      const activeTypes = types.filter(type => {
-        return data.some(item => item.TYPE === type && (item.VALUE === '1' || item.VALUE === 1));
-      }).length;
+      // Hitung unique machines (actual machine count)
+      const uniqueMachines = [...new Set(data.map(item => item.MACHINE_NAME))].length;
       
-      // Mesin tidak aktif adalah total dikurangi aktif
-      const inactiveTypes = totalMachineTypes - activeTypes;
+      // Hitung total events untuk setiap tipe
+      const frontSafeZoneTotal = data.filter(item => item.TYPE === 'FRONT_SAFE_ZONE').length;
+      const rearSafeZoneTotal = data.filter(item => item.TYPE === 'REAR_SAFE_ZONE').length;
+      const parkingBrakeTotal = data.filter(item => item.TYPE === 'PARKING_BRAKE').length;
+      
+      // Hitung jumlah status ON untuk setiap tipe
+      const frontSafeZoneOn = data.filter(item => 
+        item.TYPE === 'FRONT_SAFE_ZONE' && (item.VALUE === '1' || item.VALUE === 1)
+      ).length;
+      
+      const rearSafeZoneOn = data.filter(item => 
+        item.TYPE === 'REAR_SAFE_ZONE' && (item.VALUE === '1' || item.VALUE === 1)
+      ).length;
+      
+      const parkingBrakeOn = data.filter(item => 
+        item.TYPE === 'PARKING_BRAKE' && (item.VALUE === '1' || item.VALUE === 1)
+      ).length;
       
       // Set machine stats
       setMachineStats({
-        total: totalMachineTypes,
-        active: activeTypes,
-        inactive: inactiveTypes,
+        total: uniqueMachines,
+        frontSafeZoneTotal,
+        rearSafeZoneTotal,
+        parkingBrakeTotal,
+        frontSafeZoneOn,
+        rearSafeZoneOn,
+        parkingBrakeOn,
         dataPoints: data.length
       });
 
@@ -211,57 +211,15 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         }
       });
 
-      // Create timeline data - group by hour
-      const last24Hours = [];
-      const now = new Date();
-      
-      for (let i = 23; i >= 0; i--) {
-        const hour = new Date(now);
-        hour.setHours(now.getHours() - i);
-        last24Hours.push(hour);
-      }
-
-      const timeLabels = last24Hours.map(date => `${date.getHours()}:00`);
-      
-      // Create datasets for different machine types
-      const topTypes = types.slice(0, 3); // Take top 3 machine types
-      const datasets = topTypes.map((type, index) => {
-        const color = index === 0 ? '#4e73df' : index === 1 ? '#1cc88a' : '#36b9cc';
-        
-        const hourData = last24Hours.map(hour => {
-          const startOfHour = new Date(hour);
-          const endOfHour = new Date(hour);
-          endOfHour.setHours(hour.getHours() + 1);
-          
-          // Count entries of this type in this hour
-          return data.filter(item => {
-            const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
-            return item.TYPE === type && 
-                   itemDate >= startOfHour && 
-                   itemDate < endOfHour;
-          }).length;
-        });
-        
-        return {
-          label: type,
-          data: hourData,
-          borderColor: color,
-          backgroundColor: `${color}80`,
-          tension: 0.3,
-          fill: false
-        };
-      });
-      
-      setActivityTimeline({
-        labels: timeLabels,
-        datasets: datasets
-      });
-      
       // CREATE MACHINE TREND DATA
-      // Get top 5 machines for trend analysis
+      // Get top 5 machines by event count
       const machineEventCounts = {};
-      types.forEach(type => {
-        machineEventCounts[type] = data.filter(item => item.TYPE === type).length;
+      data.forEach(item => {
+        const machineName = item.MACHINE_NAME;
+        if (!machineEventCounts[machineName]) {
+          machineEventCounts[machineName] = 0;
+        }
+        machineEventCounts[machineName]++;
       });
       
       // Sort machines by event count and get top 5
@@ -299,6 +257,26 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
           labels: generateTimeLabels(),
           datasets: machineTrendDatasets
         });
+      }
+      
+      // Generate default activity timeline (last 24 hours)
+      const activityTimelineData = generateActivityTimelineData(data);
+      setActivityTimeline(activityTimelineData);
+      
+      // Apply current activity timeline filter if set
+      const hasCustomActivityRange = 
+        activityTimelineFilter.startDate !== new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ||
+        activityTimelineFilter.endDate !== new Date().toISOString().split('T')[0];
+      
+      if (hasCustomActivityRange) {
+        const filteredData = generateActivityTimelineData(
+          data,
+          activityTimelineFilter.startDate, 
+          activityTimelineFilter.endDate
+        );
+        setFilteredActivityTimeline(filteredData);
+      } else {
+        setFilteredActivityTimeline(activityTimelineData);
       }
       
       // CREATE TOP 10 PROBLEMATIC MACHINES DATA
@@ -362,26 +340,6 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         .slice(0, 10);
       
       setTopProblematicMachines(problematicMachines);
-
-      // Generate default activity timeline (last 24 hours)
-      const activityTimelineData = generateActivityTimelineData(data);
-      setActivityTimeline(activityTimelineData);
-      
-      // Apply current activity timeline filter if set
-      const hasCustomActivityRange = 
-        activityTimelineFilter.startDate !== new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] ||
-        activityTimelineFilter.endDate !== new Date().toISOString().split('T')[0];
-      
-      if (hasCustomActivityRange) {
-        const filteredData = generateActivityTimelineData(
-          data,
-          activityTimelineFilter.startDate, 
-          activityTimelineFilter.endDate
-        );
-        setFilteredActivityTimeline(filteredData);
-      } else {
-        setFilteredActivityTimeline(activityTimelineData);
-      }
     }
   }, [data, dateRange.startDate, dateRange.endDate, activityTimelineFilter.startDate, activityTimelineFilter.endDate]);
 
@@ -431,6 +389,9 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
       const color = colors[index % colors.length];
       
+      // Get machine type for the tooltip label
+      const machineType = data.find(item => item.MACHINE_NAME === machine)?.TYPE || 'Unknown';
+      
       const hourData = timeSlots.map(hour => {
         const startOfHour = new Date(hour);
         const endOfHour = new Date(hour);
@@ -439,14 +400,14 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         // Count entries for this machine in this hour
         return data.filter(item => {
           const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
-          return item.TYPE === machine && 
+          return item.MACHINE_NAME === machine && 
                  itemDate >= startOfHour && 
                  itemDate < endOfHour;
         }).length;
       });
       
       return {
-        label: machine,
+        label: `${machine} (${machineType})`,
         data: hourData,
         borderColor: color,
         backgroundColor: `${color}30`,
@@ -472,11 +433,14 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
   const applyDateFilter = () => {
     if (!data || data.length === 0) return;
     
-    // Get top 5 machines
-    const types = [...new Set(data.map(item => item.TYPE))];
+    // Get top 5 machines by event count
     const machineEventCounts = {};
-    types.forEach(type => {
-      machineEventCounts[type] = data.filter(item => item.TYPE === type).length;
+    data.forEach(item => {
+      const machineName = item.MACHINE_NAME;
+      if (!machineEventCounts[machineName]) {
+        machineEventCounts[machineName] = 0;
+      }
+      machineEventCounts[machineName]++;
     });
     
     const topMachines = Object.keys(machineEventCounts)
@@ -507,10 +471,14 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     
     // Apply default filter immediately
     if (data && data.length > 0) {
-      const types = [...new Set(data.map(item => item.TYPE))];
+      // Get top 5 machines by event count
       const machineEventCounts = {};
-      types.forEach(type => {
-        machineEventCounts[type] = data.filter(item => item.TYPE === type).length;
+      data.forEach(item => {
+        const machineName = item.MACHINE_NAME;
+        if (!machineEventCounts[machineName]) {
+          machineEventCounts[machineName] = 0;
+        }
+        machineEventCounts[machineName]++;
       });
       
       const topMachines = Object.keys(machineEventCounts)
@@ -553,11 +521,14 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       return `${date.toLocaleDateString()} ${date.getHours()}:00`;
     });
     
-    // Get top 5 machines for timeline
-    const types = [...new Set(dataToUse.map(item => item.TYPE))];
+    // Get top 5 machines by event count
     const machineEventCounts = {};
-    types.forEach(type => {
-      machineEventCounts[type] = dataToUse.filter(item => item.TYPE === type).length;
+    dataToUse.forEach(item => {
+      const machineName = item.MACHINE_NAME;
+      if (!machineEventCounts[machineName]) {
+        machineEventCounts[machineName] = 0;
+      }
+      machineEventCounts[machineName]++;
     });
     
     // Sort machines by event count and get top 5
@@ -570,6 +541,9 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
       const color = colors[index % colors.length];
       
+      // Get machine type for the tooltip label
+      const machineType = dataToUse.find(item => item.MACHINE_NAME === machine)?.TYPE || 'Unknown';
+      
       const hourData = timePoints.map(hour => {
         const startOfHour = new Date(hour);
         const endOfHour = new Date(hour);
@@ -578,14 +552,14 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         // Count entries of this machine in this hour
         return dataToUse.filter(item => {
           const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
-          return item.TYPE === machine && 
+          return item.MACHINE_NAME === machine && 
                  itemDate >= startOfHour && 
                  itemDate < endOfHour;
         }).length;
       });
       
       return {
-        label: machine,
+        label: `${machine} (${machineType})`,
         data: hourData,
         borderColor: color,
         backgroundColor: `${color}30`,
@@ -707,7 +681,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       },
       title: {
         display: true,
-        text: 'Activity Timeline (Top 5 Machines)'
+        text: 'Activity Timeline by Machine (Top 5)'
       }
     },
     scales: {
@@ -731,7 +705,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       },
       title: {
         display: true,
-        text: 'Machine Activity Trends (Last 24 Hours)'
+        text: 'Machine Activity Trends (Top 5 Machines)'
       }
     },
     scales: {
@@ -810,72 +784,90 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
 
       {/* Statistics Cards Row */}
       <div className="row mb-4">
-        <div className="col-md-3">
-          <div className="card h-100 border-left-primary shadow-sm">
-            <div className="card-body">
-              <div className="row align-items-center">
-                <div className="col mr-2">
-                  <div className="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                    Total Machines
-                  </div>
-                  <div className="h3 mb-0 font-weight-bold">{machineStats.total}</div>
-                </div>
-                <div className="col-auto">
-                  <i className="bi bi-truck"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-3">
+        <div className="col-md">
           <div className="card h-100 border-left-success shadow-sm">
             <div className="card-body">
               <div className="row align-items-center">
                 <div className="col mr-2">
                   <div className="text-xs font-weight-bold text-success text-uppercase mb-1">
-                    Active Machines
+                    Total Machines
                   </div>
-                  <div className="h3 mb-0 font-weight-bold">{machineStats.active}</div>
+                  <div className="h3 mb-0 font-weight-bold text-success">{machineStats.total}</div>
                 </div>
                 <div className="col-auto">
-                  <i className="bi bi-check-circle"></i>
+                  <i className="bi bi-truck text-success"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="col-md-3">
-          <div className="card h-100 border-left-warning shadow-sm">
+        <div className="col-md">
+          <div className="card h-100 border-left-primary shadow-sm">
             <div className="card-body">
               <div className="row align-items-center">
                 <div className="col mr-2">
-                  <div className="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                    Inactive Machines
+                  <div className="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                    Front Safe Zone
                   </div>
-                  <div className="h3 mb-0 font-weight-bold">{machineStats.inactive}</div>
+                  <div className="h3 mb-0 font-weight-bold text-primary">{machineStats.frontSafeZoneTotal}</div>
                 </div>
                 <div className="col-auto">
-                  <i className="bi bi-exclamation-circle"></i>
+                  <i className="bi bi-chevron-double-up text-primary"></i>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="col-md-3">
+        <div className="col-md">
           <div className="card h-100 border-left-info shadow-sm">
             <div className="card-body">
               <div className="row align-items-center">
                 <div className="col mr-2">
                   <div className="text-xs font-weight-bold text-info text-uppercase mb-1">
-                    TOTAL LOG EVENTS
+                    Rear Safe Zone
                   </div>
-                  <div className="h3 mb-0 font-weight-bold">{machineStats.dataPoints}</div>
+                  <div className="h3 mb-0 font-weight-bold text-info">{machineStats.rearSafeZoneTotal}</div>
                 </div>
                 <div className="col-auto">
-                  <i className="bi bi-database"></i>
+                  <i className="bi bi-chevron-double-down text-info"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md">
+          <div className="card h-100 border-left-warning shadow-sm">
+            <div className="card-body">
+              <div className="row align-items-center">
+                <div className="col mr-2">
+                  <div className="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                    Parking Brake
+                  </div>
+                  <div className="h3 mb-0 font-weight-bold text-warning">{machineStats.parkingBrakeTotal}</div>
+                </div>
+                <div className="col-auto">
+                  <i className="bi bi-p-square text-warning"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md">
+          <div className="card h-100 border-left-danger shadow-sm">
+            <div className="card-body">
+              <div className="row align-items-center">
+                <div className="col mr-2">
+                  <div className="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                    TOTAL LOG EVENTS
+                  </div>
+                  <div className="h3 mb-0 font-weight-bold text-danger">{machineStats.dataPoints}</div>
+                </div>
+                <div className="col-auto">
+                  <i className="bi bi-database text-danger"></i>
                 </div>
               </div>
             </div>
@@ -1098,7 +1090,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
           </div>
         </div>
         <div className="card-footer small text-muted">
-          Trend analysis for top 5 machines over the selected date range
+          Trend analysis for top 5 most active machines over the selected date range
         </div>
       </div>
 
@@ -1115,9 +1107,10 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         <div className="card-body">
           <div className="mb-3">
             <p className="text-xs font-weight-bold text-primary mb-2">
-              Grafik ini menunjukkan jumlah aktivitas (events) per jam dari lima mesin teratas.
-              Setiap titik mewakili jumlah event untuk mesin tertentu pada jam tersebut.
-              Semakin tinggi nilai, semakin banyak aktivitas.
+              This graph shows the number of activities (events) per hour from the top five machines.
+              Each point represents the number of events for a specific machine at that hour.
+              Machine names are displayed with their corresponding ACP type in parentheses.
+              The higher the value, the more activity there is.
             </p>
             
             <div className="row g-2 align-items-center mb-3">
@@ -1176,7 +1169,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
           </div>
           
           <div className="card-footer small text-muted">
-            Activity timeline for top 5 machines over selected date range
+            Activity timeline for top 5 machines by event count, showing actual machine names with ACP types
           </div>
         </div>
       </div>
@@ -1252,52 +1245,127 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       {/* Machine Status Summary */}
       <div className="card shadow-sm">
         <div className="card-header bg-light">
-          <h5 className="mb-0">Machine Status Summary</h5>
+          <h5 className="mb-0">ACP Events Status Summary</h5>
         </div>
-        <div className="card-body pb-0">
+        <div className="card-body">
           <div className="row">
-            <div className="col-lg-6 mb-4">
-              <div className="card bg-primary text-white shadow">
+            <div className="col-lg-4 mb-4">
+              <div className="card border-primary text-dark shadow-sm">
+                <div className="card-header bg-primary text-white">
+                  <strong>Front Safe Zone Status</strong>
+                </div>
                 <div className="card-body">
-                  Machine Health
                   <div className="mt-2">
                     <div className="d-flex justify-content-between">
-                      <span>Overall:</span>
-                      <span>{Math.round((machineStats.active / Math.max(machineStats.total, 1)) * 100)}%</span>
+                      <span>Active Status:</span>
+                      <span>
+                        {machineStats.frontSafeZoneTotal > 0 
+                          ? Math.round((machineStats.frontSafeZoneOn / machineStats.frontSafeZoneTotal) * 100) 
+                          : 0}%
+                      </span>
                     </div>
                     <div className="progress mt-1">
                       <div 
-                        className="progress-bar" 
+                        className="progress-bar bg-primary" 
                         role="progressbar" 
-                        style={{ width: `${(machineStats.active / Math.max(machineStats.total, 1)) * 100}%` }}
-                        aria-valuenow={(machineStats.active / Math.max(machineStats.total, 1)) * 100} 
+                        style={{ 
+                          width: `${machineStats.frontSafeZoneTotal > 0 
+                            ? (machineStats.frontSafeZoneOn / machineStats.frontSafeZoneTotal) * 100 
+                            : 0}%` 
+                        }}
+                        aria-valuenow={machineStats.frontSafeZoneTotal > 0 
+                          ? (machineStats.frontSafeZoneOn / machineStats.frontSafeZoneTotal) * 100 
+                          : 0} 
                         aria-valuemin="0" 
                         aria-valuemax="100">
                       </div>
+                    </div>
+                    <div className="small mt-2">
+                      <div>Total Events: <strong>{machineStats.frontSafeZoneTotal}</strong></div>
+                      <div>ON Status: <span className="text-success"><strong>{machineStats.frontSafeZoneOn}</strong></span></div>
+                      <div>OFF Status: <span className="text-danger"><strong>{machineStats.frontSafeZoneTotal - machineStats.frontSafeZoneOn}</strong></span></div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="col-lg-6 mb-4">
-              <div className="card bg-success text-white shadow">
+            <div className="col-lg-4 mb-4">
+              <div className="card border-info text-dark shadow-sm">
+                <div className="card-header bg-info text-white">
+                  <strong>Rear Safe Zone Status</strong>
+                </div>
                 <div className="card-body">
-                  System Performance
                   <div className="mt-2">
                     <div className="d-flex justify-content-between">
-                      <span>Response Time:</span>
-                      <span>Good</span>
+                      <span>Active Status:</span>
+                      <span>
+                        {machineStats.rearSafeZoneTotal > 0 
+                          ? Math.round((machineStats.rearSafeZoneOn / machineStats.rearSafeZoneTotal) * 100) 
+                          : 0}%
+                      </span>
                     </div>
                     <div className="progress mt-1">
                       <div 
-                        className="progress-bar" 
+                        className="progress-bar bg-info" 
                         role="progressbar" 
-                        style={{ width: '85%' }}
-                        aria-valuenow="85" 
+                        style={{ 
+                          width: `${machineStats.rearSafeZoneTotal > 0 
+                            ? (machineStats.rearSafeZoneOn / machineStats.rearSafeZoneTotal) * 100 
+                            : 0}%` 
+                        }}
+                        aria-valuenow={machineStats.rearSafeZoneTotal > 0 
+                          ? (machineStats.rearSafeZoneOn / machineStats.rearSafeZoneTotal) * 100 
+                          : 0} 
                         aria-valuemin="0" 
                         aria-valuemax="100">
                       </div>
+                    </div>
+                    <div className="small mt-2">
+                      <div>Total Events: <strong>{machineStats.rearSafeZoneTotal}</strong></div>
+                      <div>ON Status: <span className="text-success"><strong>{machineStats.rearSafeZoneOn}</strong></span></div>
+                      <div>OFF Status: <span className="text-danger"><strong>{machineStats.rearSafeZoneTotal - machineStats.rearSafeZoneOn}</strong></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-lg-4 mb-4">
+              <div className="card border-warning text-dark shadow-sm">
+                <div className="card-header bg-warning text-dark">
+                  <strong>Parking Brake Status</strong>
+                </div>
+                <div className="card-body">
+                  <div className="mt-2">
+                    <div className="d-flex justify-content-between">
+                      <span>Active Status:</span>
+                      <span>
+                        {machineStats.parkingBrakeTotal > 0 
+                          ? Math.round((machineStats.parkingBrakeOn / machineStats.parkingBrakeTotal) * 100) 
+                          : 0}%
+                      </span>
+                    </div>
+                    <div className="progress mt-1">
+                      <div 
+                        className="progress-bar bg-warning" 
+                        role="progressbar" 
+                        style={{ 
+                          width: `${machineStats.parkingBrakeTotal > 0 
+                            ? (machineStats.parkingBrakeOn / machineStats.parkingBrakeTotal) * 100 
+                            : 0}%` 
+                        }}
+                        aria-valuenow={machineStats.parkingBrakeTotal > 0 
+                          ? (machineStats.parkingBrakeOn / machineStats.parkingBrakeTotal) * 100 
+                          : 0} 
+                        aria-valuemin="0" 
+                        aria-valuemax="100">
+                      </div>
+                    </div>
+                    <div className="small mt-2">
+                      <div>Total Events: <strong>{machineStats.parkingBrakeTotal}</strong></div>
+                      <div>ON Status: <span className="text-success"><strong>{machineStats.parkingBrakeOn}</strong></span></div>
+                      <div>OFF Status: <span className="text-danger"><strong>{machineStats.parkingBrakeTotal - machineStats.parkingBrakeOn}</strong></span></div>
                     </div>
                   </div>
                 </div>
@@ -1307,7 +1375,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
         </div>
         <div className="card-footer text-muted">
           <i className="bi bi-info-circle me-2"></i>
-          Dashboard displays machine health metrics and system performance indicators
+          Percentages indicate the proportion of events with ON status for each ACP type
         </div>
       </div>
     </div>
