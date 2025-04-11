@@ -197,7 +197,7 @@ const MachineData = ({ data = [], loading }) => {
     scales: {
       y: {
         beginAtZero: true,
-        max: 1.2,
+        max: 1.1,
         ticks: {
           callback: function(value) {
             if (value === 0) return 'OFF';
@@ -467,7 +467,7 @@ const MachineData = ({ data = [], loading }) => {
               </div>
             </div>
             <div className="card-body">
-                <div style={{ height: '300px' }}>
+                <div style={{ height: '350px' }}>
                 <Line data={prepareMachineActivityData()} options={chartOptions} />
               </div>
             </div>
