@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form } from 'react-bootstrap';
+import { Card, Form, Table } from 'react-bootstrap';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
 // Register ChartJS components
 ChartJS.register(
@@ -9,6 +9,7 @@ ChartJS.register(
   LinearScale, 
   PointElement, 
   LineElement, 
+  BarElement,
   Title, 
   Tooltip, 
   Legend
@@ -21,6 +22,22 @@ const MachineData = ({ data = [], loading }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // New state for machine trends
+  const [machineTrendsData, setMachineTrendsData] = useState({
+    labels: [],
+    datasets: []
+  });
+  
+  // New state for event summary
+  const [eventSummary, setEventSummary] = useState({
+    frontSafeZone: { total: 0, on: 0, off: 0 },
+    rearSafeZone: { total: 0, on: 0, off: 0 },
+    parkingBrake: { total: 0, on: 0, off: 0 },
+    activeEvents: 0,
+    inactiveEvents: 0,
+    totalEvents: 0
+  });
 
   useEffect(() => {
     // Extract machine list from actual data
@@ -44,7 +61,14 @@ const MachineData = ({ data = [], loading }) => {
       const filteredData = data.filter(item => item.MACHINE_NAME === selectedMachine);
       setMachineData(filteredData);
       setCurrentPage(1); // Reset to first page when changing machine
+      
+      // Prepare machine trends data
+      prepareMachineTrendsData(filteredData);
+      
+      // Prepare event summary
+      prepareEventSummary(filteredData);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMachine, data]);
 
   const handleMachineChange = (e) => {
@@ -238,6 +262,164 @@ const MachineData = ({ data = [], loading }) => {
             if (value === 1) status = 'ON';
             return `${context.dataset.label}: ${status}`;
           }
+        }
+      }
+    }
+  };
+
+  // Prepare machine trends data
+  const prepareMachineTrendsData = (machineData) => {
+    if (!machineData || machineData.length === 0) {
+      setMachineTrendsData({ labels: [], datasets: [] });
+      return;
+    }
+    
+    // Group data by type and timestamp (hour)
+    const sortedData = [...machineData].sort((a, b) => {
+      const dateA = new Date(a.START_TIME || a.TIMESTAMP);
+      const dateB = new Date(b.START_TIME || b.TIMESTAMP);
+      return dateA - dateB;
+    });
+    
+    // Get date range
+    const firstDate = new Date(sortedData[0].START_TIME || sortedData[0].TIMESTAMP);
+    const lastDate = new Date(sortedData[sortedData.length - 1].START_TIME || sortedData[sortedData.length - 1].TIMESTAMP);
+    
+    // Generate hourly time slots
+    const timeSlots = [];
+    const currentSlot = new Date(firstDate);
+    currentSlot.setMinutes(0, 0, 0); // Start at the beginning of the hour
+    
+    while (currentSlot <= lastDate) {
+      timeSlots.push(new Date(currentSlot));
+      currentSlot.setHours(currentSlot.getHours() + 1);
+    }
+    
+    // Format time labels
+    const timeLabels = timeSlots.map(date => {
+      return `${date.toLocaleDateString()} ${date.getHours()}:00`;
+    });
+    
+    // Get unique types for this machine
+    const uniqueTypes = [...new Set(machineData.map(item => item.TYPE))];
+    
+    // Create datasets for each type
+    const datasets = uniqueTypes.map((type, index) => {
+      const hourData = timeSlots.map(hour => {
+        const startOfHour = new Date(hour);
+        const endOfHour = new Date(hour);
+        endOfHour.setHours(hour.getHours() + 1);
+        
+        // Count entries for this type in this hour
+        return sortedData.filter(item => {
+          const itemDate = new Date(item.START_TIME || item.TIMESTAMP);
+          return item.TYPE === type && 
+                 itemDate >= startOfHour && 
+                 itemDate < endOfHour;
+        }).length;
+      });
+      
+      return {
+        label: type,
+        data: hourData,
+        borderColor: getTypeColor(type),
+        backgroundColor: getTypeColor(type, 0.2),
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      };
+    });
+    
+    setMachineTrendsData({
+      labels: timeLabels,
+      datasets: datasets
+    });
+  };
+  
+  // Prepare event summary
+  const prepareEventSummary = (machineData) => {
+    if (!machineData || machineData.length === 0) {
+      setEventSummary({
+        frontSafeZone: { total: 0, on: 0, off: 0 },
+        rearSafeZone: { total: 0, on: 0, off: 0 },
+        parkingBrake: { total: 0, on: 0, off: 0 },
+        activeEvents: 0,
+        inactiveEvents: 0,
+        totalEvents: 0
+      });
+      return;
+    }
+    
+    // Count events by type
+    const frontSafeZoneData = machineData.filter(item => item.TYPE === 'FRONT_SAFE_ZONE');
+    const rearSafeZoneData = machineData.filter(item => item.TYPE === 'REAR_SAFE_ZONE');
+    const parkingBrakeData = machineData.filter(item => item.TYPE === 'PARKING_BRAKE');
+    
+    // Count active and inactive events
+    const activeEvents = machineData.filter(item => item.VALUE === '1' || item.VALUE === 1).length;
+    const inactiveEvents = machineData.filter(item => item.VALUE === '0' || item.VALUE === 0).length;
+    
+    setEventSummary({
+      frontSafeZone: {
+        total: frontSafeZoneData.length,
+        on: frontSafeZoneData.filter(item => item.VALUE === '1' || item.VALUE === 1).length,
+        off: frontSafeZoneData.filter(item => item.VALUE === '0' || item.VALUE === 0).length
+      },
+      rearSafeZone: {
+        total: rearSafeZoneData.length,
+        on: rearSafeZoneData.filter(item => item.VALUE === '1' || item.VALUE === 1).length,
+        off: rearSafeZoneData.filter(item => item.VALUE === '0' || item.VALUE === 0).length
+      },
+      parkingBrake: {
+        total: parkingBrakeData.length,
+        on: parkingBrakeData.filter(item => item.VALUE === '1' || item.VALUE === 1).length,
+        off: parkingBrakeData.filter(item => item.VALUE === '0' || item.VALUE === 0).length
+      },
+      activeEvents,
+      inactiveEvents,
+      totalEvents: machineData.length
+    });
+  };
+
+  // Machine Trends Chart options
+  const machineTrendOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Machine Trends by Type'
+      },
+      tooltip: {
+        callbacks: {
+          title: function(context) {
+            return context[0].label;
+          },
+          label: function(context) {
+            return `${context.dataset.label}: ${context.raw} events`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Event Count'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Time'
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45
         }
       }
     }
@@ -474,7 +656,213 @@ const MachineData = ({ data = [], loading }) => {
             <div className="card-footer small text-muted">
               Activity timeline for {selectedMachine} showing status changes over time
             </div>
+          </div>
+          
+          {/* Machine Trends Chart */}
+          <div className="card shadow-sm mt-4 mb-4">
+            <div className="card-header bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <i className="bi bi-activity me-2"></i>
+                  Machine Trends by Type
+                </h5>
+              </div>
+            </div>
+            <div className="card-body">
+              <div style={{ height: '350px' }}>
+                <Line data={machineTrendsData} options={machineTrendOptions} />
+              </div>
+            </div>
+            <div className="card-footer small text-muted">
+              Event frequency trend for {selectedMachine} grouped by type over time
+            </div>
+          </div>
+          
+          {/* Event Summary */}
+          <div className="card shadow-sm mt-4 mb-4">
+            <div className="card-header bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <i className="bi bi-list-check me-2"></i>
+                  Event Summary
+                </h5>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="row mb-4">
+                {/* Stats Summary */}
+                <div className="col-md-4 mb-3">
+                  <div className="card h-100 border-left-primary shadow-sm">
+                    <div className="card-header bg-primary text-white">
+                      <strong>Front Safe Zone</strong>
+                    </div>
+                    <div className="card-body">
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Total Events:</span>
+                        <span className="font-weight-bold">{eventSummary.frontSafeZone.total}</span>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>ON Status:</span>
+                        <span className="text-success font-weight-bold">{eventSummary.frontSafeZone.on}</span>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span>OFF Status:</span>
+                        <span className="text-danger font-weight-bold">{eventSummary.frontSafeZone.off}</span>
+                      </div>
+                      {eventSummary.frontSafeZone.total > 0 && (
+                        <div className="progress mt-3">
+                          <div 
+                            className={`progress-bar ${Math.abs((eventSummary.frontSafeZone.on / eventSummary.frontSafeZone.total) * 100 - 50) < 5 ? 'bg-success' : 'bg-primary'}`} 
+                            role="progressbar" 
+                            style={{ width: `${(eventSummary.frontSafeZone.on / eventSummary.frontSafeZone.total) * 100}%` }}
+                            aria-valuenow={(eventSummary.frontSafeZone.on / eventSummary.frontSafeZone.total) * 100} 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {Math.round((eventSummary.frontSafeZone.on / eventSummary.frontSafeZone.total) * 100)}%
+                            {Math.abs((eventSummary.frontSafeZone.on / eventSummary.frontSafeZone.total) * 100 - 50) < 5 && ' (Balanced)'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                
+                <div className="col-md-4 mb-3">
+                  <div className="card h-100 border-left-info shadow-sm">
+                    <div className="card-header bg-info text-white">
+                      <strong>Rear Safe Zone</strong>
+                    </div>
+                    <div className="card-body">
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Total Events:</span>
+                        <span className="font-weight-bold">{eventSummary.rearSafeZone.total}</span>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>ON Status:</span>
+                        <span className="text-success font-weight-bold">{eventSummary.rearSafeZone.on}</span>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span>OFF Status:</span>
+                        <span className="text-danger font-weight-bold">{eventSummary.rearSafeZone.off}</span>
+                      </div>
+                      {eventSummary.rearSafeZone.total > 0 && (
+                        <div className="progress mt-3">
+                          <div 
+                            className={`progress-bar ${Math.abs((eventSummary.rearSafeZone.on / eventSummary.rearSafeZone.total) * 100 - 50) < 5 ? 'bg-success' : 'bg-info'}`} 
+                            role="progressbar" 
+                            style={{ width: `${(eventSummary.rearSafeZone.on / eventSummary.rearSafeZone.total) * 100}%` }}
+                            aria-valuenow={(eventSummary.rearSafeZone.on / eventSummary.rearSafeZone.total) * 100} 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {Math.round((eventSummary.rearSafeZone.on / eventSummary.rearSafeZone.total) * 100)}%
+                            {Math.abs((eventSummary.rearSafeZone.on / eventSummary.rearSafeZone.total) * 100 - 50) < 5 && ' (Balanced)'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="col-md-4 mb-3">
+                  <div className="card h-100 border-left-warning shadow-sm">
+                    <div className="card-header bg-warning text-dark">
+                      <strong>Parking Brake</strong>
+                    </div>
+                    <div className="card-body">
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>Total Events:</span>
+                        <span className="font-weight-bold">{eventSummary.parkingBrake.total}</span>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <span>ON Status:</span>
+                        <span className="text-success font-weight-bold">{eventSummary.parkingBrake.on}</span>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span>OFF Status:</span>
+                        <span className="text-danger font-weight-bold">{eventSummary.parkingBrake.off}</span>
+                      </div>
+                      {eventSummary.parkingBrake.total > 0 && (
+                        <div className="progress mt-3">
+                          <div 
+                            className={`progress-bar ${Math.abs((eventSummary.parkingBrake.on / eventSummary.parkingBrake.total) * 100 - 50) < 5 ? 'bg-success' : 'bg-warning'}`} 
+                            role="progressbar" 
+                            style={{ width: `${(eventSummary.parkingBrake.on / eventSummary.parkingBrake.total) * 100}%` }}
+                            aria-valuenow={(eventSummary.parkingBrake.on / eventSummary.parkingBrake.total) * 100} 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                            {Math.round((eventSummary.parkingBrake.on / eventSummary.parkingBrake.total) * 100)}%
+                            {Math.abs((eventSummary.parkingBrake.on / eventSummary.parkingBrake.total) * 100 - 50) < 5 && ' (Balanced)'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="table-responsive mt-3">
+                <h6 className="mb-3">Event Summary for {selectedMachine}</h6>
+                <Table hover bordered className="table-sm">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="text-center">
+                        <span className="badge bg-primary px-2">Front Safe Zone</span>
+                      </th>
+                      <th className="text-center">
+                        <span className="badge bg-info px-2">Rear Safe Zone</span>
+                      </th>
+                      <th className="text-center">
+                        <span className="badge bg-warning px-2">Parking Brake</span>
+                      </th>
+                      <th className="text-center">Active Events</th>
+                      <th className="text-center">Inactive Events</th>
+                      <th className="text-center">Total Events</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="text-center">
+                        <strong className="d-block text-primary">{eventSummary.frontSafeZone.total}</strong>
+                        <small className="d-block">
+                          <span className="text-success">{eventSummary.frontSafeZone.on} ON</span> / <span className="text-danger">{eventSummary.frontSafeZone.off} OFF</span>
+                        </small>
+                      </td>
+                      <td className="text-center">
+                        <strong className="d-block text-info">{eventSummary.rearSafeZone.total}</strong>
+                        <small className="d-block">
+                          <span className="text-success">{eventSummary.rearSafeZone.on} ON</span> / <span className="text-danger">{eventSummary.rearSafeZone.off} OFF</span>
+                        </small>
+                      </td>
+                      <td className="text-center">
+                        <strong className="d-block text-warning">{eventSummary.parkingBrake.total}</strong>
+                        <small className="d-block">
+                          <span className="text-success">{eventSummary.parkingBrake.on} ON</span> / <span className="text-danger">{eventSummary.parkingBrake.off} OFF</span>
+                        </small>
+                      </td>
+                      <td className="text-center font-weight-bold text-success">{eventSummary.activeEvents}</td>
+                      <td className="text-center font-weight-bold text-danger">{eventSummary.inactiveEvents}</td>
+                      <td className="text-center font-weight-bold">{eventSummary.totalEvents}</td>
+                    </tr>
+                  </tbody>
+                </Table>
+              </div>
+              
+              <div className="d-flex justify-content-between align-items-center mt-4">
+                <div>
+                  <span className="badge bg-success me-2">ON</span> Represents active status
+                </div>
+                <div>
+                  <span className="badge bg-secondary me-2">50%</span> Represents balance (equal ON/OFF events) - significant deviation may indicate anomaly
+                </div>
+                <div>
+                  <span className="badge bg-danger me-2">OFF</span> Represents inactive status
+                </div>
+              </div>
+            </div>
+            <div className="card-footer small text-muted">
+              Detailed event statistics for {selectedMachine} grouped by type. A balanced 50% ON/OFF ratio is expected for normal operation - significant deviations may indicate anomalies.
+            </div>
+          </div>
         </>
       ) : (
         <div className="alert alert-info">
