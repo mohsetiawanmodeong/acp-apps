@@ -58,6 +58,12 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
     endDate: today
   };
   
+  // Connection status states
+  const [apiStatus, setApiStatus] = useState({
+    isOnline: false,
+    lastCheck: new Date()
+  });
+  
   // Initial state values from localStorage for persistence
   const [machineStats, setMachineStats] = useState({
     total: 0,
@@ -342,6 +348,16 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       setTopProblematicMachines(problematicMachines);
     }
   }, [data, dateRange.startDate, dateRange.endDate, activityTimelineFilter.startDate, activityTimelineFilter.endDate]);
+
+  // Effect for checking connection status
+  useEffect(() => {
+    // Check API connection - consider API online if we have any data or if loading is true
+    const isApiOnline = data.length > 0 || loading;
+    setApiStatus({
+      isOnline: isApiOnline,
+      lastCheck: new Date()
+    });
+  }, [data, loading]);
 
   // New function to generate time labels based on date range
   const generateTimeLabels = (start = null, end = null) => {
@@ -883,24 +899,25 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
             <div className="col-md-6">
               <div className="status-item mb-2">
                 <div className="d-flex align-items-center mb-1">
-                  <span className="status-dot me-2" style={{ backgroundColor: '#1cc88a', width: '10px', height: '10px', borderRadius: '50%', display: 'inline-block' }}></span>
-                  <span>API Connection: </span>
-                  <Badge bg="success" className="ms-2">Online</Badge>
-                </div>
-              </div>
-              <div className="status-item mb-2">
-                <div className="d-flex align-items-center mb-1">
-                  <span className="status-dot me-2" style={{ backgroundColor: '#1cc88a', width: '10px', height: '10px', borderRadius: '50%', display: 'inline-block' }}></span>
-                  <span>Database: </span>
-                  <Badge bg="success" className="ms-2">Connected</Badge>
+                  <span className="status-dot me-2" style={{ 
+                    backgroundColor: apiStatus.isOnline ? '#1cc88a' : '#e74a3b', 
+                    width: '10px', 
+                    height: '10px', 
+                    borderRadius: '50%', 
+                    display: 'inline-block' 
+                  }}></span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>API Connection: </span>
+                  <Badge bg={apiStatus.isOnline ? 'success' : 'danger'} className="ms-2" style={{ fontSize: '1rem' }}>
+                    {apiStatus.isOnline ? 'Online' : 'Offline'}
+                  </Badge>
                 </div>
               </div>
             </div>
             <div className="col-md-6">
               <div className="status-info text-muted">
                 <p className="mb-1"><strong>Last Update:</strong> {lastUpdate || 'N/A'}</p>
-                <p className="mb-0"><strong>Latest Data:</strong> {data.length > 0 ? 
-                  new Date(data[0].START_TIME || data[0].TIMESTAMP).toLocaleString() : 'N/A'}</p>
+                <p className="mb-3"><strong>Latest Data:</strong> {data.length > 0 ? 
+                  new Date(data[0].START_TIME || data[0].TIMESTAMP).toLocaleString() : 'No data available'}</p>
               </div>
             </div>
           </div>
