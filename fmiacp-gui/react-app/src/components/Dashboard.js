@@ -916,7 +916,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
             <div className="col-md-6">
               <div className="status-info text-muted">
                 <p className="mb-1"><strong>Last Update:</strong> {lastUpdate || 'N/A'}</p>
-                <p className="mb-3"><strong>Latest Data:</strong> {data.length > 0 ? 
+                <p className="mb-1"><strong>Latest Data:</strong> {data.length > 0 ? 
                   new Date(data[0].START_TIME || data[0].TIMESTAMP).toLocaleString() : 'No data available'}</p>
               </div>
             </div>
