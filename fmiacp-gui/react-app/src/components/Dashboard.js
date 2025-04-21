@@ -894,7 +894,7 @@ const Dashboard = ({ data = [], loading, lastUpdate, onRefresh }) => {
       {/* System Status */}
       <div className="card mb-4 bg-light shadow-sm">
         <div className="card-body py-3">
-          <h5 className="card-title mb-3">System Status</h5>
+          <h5 className="card-title mb-2">System Status</h5>
           <div className="row">
             <div className="col-md-6">
               <div className="status-item mb-2">
