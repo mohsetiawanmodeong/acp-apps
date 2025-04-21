@@ -59,7 +59,15 @@ const MachineData = ({ data = [], loading }) => {
     // Filter data for selected machine
     if (selectedMachine && data && data.length > 0) {
       const filteredData = data.filter(item => item.MACHINE_NAME === selectedMachine);
-      setMachineData(filteredData);
+      
+      // Sort data from newest to oldest
+      const sortedData = [...filteredData].sort((a, b) => {
+        const dateA = new Date(a.START_TIME || a.TIMESTAMP);
+        const dateB = new Date(b.START_TIME || b.TIMESTAMP);
+        return dateB - dateA; // Descending order (newest first)
+      });
+      
+      setMachineData(sortedData);
       setCurrentPage(1); // Reset to first page when changing machine
       
       // Prepare machine trends data
