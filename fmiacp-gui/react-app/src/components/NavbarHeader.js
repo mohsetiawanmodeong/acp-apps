@@ -45,7 +45,7 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
           {/* Logo Freeport di kiri */}
           <div className="logo-freeport">
             <img 
-              src="/img/logo-freeport.png" 
+              src={`${process.env.PUBLIC_URL}/img/logo-freeport.png`}
               alt="Freeport" 
             />
           </div>
@@ -75,7 +75,7 @@ const NavbarHeader = ({ onRefresh, lastUpdate, apiStatus, activeTab, setActiveTa
             
             <div className="logo-trakindo">
               <img 
-                src="/img/logo-trakindo.png" 
+                src={`${process.env.PUBLIC_URL}/img/logo-trakindo.png`}
                 alt="Trakindo" 
               />
             </div>

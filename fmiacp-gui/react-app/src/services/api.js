@@ -7,7 +7,8 @@ import axios from 'axios';
 
 // Configuration for API
 const API_CONFIG = {
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4990', // Updated port to match fmiacp.js
+  // baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4990', // Updated port to match fmiacp.js
+  baseURL: process.env.REACT_APP_API_URL || 'https://grspcnuggbctrm.fmi.com/', // Updated port to match fmiacp.js
   timeout: 15000, // 15 seconds
   retryAttempts: 3,
   retryDelay: 1000
